@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drivstoff-indeks – NG Group</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ── NG Nordic design tokens ── */
+  .ng-orange {
+    --card-button:        #e85c0d;
+    --card-button-hover:  #c94e0a;
+    --text-contrast:      #1a1a1a;
+    --text-contrast-header: #e85c0d;
+    --text-default:       #333333;
+    --text-inverted:      #ffffff;
+    --navbar-bg:          #fff8f0;
+    --footer:             #1a1a1a;
+    --border:             #e0d9d2;
+    --bg-page:            #fff8f0;
+    --bg-card:            #ffffff;
+    --key-number-bg-1: #e85c0d; --key-number-text-1: #ffffff;
+    --key-number-bg-2: #fff0e0; --key-number-text-2: #1a1a1a;
+    --key-number-bg-3: #1a1a1a; --key-number-text-3: #ffffff;
+    --key-number-bg-4: #fff8f0; --key-number-text-4: #e85c0d;
+    --red:        #C0392B;
+    --red-light:  #FDECEA;
+    --green:      #2E7D50;
+    --green-light:#E5F4EC;
+    --blue:       #2471A3;
+    --blue-light: #EAF4FB;
+    --gray:       #6B6B6B;
+    --shadow:     0 1px 3px rgba(0,0,0,0.07);
+    --shadow-md:  0 3px 12px rgba(0,0,0,0.10);
+    /* legacy aliases */
+    --ng-dark:   #1a1a1a;
+    --ng-mid:    #e85c0d;
+    --ng-bright: #e85c0d;
+    --ng-light:  #fff0e0;
+    --ng-bg:     #fff8f0;
+    --text:      #1a1a1a;
+    --text-muted:#6B6B6B;
+    --white:     #ffffff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg-page);
+    color: var(--text-default);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--white);
+    color: var(--text);
+    padding: 0 40px;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 0;
+  }
+  .header-logo {
+    height: 40px;
+    width: auto;
+    flex-shrink: 0;
+  }
+  .header-title h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text-contrast); }
+  .header-title p  { font-size: 0.72rem; color: var(--gray); margin-top: 2px; }
+  .header-right {
+    display: flex; align-items: center;
+    font-size: 0.75rem; color: var(--text-muted);
+    padding: 18px 0;
+  }
+
+  .outer-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    max-width: 1560px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+  .container { flex: 1; min-width: 0; padding: 24px 0; }
+
+  /* ── Controls ── */
+  .controls {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-end;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-group label {
+    font-size: 0.68rem; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  select, input[type=number] {
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 11px;
+    font-size: 0.88rem;
+    background: var(--ng-bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+  }
+  select:focus, input:focus {
+    border-color: var(--ng-mid);
+    background: white;
+  }
+
+  /* ── Page layout ── */
+  .page-body { display: block; }
+  .main-col { width: 100%; }
+
+  .news-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.2s ease;
+    margin-top: 24px;
+  }
+  .news-sidebar.collapsed {
+    width: 32px;
+  }
+
+  .news-sidebar-header {
+    padding: 10px 10px 8px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    min-height: 36px;
+  }
+  .news-sidebar-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .news-sidebar.collapsed .news-sidebar-title { display: none; }
+  .news-sidebar.collapsed .news-refresh-btn   { display: none; }
+
+  .news-collapse-btn {
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    border-radius: 4px;
+    transition: color .12s, transform .2s;
+    flex-shrink: 0;
+  }
+  .news-collapse-btn:hover { color: var(--ng-mid); }
+  .news-sidebar.collapsed .news-collapse-btn { transform: rotate(180deg); }
+
+  .news-refresh-btn {
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    font-size: 1rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    border-radius: 4px;
+    transition: color .12s;
+  }
+  .news-refresh-btn:hover { color: var(--ng-mid); }
+  .news-refresh-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .news-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 0;
+    max-height: 600px;
+  }
+  .news-sidebar.collapsed .news-list { display: none; }
+
+  .news-item {
+    display: block;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    transition: background .1s;
+    cursor: pointer;
+  }
+  .news-item:last-child { border-bottom: none; }
+  .news-item:hover { background: var(--ng-bg); }
+  .news-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .news-item-time {
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: var(--ng-mid);
+    min-width: 28px;
+  }
+  .news-item-source {
+    font-size: 0.67rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+  }
+  .news-item-headline {
+    font-size: 0.79rem;
+    font-weight: 600;
+    color: var(--text-contrast);
+    line-height: 1.35;
+  }
+  .news-loading {
+    padding: 24px 16px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  @media (max-width: 900px) {
+    .outer-layout { flex-direction: column; padding: 0 16px; }
+    .news-sidebar { width: 100% !important; margin-top: 0; }
+    .news-sidebar.collapsed { width: 100% !important; }
+    .news-sidebar.collapsed .news-list,
+    .news-sidebar.collapsed .news-sidebar-title,
+    .news-sidebar.collapsed .news-refresh-btn { display: revert; }
+    .news-list { max-height: 280px; }
+  }
+
+  /* ── View month slider ── */
+  .slider-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 220px; }
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  .slider-label-val {
+    font-size: 0.84rem; font-weight: 700;
+    color: var(--ng-mid); white-space: nowrap; min-width: 80px;
+  }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    flex: 1; height: 4px;
+    background: var(--border); border-radius: 2px; outline: none;
+    border: none; padding: 0;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%; background: var(--ng-mid);
+    cursor: pointer; border: 2px solid white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    transition: transform .1s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  .slider-endpoints { display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--text-muted); }
+
+  /* ── Period buttons (inside chart cards) ── */
+  .chart-footer { display: flex; justify-content: flex-end; padding-top: 10px; }
+  .period-btns { display: flex; gap: 3px; flex-wrap: wrap; justify-content: flex-end; }
+  .period-btns button {
+    padding: 4px 9px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border);
+    background: var(--ng-bg);
+    color: var(--text-muted);
+    font-size: 0.74rem; font-weight: 600;
+    cursor: pointer;
+    transition: all .12s;
+    white-space: nowrap;
+  }
+  .period-btns button:hover { border-color: var(--ng-mid); color: var(--ng-mid); }
+  .period-btns button.active { background: var(--ng-mid); border-color: var(--ng-mid); color: white; }
+
+  /* ── Country tabs ── */
+  .country-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab {
+    padding: 7px 18px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    cursor: pointer;
+    font-size: 0.84rem; font-weight: 600;
+    color: var(--text-muted);
+    transition: all .15s;
+    user-select: none;
+  }
+  .tab:hover { border-color: var(--ng-mid); color: var(--ng-mid); }
+  .tab.active { background: var(--ng-mid); border-color: var(--ng-mid); color: white; }
+
+  /* ── KPI cards – NG key-number style ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 3px;
+    margin-bottom: 20px;
+  }
+  .kpi-ng {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 8px;
+    min-height: 140px;
+    padding: 20px 22px;
+    transition: filter .15s;
+  }
+  .kpi-ng:hover { filter: brightness(0.97); }
+  .kpi-ng-label {
+    font-size: 0.68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    opacity: 0.75;
+  }
+  .kpi-ng-value {
+    font-size: clamp(1.6rem, 2vw + 0.5rem, 2.4rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    align-self: center;
+  }
+  .kpi-ng-sub {
+    font-size: 0.75rem; font-weight: 500;
+    opacity: 0.7;
+    align-self: end;
+  }
+
+  /* ── Surcharge chart ── */
+  .surcharge-card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 20px 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .card-title {
+    font-size: 0.72rem; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .card-subtitle { font-size: 0.75rem; color: var(--text-muted); }
+  .surcharge-wrap { position: relative; height: 260px; }
+
+  /* ── Price charts ── */
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  @media (max-width: 800px) { .charts { grid-template-columns: 1fr; } }
+  .chart-card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 20px 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .chart-wrap { position: relative; height: 240px; }
+
+  /* ── Table ── */
+  .table-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  th {
+    background: var(--ng-bg);
+    padding: 10px 13px;
+    text-align: left;
+    font-size: 0.68rem; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  td { padding: 9px 13px; border-bottom: 1px solid #F0F5F2; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--ng-bg); }
+  tr.base-row td { background: var(--ng-light); font-weight: 600; }
+  tr.base-row:hover td { background: #F5D5C5; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-size: 0.74rem; font-weight: 700;
+  }
+  .badge.up   { background: var(--red-light);   color: var(--red); }
+  .badge.down { background: var(--green-light);  color: var(--green); }
+  .badge.flat { background: var(--gray-light);   color: var(--gray); }
+  .badge.ng   { background: var(--ng-light); color: var(--ng-mid); }
+
+  /* ── Data freshness note ── */
+  .data-note {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.74rem; color: #92622A;
+    background: #FEF3E2; border: 1px solid #F5CBA7;
+    border-radius: 6px; padding: 4px 10px;
+    margin-top: 6px;
+  }
+  .data-note.complete { color: var(--text-muted); background: var(--ng-bg); border-color: var(--border); }
+
+  /* ── Fuel type toggles ── */
+  .fuel-toggles { display: flex; gap: 6px; align-items: center; }
+  .fuel-toggle {
+    padding: 5px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.78rem; font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+    letter-spacing: 0.02em;
+  }
+  .fuel-toggle.active {
+    background: var(--ng-mid);
+    border-color: var(--ng-mid);
+    color: #fff;
+  }
+  .fuel-toggle:hover:not(.active) {
+    border-color: var(--ng-mid);
+    color: var(--ng-mid);
+  }
+
+  /* Hide columns by state */
+  table.hide-diesel .col-diesel,
+  table.hide-diesel .col-diesel-vs { display: none; }
+  table.hide-hvo    .col-hvo,
+  table.hide-hvo    .col-hvo-vs    { display: none; }
+
+  /* ── Legend dots ── */
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.74rem; color: var(--text-muted); }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+
+  /* ── Section label with HR accent ── */
+  .section-label {
+    font-size: 0.68rem; font-weight: 700;
+    color: var(--text-default); text-transform: uppercase; letter-spacing: 0.08em;
+    margin: 0 0 10px 2px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    display: block;
+    height: 2px;
+    width: 28px;
+    background: var(--text-contrast-header);
+    border-radius: 2px;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    padding: 14px 0 24px;
+    opacity: 0.7;
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 16px; }
+    header { padding: 0 16px; }
+    .kpi .value { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body class="ng-orange">
+
+<header>
+  <div class="header-left">
+    <img src="assets/logo.svg" class="header-logo" alt="NG Nordic">
+    <div class="header-title">
+      <h1>Drivstoff-indeks</h1>
+      <p>Dieseltillegg · Preem SE · Circle K SE · Circle K DK</p>
+    </div>
+  </div>
+  <div class="header-right" id="last-updated">—</div>
+</header>
+
+<div class="outer-layout">
+<div class="container">
+<div class="page-body">
+<div class="main-col">
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="control-group">
+      <label>Basismåned</label>
+      <select id="baseMonth"></select>
+    </div>
+    <div class="control-group">
+      <label>Drivstoffandel (%)</label>
+      <input type="number" id="impactFactor" value="30" min="1" max="100" step="1" style="width:88px">
+    </div>
+
+    <!-- Periode (år) — til venstre for månedslider, samme stil -->
+    <div class="slider-group">
+      <label style="font-size:0.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">Periode (år)</label>
+      <div class="slider-row">
+        <span class="slider-label-val" id="yearFromLabel" style="min-width:36px;text-align:center">—</span>
+        <input type="range" id="yearFrom" min="2000" max="2026" value="2021" step="1">
+        <input type="range" id="yearTo"   min="2000" max="2026" value="2026" step="1">
+        <span class="slider-label-val" id="yearToLabel" style="min-width:36px;text-align:center">—</span>
+      </div>
+      <div class="slider-endpoints">
+        <span id="yearAbsMin">—</span>
+        <span id="yearAbsMax">—</span>
+      </div>
+    </div>
+
+    <!-- Vis måned -->
+    <div class="slider-group">
+      <label style="font-size:0.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">Vis måned</label>
+      <div class="slider-row">
+        <input type="range" id="viewMonthSlider" min="0" max="0" value="0" step="1">
+        <span class="slider-label-val" id="viewMonthLabel">—</span>
+      </div>
+      <div class="slider-endpoints">
+        <span id="sliderStart">—</span>
+        <span id="sliderEnd">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Country tabs + source ref -->
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+    <div class="country-tabs" style="margin-bottom:0;flex:1;min-width:200px;">
+      <div class="tab active" data-country="SE_preem" onclick="setCountry(this)">🇸🇪 Sverige – Preem</div>
+      <div class="tab" data-country="SE_ck"    onclick="setCountry(this)">🇸🇪 Sverige – Circle K</div>
+      <div class="tab" data-country="DK_ck"    onclick="setCountry(this)">🇩🇰 Danmark – Circle K</div>
+    </div>
+    <div id="source-ref" style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;"></div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <!-- Surcharge history chart -->
+  <div class="surcharge-card">
+    <div class="card-header">
+      <span class="card-title" id="surcharge-chart-title">Dieseltillegg per måned</span>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Tillegg over basis</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Under basis</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--ng-bright)"></div> Basismåned</div>
+      </div>
+    </div>
+    <div class="surcharge-wrap"><canvas id="surchargeChart"></canvas></div>
+    <div class="chart-footer">
+      <div class="period-btns" id="periodSurcharge">
+        <button data-months="3"   onclick="setChartPeriod('surcharge',this)">Kvartal</button>
+        <button data-months="6"   onclick="setChartPeriod('surcharge',this)" class="active">Halvår</button>
+        <button data-months="12"  onclick="setChartPeriod('surcharge',this)">1 år</button>
+        <button data-months="36"  onclick="setChartPeriod('surcharge',this)">3 år</button>
+        <button data-months="60"  onclick="setChartPeriod('surcharge',this)">5 år</button>
+        <button data-months="120" onclick="setChartPeriod('surcharge',this)">10 år</button>
+        <button data-months="0"   onclick="setChartPeriod('surcharge',this)">Alt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Price charts -->
+  <p class="section-label">Prisutvikling</p>
+  <div class="charts">
+    <div class="chart-card">
+      <div class="card-header">
+        <span class="card-title" id="diesel-chart-title">Diesel eks. mva</span>
+      </div>
+      <div class="chart-wrap"><canvas id="dieselChart"></canvas></div>
+      <div class="chart-footer">
+        <div class="period-btns" id="periodDiesel">
+          <button data-months="3"   onclick="setChartPeriod('diesel',this)">Kvartal</button>
+          <button data-months="6"   onclick="setChartPeriod('diesel',this)" class="active">Halvår</button>
+          <button data-months="12"  onclick="setChartPeriod('diesel',this)">1 år</button>
+          <button data-months="36"  onclick="setChartPeriod('diesel',this)">3 år</button>
+          <button data-months="60"  onclick="setChartPeriod('diesel',this)">5 år</button>
+          <button data-months="120" onclick="setChartPeriod('diesel',this)">10 år</button>
+          <button data-months="0"   onclick="setChartPeriod('diesel',this)">Alt</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header">
+        <span class="card-title" id="hvo-chart-title">HVO100 eks. mva</span>
+      </div>
+      <div class="chart-wrap"><canvas id="hvoChart"></canvas></div>
+      <div class="chart-footer">
+        <div class="period-btns" id="periodHvo">
+          <button data-months="3"   onclick="setChartPeriod('hvo',this)">Kvartal</button>
+          <button data-months="6"   onclick="setChartPeriod('hvo',this)" class="active">Halvår</button>
+          <button data-months="12"  onclick="setChartPeriod('hvo',this)">1 år</button>
+          <button data-months="36"  onclick="setChartPeriod('hvo',this)">3 år</button>
+          <button data-months="60"  onclick="setChartPeriod('hvo',this)">5 år</button>
+          <button data-months="120" onclick="setChartPeriod('hvo',this)">10 år</button>
+          <button data-months="0"   onclick="setChartPeriod('hvo',this)">Alt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <p class="section-label">Historikk</p>
+  <div class="table-card">
+    <div class="card-header">
+      <div>
+        <span class="card-title" id="table-title">Månedlige snitt</span>
+        <div class="data-note" id="data-freshness-note" style="display:none"></div>
+      </div>
+      <div class="fuel-toggles">
+        <button class="fuel-toggle active" data-fuel="diesel" onclick="toggleFuel(this)">Diesel</button>
+        <button class="fuel-toggle active" data-fuel="hvo"    onclick="toggleFuel(this)">HVO100</button>
+      </div>
+    </div>
+    <table id="priceTable">
+      <thead>
+        <tr>
+          <th>Måned</th>
+          <th id="th-diesel" class="col-diesel">Diesel</th>
+          <th id="th-hvo" class="col-hvo">HVO100</th>
+          <th class="col-diesel-vs">Diesel vs basis</th>
+          <th class="col-hvo-vs">HVO vs basis</th>
+          <th>Dieseltillegg</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+</div><!-- /.main-col -->
+</div><!-- /.page-body -->
+</div><!-- /.container -->
+
+<!-- News sidebar — sibling of container, in flex row, no overlap -->
+<aside class="news-sidebar" id="newsSidebar">
+  <div class="news-sidebar-header">
+    <span class="news-sidebar-title">Siste nytt</span>
+    <button class="news-refresh-btn" id="newsRefreshBtn" onclick="loadNews()" title="Oppdater">↻</button>
+    <button class="news-collapse-btn" id="newsCollapseBtn" onclick="toggleNewsSidebar()" title="Vis/skjul nyheter">‹</button>
+  </div>
+  <div id="newsList" class="news-list">
+    <div class="news-loading">Laster…</div>
+  </div>
+</aside>
+
+</div><!-- /.outer-layout -->
+
+<footer>Data: Circle K DK (DKK/L inkl. moms) · Preem SE / Circle K SE (SEK/L eks. mva) · Månedlig gjennomsnitt</footer>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const SOURCES = {
+  SE_preem: {
+    label: 'Preem Sverige', currency: 'SEK', flag: '🇸🇪',
+    sourceUrl: 'https://www.preem.se/foretag/listpriser/',
+    sourceFile: 'prishistorik-listpriser-2008-2026.xls',
+    data: [{"month":"2008-03","diesel":13.7194,"hvo":null},{"month":"2008-04","diesel":14.3733,"hvo":null},{"month":"2008-05","diesel":15.0581,"hvo":null},{"month":"2008-06","diesel":16.04,"hvo":null},{"month":"2008-07","diesel":16.3935,"hvo":null},{"month":"2008-08","diesel":15.5581,"hvo":null},{"month":"2008-09","diesel":14.8267,"hvo":null},{"month":"2008-10","diesel":12.8774,"hvo":null},{"month":"2008-11","diesel":10.9267,"hvo":null},{"month":"2008-12","diesel":10.3258,"hvo":null},{"month":"2009-01","diesel":10.6452,"hvo":null},{"month":"2009-02","diesel":10.4071,"hvo":null},{"month":"2009-03","diesel":10.6839,"hvo":null},{"month":"2009-04","diesel":11.0867,"hvo":null},{"month":"2009-05","diesel":11.5323,"hvo":null},{"month":"2009-06","diesel":12.0133,"hvo":null},{"month":"2009-07","diesel":12.2742,"hvo":null},{"month":"2009-08","diesel":12.2323,"hvo":null},{"month":"2009-09","diesel":12.2667,"hvo":null},{"month":"2009-10","diesel":12.44,"hvo":null},{"month":"2009-11","diesel":12.4033,"hvo":null},{"month":"2009-12","diesel":12.5548,"hvo":null},{"month":"2010-01","diesel":12.3419,"hvo":null},{"month":"2010-02","diesel":12.44,"hvo":null},{"month":"2010-03","diesel":13.0419,"hvo":null},{"month":"2010-04","diesel":13.5333,"hvo":null},{"month":"2010-05","diesel":13.5935,"hvo":null},{"month":"2010-06","diesel":13.2267,"hvo":null},{"month":"2010-07","diesel":13.3258,"hvo":null},{"month":"2010-08","diesel":13.8484,"hvo":null},{"month":"2010-09","diesel":13.9333,"hvo":null},{"month":"2010-10","diesel":14.2452,"hvo":null},{"month":"2010-11","diesel":14.5333,"hvo":null},{"month":"2010-12","diesel":14.7677,"hvo":null},{"month":"2011-01","diesel":15.18,"hvo":null},{"month":"2011-02","diesel":15.73,"hvo":null},{"month":"2011-03","diesel":16.4935,"hvo":null},{"month":"2011-04","diesel":16.7133,"hvo":null},{"month":"2011-05","diesel":16.86,"hvo":null},{"month":"2011-06","diesel":16.6467,"hvo":null},{"month":"2011-07","diesel":16.59,"hvo":null},{"month":"2011-08","diesel":16.5581,"hvo":null},{"month":"2011-09","diesel":16.6067,"hvo":null},{"month":"2011-10","diesel":16.3194,"hvo":null},{"month":"2011-11","diesel":16.2233,"hvo":null},{"month":"2011-12","diesel":16.2581,"hvo":null},{"month":"2012-01","diesel":16.2194,"hvo":null},{"month":"2012-02","diesel":16.4967,"hvo":null},{"month":"2012-03","diesel":17.0065,"hvo":null},{"month":"2012-04","diesel":17.2867,"hvo":null},{"month":"2012-05","diesel":16.8935,"hvo":null},{"month":"2012-06","diesel":16.3,"hvo":null},{"month":"2012-07","diesel":16.4419,"hvo":null},{"month":"2012-08","diesel":16.7871,"hvo":null},{"month":"2012-09","diesel":17.1867,"hvo":null},{"month":"2012-10","diesel":16.8677,"hvo":null},{"month":"2012-11","diesel":16.4867,"hvo":null},{"month":"2012-12","diesel":16.2516,"hvo":null},{"month":"2013-01","diesel":16.3871,"hvo":null},{"month":"2013-02","diesel":16.39,"hvo":null},{"month":"2013-03","diesel":16.5968,"hvo":null},{"month":"2013-04","diesel":16.8467,"hvo":null},{"month":"2013-05","diesel":16.8677,"hvo":null},{"month":"2013-06","diesel":16.7,"hvo":null},{"month":"2013-07","diesel":16.5677,"hvo":null},{"month":"2013-08","diesel":16.5581,"hvo":null},{"month":"2013-09","diesel":16.9667,"hvo":null},{"month":"2013-10","diesel":17.12,"hvo":null},{"month":"2013-11","diesel":16.9867,"hvo":null},{"month":"2013-12","diesel":17.0667,"hvo":null},{"month":"2014-01","diesel":16.9677,"hvo":null},{"month":"2014-02","diesel":16.6367,"hvo":null},{"month":"2014-03","diesel":16.5935,"hvo":null},{"month":"2014-04","diesel":16.7267,"hvo":null},{"month":"2014-05","diesel":16.9677,"hvo":null},{"month":"2014-06","diesel":16.9667,"hvo":null},{"month":"2014-07","diesel":16.62,"hvo":null},{"month":"2014-08","diesel":16.3,"hvo":null},{"month":"2014-09","diesel":15.8133,"hvo":null},{"month":"2014-10","diesel":14.9871,"hvo":null},{"month":"2014-11","diesel":13.4167,"hvo":null},{"month":"2014-12","diesel":12.3613,"hvo":null},{"month":"2015-01","diesel":11.7,"hvo":null},{"month":"2015-02","diesel":12.2971,"hvo":null},{"month":"2015-03","diesel":13.31,"hvo":null},{"month":"2015-04","diesel":13.6733,"hvo":null},{"month":"2015-05","diesel":13.8,"hvo":null},{"month":"2015-06","diesel":13.9267,"hvo":null},{"month":"2015-07","diesel":13.5548,"hvo":null},{"month":"2015-08","diesel":13.01,"hvo":null},{"month":"2015-09","diesel":12.4533,"hvo":null},{"month":"2015-10","diesel":12.0452,"hvo":null},{"month":"2015-11","diesel":11.5967,"hvo":null},{"month":"2015-12","diesel":11.4613,"hvo":null},{"month":"2016-01","diesel":11.1871,"hvo":null},{"month":"2016-02","diesel":11.7133,"hvo":null},{"month":"2016-03","diesel":12.0806,"hvo":null},{"month":"2016-04","diesel":12.4867,"hvo":null},{"month":"2016-05","diesel":12.5806,"hvo":null},{"month":"2016-06","diesel":12.5,"hvo":null},{"month":"2016-07","diesel":12.4548,"hvo":null},{"month":"2016-08","diesel":12.54,"hvo":null},{"month":"2016-09","diesel":12.4867,"hvo":null},{"month":"2016-10","diesel":12.6677,"hvo":null},{"month":"2016-11","diesel":13.0,"hvo":null},{"month":"2016-12","diesel":13.1452,"hvo":null},{"month":"2017-01","diesel":13.7387,"hvo":null},{"month":"2017-02","diesel":13.8929,"hvo":null},{"month":"2017-03","diesel":13.3871,"hvo":null},{"month":"2017-04","diesel":13.2867,"hvo":null},{"month":"2017-05","diesel":13.4548,"hvo":null},{"month":"2017-06","diesel":13.0267,"hvo":null},{"month":"2017-07","diesel":13.24,"hvo":null},{"month":"2017-08","diesel":13.4419,"hvo":null},{"month":"2017-09","diesel":13.7667,"hvo":null},{"month":"2017-10","diesel":14.0452,"hvo":null},{"month":"2017-11","diesel":14.06,"hvo":null},{"month":"2017-12","diesel":14.2419,"hvo":null},{"month":"2018-01","diesel":14.6935,"hvo":null},{"month":"2018-02","diesel":14.71,"hvo":null},{"month":"2018-03","diesel":15.1161,"hvo":null},{"month":"2018-04","diesel":15.6733,"hvo":null},{"month":"2018-05","diesel":16.3548,"hvo":null},{"month":"2018-06","diesel":16.5267,"hvo":null},{"month":"2018-07","diesel":16.78,"hvo":null},{"month":"2018-08","diesel":17.1129,"hvo":null},{"month":"2018-09","diesel":17.2333,"hvo":null},{"month":"2018-10","diesel":17.0613,"hvo":null},{"month":"2018-11","diesel":16.0867,"hvo":null},{"month":"2018-12","diesel":15.0387,"hvo":null},{"month":"2019-01","diesel":14.7935,"hvo":null},{"month":"2019-02","diesel":14.9233,"hvo":null},{"month":"2019-03","diesel":15.3806,"hvo":null},{"month":"2019-04","diesel":15.6933,"hvo":null},{"month":"2019-05","diesel":16.0867,"hvo":null},{"month":"2019-06","diesel":15.5867,"hvo":null},{"month":"2019-07","diesel":15.8806,"hvo":null},{"month":"2019-08","diesel":16.1129,"hvo":null},{"month":"2019-09","diesel":16.1,"hvo":null},{"month":"2019-10","diesel":15.5935,"hvo":null},{"month":"2019-11","diesel":15.3267,"hvo":null},{"month":"2019-12","diesel":15.3419,"hvo":null},{"month":"2020-01","diesel":15.5677,"hvo":null},{"month":"2020-02","diesel":15.3033,"hvo":null},{"month":"2020-03","diesel":13.5677,"hvo":null},{"month":"2020-04","diesel":11.9067,"hvo":null},{"month":"2020-05","diesel":12.1871,"hvo":null},{"month":"2020-06","diesel":12.6133,"hvo":null},{"month":"2020-07","diesel":12.8,"hvo":null},{"month":"2020-08","diesel":13.0161,"hvo":null},{"month":"2020-09","diesel":12.96,"hvo":null},{"month":"2020-10","diesel":12.7677,"hvo":null},{"month":"2020-11","diesel":12.1267,"hvo":null},{"month":"2020-12","diesel":12.5935,"hvo":null},{"month":"2021-01","diesel":14.57,"hvo":15.17},{"month":"2021-02","diesel":14.7967,"hvo":16.0833},{"month":"2021-03","diesel":15.7,"hvo":17.16},{"month":"2021-04","diesel":15.8267,"hvo":17.3},{"month":"2021-05","diesel":16.2267,"hvo":17.89},{"month":"2021-06","diesel":16.5467,"hvo":18.3533},{"month":"2021-07","diesel":17.0935,"hvo":18.8935},{"month":"2021-08","diesel":16.9967,"hvo":18.8267},{"month":"2021-09","diesel":17.3333,"hvo":19.2667},{"month":"2021-10","diesel":18.2867,"hvo":20.0667},{"month":"2021-11","diesel":19.5767,"hvo":21.3767},{"month":"2021-12","diesel":20.3032,"hvo":22.0032},{"month":"2022-01","diesel":19.4635,"hvo":23.1935},{"month":"2022-02","diesel":19.7607,"hvo":23.2407},{"month":"2022-03","diesel":24.1194,"hvo":28.0994},{"month":"2022-04","diesel":22.6867,"hvo":27.5267},{"month":"2022-05","diesel":23.5,"hvo":28.2867},{"month":"2022-06","diesel":25.3267,"hvo":29.62},{"month":"2022-07","diesel":23.3161,"hvo":27.8561},{"month":"2022-08","diesel":22.2935,"hvo":27.4735},{"month":"2022-09","diesel":22.4867,"hvo":27.7867},{"month":"2022-10","diesel":22.5452,"hvo":27.4452},{"month":"2022-11","diesel":21.26,"hvo":26.46},{"month":"2022-12","diesel":20.6419,"hvo":26.1419},{"month":"2023-01","diesel":20.72,"hvo":25.9},{"month":"2023-02","diesel":19.4071,"hvo":24.5071},{"month":"2023-03","diesel":18.8935,"hvo":24.7335},{"month":"2023-04","diesel":19.0333,"hvo":25.0933},{"month":"2023-05","diesel":18.3516,"hvo":24.4916},{"month":"2023-06","diesel":18.5933,"hvo":24.7633},{"month":"2023-07","diesel":19.8677,"hvo":26.0677},{"month":"2023-08","diesel":21.12,"hvo":27.42},{"month":"2023-09","diesel":21.4133,"hvo":27.7133},{"month":"2023-10","diesel":21.2,"hvo":27.5},{"month":"2023-11","diesel":19.3733,"hvo":26.0733},{"month":"2023-12","diesel":18.6516,"hvo":25.3516},{"month":"2024-01","diesel":18.2871,"hvo":25.0871},{"month":"2024-02","diesel":18.3871,"hvo":25.1871},{"month":"2024-03","diesel":18.5581,"hvo":25.3381},{"month":"2024-04","diesel":18.8533,"hvo":25.6333},{"month":"2024-05","diesel":18.8806,"hvo":25.6606},{"month":"2024-06","diesel":18.2467,"hvo":25.1467},{"month":"2024-07","diesel":17.8677,"hvo":24.7677},{"month":"2024-08","diesel":17.5571,"hvo":24.4371},{"month":"2024-09","diesel":17.3533,"hvo":24.3333},{"month":"2024-10","diesel":17.3452,"hvo":24.3452},{"month":"2024-11","diesel":17.1233,"hvo":24.1233},{"month":"2024-12","diesel":16.4916,"hvo":23.6516},{"month":"2025-01","diesel":16.7171,"hvo":23.8971},{"month":"2025-02","diesel":17.0714,"hvo":24.2514},{"month":"2025-03","diesel":17.0435,"hvo":24.1835},{"month":"2025-04","diesel":16.6067,"hvo":24.0467},{"month":"2025-05","diesel":16.6516,"hvo":23.9916},{"month":"2025-06","diesel":16.4867,"hvo":23.8267},{"month":"2025-07","diesel":16.69,"hvo":24.05},{"month":"2025-08","diesel":16.4952,"hvo":24.0352},{"month":"2025-09","diesel":16.3933,"hvo":23.9133},{"month":"2025-10","diesel":16.3387,"hvo":24.0587},{"month":"2025-11","diesel":16.3,"hvo":24.12},{"month":"2025-12","diesel":16.4916,"hvo":24.4916},{"month":"2026-01","diesel":16.5271,"hvo":24.8048},{"month":"2026-02","diesel":16.9096,"hvo":24.9096},{"month":"2026-03","diesel":22.0545,"hvo":30.0432},{"month":"2026-04","diesel":23.0733,"hvo":30.5567},{"month":"2026-05","diesel":21.568,"hvo":29.802},{"month":"2026-06","diesel":19.74,"hvo":28.29}]
+  },
+  SE_ck: {
+    label: 'Circle K Sverige', currency: 'SEK', flag: '🇸🇪',
+    sourceUrl: 'https://www.circlek.se/media-assets/uploads/2026-06/Prishistorik_B2B.xls',
+    sourceFile: 'Prishistorik_B2B.xls',
+    data: [{"month":"2008-01","diesel":12.74,"hvo":null},{"month":"2008-02","diesel":12.74,"hvo":null},{"month":"2008-03","diesel":12.98,"hvo":null},{"month":"2008-04","diesel":13.8452,"hvo":null},{"month":"2008-05","diesel":14.5742,"hvo":null},{"month":"2008-06","diesel":15.6867,"hvo":null},{"month":"2008-07","diesel":16.2387,"hvo":null},{"month":"2008-08","diesel":15.5129,"hvo":null},{"month":"2008-09","diesel":14.7133,"hvo":null},{"month":"2008-10","diesel":12.8742,"hvo":null},{"month":"2008-11","diesel":10.82,"hvo":null},{"month":"2008-12","diesel":10.26,"hvo":null},{"month":"2009-01","diesel":10.5226,"hvo":null},{"month":"2009-02","diesel":10.2893,"hvo":null},{"month":"2009-03","diesel":10.5871,"hvo":null},{"month":"2009-04","diesel":10.9733,"hvo":null},{"month":"2009-05","diesel":11.3387,"hvo":null},{"month":"2009-06","diesel":11.7467,"hvo":null},{"month":"2009-07","diesel":12.0387,"hvo":null},{"month":"2009-08","diesel":12.02,"hvo":null},{"month":"2009-09","diesel":12.0267,"hvo":null},{"month":"2009-10","diesel":12.1467,"hvo":null},{"month":"2009-11","diesel":12.1333,"hvo":null},{"month":"2009-12","diesel":12.2935,"hvo":null},{"month":"2010-01","diesel":12.14,"hvo":null},{"month":"2010-02","diesel":12.2677,"hvo":null},{"month":"2010-03","diesel":12.8677,"hvo":null},{"month":"2010-04","diesel":13.3533,"hvo":null},{"month":"2010-05","diesel":13.4,"hvo":null},{"month":"2010-06","diesel":13.0133,"hvo":null},{"month":"2010-07","diesel":13.08,"hvo":null},{"month":"2010-08","diesel":13.5677,"hvo":null},{"month":"2010-09","diesel":13.6667,"hvo":null},{"month":"2010-10","diesel":13.9677,"hvo":null},{"month":"2010-11","diesel":14.2867,"hvo":null},{"month":"2010-12","diesel":14.5484,"hvo":null},{"month":"2011-01","diesel":14.9635,"hvo":null},{"month":"2011-02","diesel":15.49,"hvo":null},{"month":"2011-03","diesel":16.2935,"hvo":null},{"month":"2011-04","diesel":16.4533,"hvo":null},{"month":"2011-05","diesel":16.6,"hvo":null},{"month":"2011-06","diesel":16.4067,"hvo":null},{"month":"2011-07","diesel":16.34,"hvo":null},{"month":"2011-08","diesel":16.34,"hvo":null},{"month":"2011-09","diesel":16.4,"hvo":null},{"month":"2011-10","diesel":16.14,"hvo":null},{"month":"2011-11","diesel":16.0267,"hvo":null},{"month":"2011-12","diesel":16.0548,"hvo":null},{"month":"2012-01","diesel":16.0194,"hvo":null},{"month":"2012-02","diesel":16.2935,"hvo":null},{"month":"2012-03","diesel":16.7,"hvo":null},{"month":"2012-04","diesel":17.0867,"hvo":null},{"month":"2012-05","diesel":16.7419,"hvo":null},{"month":"2012-06","diesel":16.1067,"hvo":null},{"month":"2012-07","diesel":16.22,"hvo":null},{"month":"2012-08","diesel":16.5677,"hvo":null},{"month":"2012-09","diesel":16.94,"hvo":null},{"month":"2012-10","diesel":16.6677,"hvo":null},{"month":"2012-11","diesel":16.3267,"hvo":null},{"month":"2012-12","diesel":16.1,"hvo":null},{"month":"2013-01","diesel":16.2452,"hvo":null},{"month":"2013-02","diesel":16.22,"hvo":null},{"month":"2013-03","diesel":16.4613,"hvo":null},{"month":"2013-04","diesel":16.7067,"hvo":null},{"month":"2013-05","diesel":16.7,"hvo":null},{"month":"2013-06","diesel":16.5133,"hvo":null},{"month":"2013-07","diesel":16.3867,"hvo":null},{"month":"2013-08","diesel":16.3667,"hvo":null},{"month":"2013-09","diesel":16.76,"hvo":null},{"month":"2013-10","diesel":16.9,"hvo":null},{"month":"2013-11","diesel":16.7867,"hvo":null},{"month":"2013-12","diesel":16.8667,"hvo":null},{"month":"2014-01","diesel":16.7667,"hvo":null},{"month":"2014-02","diesel":16.4467,"hvo":null},{"month":"2014-03","diesel":16.4,"hvo":null},{"month":"2014-04","diesel":16.5333,"hvo":null},{"month":"2014-05","diesel":16.7667,"hvo":null},{"month":"2014-06","diesel":16.7667,"hvo":null},{"month":"2014-07","diesel":16.4467,"hvo":null},{"month":"2014-08","diesel":16.1,"hvo":null},{"month":"2014-09","diesel":15.6133,"hvo":null},{"month":"2014-10","diesel":14.7871,"hvo":null},{"month":"2014-11","diesel":13.2667,"hvo":null},{"month":"2014-12","diesel":12.2161,"hvo":null},{"month":"2015-01","diesel":11.5,"hvo":null},{"month":"2015-02","diesel":12.1,"hvo":null},{"month":"2015-03","diesel":13.11,"hvo":null},{"month":"2015-04","diesel":13.4733,"hvo":null},{"month":"2015-05","diesel":13.6,"hvo":null},{"month":"2015-06","diesel":13.7267,"hvo":null},{"month":"2015-07","diesel":13.3548,"hvo":null},{"month":"2015-08","diesel":12.81,"hvo":null},{"month":"2015-09","diesel":12.2533,"hvo":null},{"month":"2015-10","diesel":11.8452,"hvo":null},{"month":"2015-11","diesel":11.3967,"hvo":null},{"month":"2015-12","diesel":11.2613,"hvo":null},{"month":"2016-01","diesel":10.9871,"hvo":null},{"month":"2016-02","diesel":11.5133,"hvo":null},{"month":"2016-03","diesel":11.8806,"hvo":null},{"month":"2016-04","diesel":12.2867,"hvo":null},{"month":"2016-05","diesel":12.3806,"hvo":null},{"month":"2016-06","diesel":12.3,"hvo":null},{"month":"2016-07","diesel":12.2548,"hvo":null},{"month":"2016-08","diesel":12.34,"hvo":null},{"month":"2016-09","diesel":12.2867,"hvo":null},{"month":"2016-10","diesel":12.4677,"hvo":null},{"month":"2016-11","diesel":12.8,"hvo":null},{"month":"2016-12","diesel":12.9452,"hvo":null},{"month":"2017-01","diesel":13.5387,"hvo":null},{"month":"2017-02","diesel":13.6929,"hvo":null},{"month":"2017-03","diesel":13.1871,"hvo":null},{"month":"2017-04","diesel":13.0867,"hvo":null},{"month":"2017-05","diesel":13.2548,"hvo":null},{"month":"2017-06","diesel":12.8267,"hvo":null},{"month":"2017-07","diesel":13.04,"hvo":null},{"month":"2017-08","diesel":13.2419,"hvo":null},{"month":"2017-09","diesel":13.5667,"hvo":null},{"month":"2017-10","diesel":13.8452,"hvo":null},{"month":"2017-11","diesel":13.86,"hvo":null},{"month":"2017-12","diesel":14.0419,"hvo":null},{"month":"2018-01","diesel":14.4935,"hvo":null},{"month":"2018-02","diesel":14.51,"hvo":null},{"month":"2018-03","diesel":14.9161,"hvo":null},{"month":"2018-04","diesel":15.4733,"hvo":null},{"month":"2018-05","diesel":16.1548,"hvo":null},{"month":"2018-06","diesel":16.3267,"hvo":null},{"month":"2018-07","diesel":16.58,"hvo":null},{"month":"2018-08","diesel":16.9129,"hvo":null},{"month":"2018-09","diesel":17.0333,"hvo":null},{"month":"2018-10","diesel":16.8613,"hvo":null},{"month":"2018-11","diesel":15.8867,"hvo":null},{"month":"2018-12","diesel":14.8387,"hvo":null},{"month":"2019-01","diesel":14.5935,"hvo":null},{"month":"2019-02","diesel":14.7233,"hvo":null},{"month":"2019-03","diesel":15.1806,"hvo":null},{"month":"2019-04","diesel":15.4933,"hvo":null},{"month":"2019-05","diesel":15.8867,"hvo":null},{"month":"2019-06","diesel":15.3867,"hvo":null},{"month":"2019-07","diesel":15.6806,"hvo":null},{"month":"2019-08","diesel":15.9129,"hvo":null},{"month":"2019-09","diesel":15.9,"hvo":null},{"month":"2019-10","diesel":15.3935,"hvo":null},{"month":"2019-11","diesel":15.1267,"hvo":null},{"month":"2019-12","diesel":15.1419,"hvo":null},{"month":"2020-01","diesel":15.3677,"hvo":null},{"month":"2020-02","diesel":15.1033,"hvo":null},{"month":"2020-03","diesel":13.3677,"hvo":null},{"month":"2020-04","diesel":11.7067,"hvo":null},{"month":"2020-05","diesel":11.9871,"hvo":null},{"month":"2020-06","diesel":12.4133,"hvo":null},{"month":"2020-07","diesel":12.6,"hvo":null},{"month":"2020-08","diesel":12.8161,"hvo":null},{"month":"2020-09","diesel":12.76,"hvo":null},{"month":"2020-10","diesel":12.5677,"hvo":null},{"month":"2020-11","diesel":11.9267,"hvo":null},{"month":"2020-12","diesel":12.3935,"hvo":null},{"month":"2021-01","diesel":14.24,"hvo":15.17},{"month":"2021-02","diesel":14.5867,"hvo":15.8233},{"month":"2021-03","diesel":15.5,"hvo":16.96},{"month":"2021-04","diesel":15.6267,"hvo":17.1},{"month":"2021-05","diesel":16.0267,"hvo":17.69},{"month":"2021-06","diesel":16.3467,"hvo":18.1533},{"month":"2021-07","diesel":16.8935,"hvo":18.6935},{"month":"2021-08","diesel":16.7967,"hvo":18.6267},{"month":"2021-09","diesel":17.1333,"hvo":19.0667},{"month":"2021-10","diesel":18.0867,"hvo":19.8667},{"month":"2021-11","diesel":19.3767,"hvo":21.1767},{"month":"2021-12","diesel":20.1032,"hvo":21.8032},{"month":"2022-01","diesel":19.2635,"hvo":22.9935},{"month":"2022-02","diesel":19.5607,"hvo":23.0407},{"month":"2022-03","diesel":23.9194,"hvo":27.8994},{"month":"2022-04","diesel":22.4867,"hvo":27.3267},{"month":"2022-05","diesel":23.3,"hvo":28.0867},{"month":"2022-06","diesel":25.1267,"hvo":29.42},{"month":"2022-07","diesel":23.1161,"hvo":27.6561},{"month":"2022-08","diesel":22.0935,"hvo":27.2735},{"month":"2022-09","diesel":22.2867,"hvo":27.5867},{"month":"2022-10","diesel":22.3452,"hvo":27.2452},{"month":"2022-11","diesel":21.06,"hvo":26.26},{"month":"2022-12","diesel":20.4419,"hvo":25.9419},{"month":"2023-01","diesel":20.52,"hvo":25.7},{"month":"2023-02","diesel":19.2071,"hvo":24.3071},{"month":"2023-03","diesel":18.6935,"hvo":24.5335},{"month":"2023-04","diesel":18.8333,"hvo":24.8933},{"month":"2023-05","diesel":18.1516,"hvo":24.2916},{"month":"2023-06","diesel":18.3933,"hvo":24.5633},{"month":"2023-07","diesel":19.6677,"hvo":25.8677},{"month":"2023-08","diesel":20.92,"hvo":27.22},{"month":"2023-09","diesel":21.2133,"hvo":27.5133},{"month":"2023-10","diesel":21.0,"hvo":27.3},{"month":"2023-11","diesel":19.1733,"hvo":25.8733},{"month":"2023-12","diesel":18.4516,"hvo":25.1516},{"month":"2024-01","diesel":18.0871,"hvo":24.8871},{"month":"2024-02","diesel":18.1871,"hvo":24.9871},{"month":"2024-03","diesel":18.3581,"hvo":25.1381},{"month":"2024-04","diesel":18.6533,"hvo":25.4333},{"month":"2024-05","diesel":18.6806,"hvo":25.4606},{"month":"2024-06","diesel":18.0467,"hvo":24.9467},{"month":"2024-07","diesel":17.6677,"hvo":24.5677},{"month":"2024-08","diesel":17.3571,"hvo":24.2371},{"month":"2024-09","diesel":17.1533,"hvo":24.1333},{"month":"2024-10","diesel":17.1452,"hvo":24.1452},{"month":"2024-11","diesel":16.9233,"hvo":23.9233},{"month":"2024-12","diesel":16.2916,"hvo":23.4516},{"month":"2025-01","diesel":16.5171,"hvo":23.6971},{"month":"2025-02","diesel":16.8714,"hvo":24.0514},{"month":"2025-03","diesel":16.8435,"hvo":23.9835},{"month":"2025-04","diesel":16.4067,"hvo":23.8467},{"month":"2025-05","diesel":16.4516,"hvo":23.7916},{"month":"2025-06","diesel":16.2867,"hvo":23.6267},{"month":"2025-07","diesel":16.49,"hvo":23.85},{"month":"2025-08","diesel":16.2952,"hvo":23.8352},{"month":"2025-09","diesel":16.1933,"hvo":23.7133},{"month":"2025-10","diesel":16.1387,"hvo":23.8587},{"month":"2025-11","diesel":15.9,"hvo":23.92},{"month":"2025-12","diesel":16.2916,"hvo":24.2916},{"month":"2026-01","diesel":16.5271,"hvo":24.4771},{"month":"2026-02","diesel":16.9096,"hvo":24.8596},{"month":"2026-03","diesel":22.0835,"hvo":30.1787},{"month":"2026-04","diesel":23.0733,"hvo":31.19},{"month":"2026-05","diesel":21.3255,"hvo":29.7465}]
+  },
+  // Kilde: https://www.circlek.dk/media-assets/uploads/2026-05/HistoriskePriserInklMoms_16.pdf
+  // Priser eks. mva (inkl. mva / 1.25). Sist oppdatert: 2026-06-01
+  DK_ck: {
+    label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰',
+    sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser',
+    sourceFile: 'HistoriskePriserEksklMoms_0.pdf',
+    data: [{"month":"2025-01","diesel":14.19,"hvo":15.7},{"month":"2025-02","diesel":14.75,"hvo":16.26},{"month":"2025-03","diesel":14.55,"hvo":16.06},{"month":"2025-04","diesel":14.15,"hvo":15.66},{"month":"2025-05","diesel":14.15,"hvo":15.66},{"month":"2025-06","diesel":14.18,"hvo":15.69},{"month":"2025-07","diesel":14.35,"hvo":15.86},{"month":"2025-08","diesel":14.05,"hvo":15.56},{"month":"2025-09","diesel":14.19,"hvo":16.2},{"month":"2025-10","diesel":14.17,"hvo":20.17},{"month":"2025-11","diesel":14.61,"hvo":23.33},{"month":"2025-12","diesel":14.0,"hvo":23.66},{"month":"2026-01","diesel":14.06,"hvo":23.65},{"month":"2026-02","diesel":14.27,"hvo":23.8},{"month":"2026-03","diesel":17.63,"hvo":27.56},{"month":"2026-04","diesel":18.38,"hvo":28.45},{"month":"2026-05","diesel":17.82,"hvo":27.72},{"month":"2026-06","diesel":16.99,"hvo":26.8}]
+  }
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let activeCountry = 'SE_preem';
+let dieselChart = null, hvoChart = null, surchargeChart = null;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const fmt    = (v, d=2) => v != null ? v.toFixed(d) : '—';
+const fmtPct = v => v != null ? (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%' : '—';
+const monthLabel = m => {
+  const [y, mo] = m.split('-');
+  return ['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Des'][+mo - 1] + ' ' + y;
+};
+
+function toggleFuel(btn) {
+  btn.classList.toggle('active');
+  const table = document.getElementById('priceTable');
+  table.classList.toggle('hide-diesel', !document.querySelector('[data-fuel="diesel"]').classList.contains('active'));
+  table.classList.toggle('hide-hvo',    !document.querySelector('[data-fuel="hvo"]').classList.contains('active'));
+}
+
+function setCountry(el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  activeCountry = el.dataset.country;
+  populateYearSliders();
+  populateBaseMonths();
+  populateViewMonthSlider();
+  render();
+}
+
+const getSource     = () => SOURCES[activeCountry];
+const getBaseMonth  = () => document.getElementById('baseMonth').value;
+const getImpact     = () => parseFloat(document.getElementById('impactFactor').value) / 100;
+
+// ── Year range filter ─────────────────────────────────────────────────────────
+function getYearRange() {
+  return {
+    from: parseInt(document.getElementById('yearFrom').value, 10),
+    to:   parseInt(document.getElementById('yearTo').value,   10)
+  };
+}
+
+function getFilteredData() {
+  const { from, to } = getYearRange();
+  return getSource().data.filter(r => {
+    const y = parseInt(r.month.substring(0, 4), 10);
+    return y >= from && y <= to;
+  });
+}
+
+function populateYearSliders() {
+  const data = getSource().data.filter(r => r.diesel != null);
+  if (!data.length) return;
+  const years = data.map(r => parseInt(r.month.substring(0, 4), 10));
+  const minY  = Math.min(...years);
+  const maxY  = Math.max(...years);
+  const defFrom = Math.max(minY, maxY - 4); // default: siste 5 år
+
+  const slFrom = document.getElementById('yearFrom');
+  const slTo   = document.getElementById('yearTo');
+  slFrom.min = minY; slFrom.max = maxY; slFrom.value = defFrom;
+  slTo.min   = minY; slTo.max   = maxY; slTo.value   = maxY;
+  document.getElementById('yearFromLabel').textContent = defFrom;
+  document.getElementById('yearToLabel').textContent   = maxY;
+  document.getElementById('yearAbsMin').textContent    = minY;
+  document.getElementById('yearAbsMax').textContent    = maxY;
+}
+
+let _viewMonthData = []; // months with diesel data, sorted
+
+function populateViewMonthSlider() {
+  const data = getFilteredData().filter(r => r.diesel != null);
+  _viewMonthData = [...data]; // ascending order
+  const slider = document.getElementById('viewMonthSlider');
+  slider.min = 0;
+  slider.max = Math.max(0, data.length - 1);
+  slider.value = data.length - 1; // default: latest month
+  document.getElementById('sliderStart').textContent = data.length ? monthLabel(data[0].month) : '';
+  document.getElementById('sliderEnd').textContent   = data.length ? monthLabel(data[data.length-1].month) : '';
+  document.getElementById('viewMonthLabel').textContent = data.length ? monthLabel(data[data.length-1].month) : '—';
+}
+
+function getViewMonth() {
+  const idx = parseInt(document.getElementById('viewMonthSlider').value, 10);
+  return _viewMonthData[idx] || null;
+}
+const chartPeriods = { surcharge: 36, diesel: 36, hvo: 36 };
+
+function getPeriodMths(chart) {
+  const m = chartPeriods[chart] || 36;
+  return m === 0 ? 99999 : m;
+}
+
+function setChartPeriod(chart, btn) {
+  chartPeriods[chart] = +btn.dataset.months;
+  const groupId = { surcharge: 'periodSurcharge', diesel: 'periodDiesel', hvo: 'periodHvo' }[chart];
+  document.querySelectorAll('#' + groupId + ' button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const data = getSource().data;
+  const base = getBaseMonth();
+  if (!base) return;
+  if (chart === 'surcharge') { try { renderSurchargeChart(data, base); } catch(e) {} }
+  if (chart === 'diesel' || chart === 'hvo') { try { renderCharts(data, base); } catch(e) {} }
+}
+
+// ── Base month dropdown ───────────────────────────────────────────────────────
+function populateBaseMonths() {
+  const sel  = document.getElementById('baseMonth');
+  const prev = sel.value;
+  const data = getFilteredData().filter(r => r.diesel != null);
+  const reversed = [...data].reverse();
+
+  sel.innerHTML = reversed.map(r => {
+    const isDefault = r.month === '2026-02';
+    return `<option value="${r.month}"${isDefault ? ' selected' : ''}>${monthLabel(r.month)}</option>`;
+  }).join('');
+
+  // If no 2026-02 in this source, default to the latest month
+  if (!data.find(r => r.month === '2026-02')) {
+    sel.value = reversed[0].month;
+  } else if (prev && sel.querySelector(`option[value="${prev}"]`)) {
+    sel.value = prev;
+  }
+}
+
+// ── KPIs ──────────────────────────────────────────────────────────────────────
+function renderKPIs(data, baseMonth) {
+  const src    = getSource();
+  const impact = getImpact();
+  const base   = data.find(r => r.month === baseMonth);
+  const withDiesel = data.filter(r => r.diesel != null);
+
+  // Use slider-selected month (falls back to latest)
+  const selected = getViewMonth() || withDiesel[withDiesel.length - 1];
+  const selectedIdx = withDiesel.findIndex(r => r.month === selected.month);
+  const prev = selectedIdx > 0 ? withDiesel[selectedIdx - 1] : null;
+
+  if (!base || !selected) { document.getElementById('kpi-grid').innerHTML = ''; return; }
+
+  const dieselChg  = selected.diesel / base.diesel - 1;
+  const hvoChg     = selected.hvo && base.hvo ? selected.hvo / base.hvo - 1 : null;
+  const surcharge  = dieselChg * impact;
+  const momDiesel  = prev ? selected.diesel / prev.diesel - 1 : null;
+
+  const surPct   = (surcharge >= 0 ? '+' : '') + (surcharge * 100).toFixed(1) + '%';
+  const isLatest = selected.month === withDiesel[withDiesel.length - 1].month;
+  const afterBase = selected.month > baseMonth; // kun vis tillegg når valgt måned er etter basismåned
+
+  // Gjennomsnittlig dieseltillegg fra basismåned t.o.m. valgt måned
+  const periodRows = withDiesel.filter(r => r.month > baseMonth && r.month <= selected.month);
+  const avgSurcharge = afterBase && periodRows.length > 0
+    ? periodRows.reduce((sum, r) => sum + (r.diesel / base.diesel - 1) * impact, 0) / periodRows.length
+    : null;
+  const avgSurPct = avgSurcharge != null
+    ? (avgSurcharge >= 0 ? '+' : '') + (avgSurcharge * 100).toFixed(1) + '%'
+    : '—';
+
+  // Oppdater kildevisning
+  const sourceRef = document.getElementById('source-ref');
+  if (sourceRef && src.sourceUrl) {
+    sourceRef.innerHTML = `Kilde: <a href="${src.sourceUrl}" target="_blank" rel="noopener"
+      style="color:var(--ng-mid);text-decoration:none;font-weight:600"
+      title="Last ned ${src.sourceFile}">${src.sourceFile}</a>`;
+  }
+
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-ng" style="background:var(--key-number-bg-1);color:var(--key-number-text-1)">
+      <div class="kpi-ng-label">Dieseltillegg${isLatest ? ' nå' : ''}</div>
+      <div class="kpi-ng-value">${afterBase ? surPct : '—'}</div>
+      <div class="kpi-ng-sub">${afterBase ? 'vs basis ' + monthLabel(baseMonth) : 'Velg måned etter basis'}</div>
+    </div>
+    <div class="kpi-ng" style="background:var(--key-number-bg-2);color:var(--key-number-text-2)">
+      <div class="kpi-ng-label">Diesel – ${monthLabel(selected.month)}</div>
+      <div class="kpi-ng-value">${fmt(selected.diesel)} <span style="font-size:1rem;font-weight:500">${src.currency}/L</span></div>
+      <div class="kpi-ng-sub">${momDiesel != null ? fmtPct(momDiesel) + ' fra forrige mnd' : ''}</div>
+    </div>
+    <div class="kpi-ng" style="background:var(--key-number-bg-3);color:var(--key-number-text-3)">
+      <div class="kpi-ng-label">HVO100 – ${monthLabel(selected.month)}</div>
+      <div class="kpi-ng-value">${selected.hvo ? fmt(selected.hvo) + ' <span style="font-size:1rem;font-weight:500">' + src.currency + '/L</span>' : '—'}</div>
+      <div class="kpi-ng-sub">${hvoChg != null ? fmtPct(hvoChg) + ' vs basis' : 'Data begrenset'}</div>
+    </div>
+    <div class="kpi-ng" style="background:var(--key-number-bg-4);color:var(--key-number-text-4)">
+      <div class="kpi-ng-label">Basispris diesel</div>
+      <div class="kpi-ng-value">${fmt(base.diesel)} <span style="font-size:1rem;font-weight:500">${src.currency}/L</span></div>
+      <div class="kpi-ng-sub">${monthLabel(base.month)}</div>
+    </div>
+    <div class="kpi-ng" style="background:var(--key-number-bg-1);color:var(--key-number-text-1);opacity:0.85">
+      <div class="kpi-ng-label">Snitt dieseltillegg</div>
+      <div class="kpi-ng-value">${avgSurPct}</div>
+      <div class="kpi-ng-sub">${monthLabel(baseMonth)} – ${monthLabel(selected.month)}</div>
+    </div>`;
+}
+
+// ── Surcharge bar chart ───────────────────────────────────────────────────────
+function renderSurchargeChart(data, baseMonth) {
+  const src    = getSource();
+  const impact = getImpact();
+  const base   = data.find(r => r.month === baseMonth);
+  if (!base) return;
+
+  const rows = data.filter(r => r.diesel != null).map(r => ({
+    month: r.month,
+    val:   parseFloat(((r.diesel / base.diesel - 1) * impact * 100).toFixed(2))
+  }));
+
+  document.getElementById('surcharge-chart-title').textContent =
+    `Dieseltillegg per måned – ${src.flag} ${src.label}  ·  basis: ${monthLabel(baseMonth)}  ·  andel: ${Math.round(impact * 100)}%`;
+
+  if (surchargeChart) { surchargeChart.destroy(); surchargeChart = null; }
+
+  const ctx = document.getElementById('surchargeChart').getContext('2d');
+  surchargeChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => monthLabel(r.month)),
+      datasets: [{
+        label: 'Dieseltillegg (%)',
+        data:  rows.map(r => r.val),
+        backgroundColor: rows.map(r =>
+          r.month === baseMonth ? '#52B788' :
+          r.val > 0             ? 'rgba(192,57,43,0.72)' :
+                                  'rgba(39,174,96,0.72)'
+        ),
+        borderRadius: 2,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `Tillegg: ${ctx.raw >= 0 ? '+' : ''}${ctx.raw.toFixed(1)}%`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { maxTicksLimit: 14, font: { size: 10 }, color: '#5D7A6A' },
+          grid:  { display: false }
+        },
+        y: {
+          ticks: { font: { size: 11 }, color: '#5D7A6A', callback: v => (v >= 0 ? '+' : '') + v + '%' },
+          grid:  { color: '#E8F0EB' },
+          afterDataLimits: axis => {
+            const pad = Math.max(Math.abs(axis.max), Math.abs(axis.min), 1) * 0.12;
+            axis.max += pad;
+            axis.min -= pad;
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── Price line charts ─────────────────────────────────────────────────────────
+function renderCharts(data, baseMonth) {
+  const src  = getSource();
+  const n    = getPeriodMths();
+  const base = data.find(r => r.month === baseMonth);
+
+  const dieselRows = data.filter(r => r.diesel != null).slice(-nd);
+  const hvoRows    = data.filter(r => r.hvo    != null).slice(-nh);
+
+  document.getElementById('diesel-chart-title').textContent =
+    `Diesel eks. mva (${src.currency}/L) – ${src.flag} ${src.label}`;
+  document.getElementById('hvo-chart-title').textContent =
+    `HVO100 eks. mva (${src.currency}/L) – ${src.flag} ${src.label}`;
+
+  if (dieselChart) { dieselChart.destroy(); dieselChart = null; }
+  dieselChart = new Chart(document.getElementById('dieselChart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: dieselRows.map(r => monthLabel(r.month)),
+      datasets: [
+        {
+          label: 'Diesel',
+          data:  dieselRows.map(r => r.diesel),
+          borderColor: '#2D6A4F',
+          backgroundColor: 'rgba(45,106,79,0.08)',
+          borderWidth: 2,
+          pointRadius: dieselRows.length > 36 ? 0 : 3,
+          pointHoverRadius: 5,
+          tension: 0.3,
+          fill: true
+        },
+        ...(base ? [{
+          label: 'Basis',
+          data:  dieselRows.map(() => base.diesel),
+          borderColor: 'rgba(192,57,43,0.6)',
+          borderWidth: 1.5,
+          borderDash: [5, 4],
+          pointRadius: 0,
+          fill: false
+        }] : [])
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, font: { size: 11 }, color: '#5D7A6A' }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, color: '#5D7A6A' }, grid: { color: '#E8F0EB' } }
+      }
+    }
+  });
+
+  if (hvoChart) { hvoChart.destroy(); hvoChart = null; }
+
+  if (!hvoRows.length) {
+    const ctx = document.getElementById('hvoChart').getContext('2d');
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle   = '#5D7A6A';
+    ctx.font        = '13px -apple-system, sans-serif';
+    ctx.textAlign   = 'center';
+    ctx.fillText('Ingen HVO-data for valgt periode', ctx.canvas.width / 2, 105);
+    return;
+  }
+
+  hvoChart = new Chart(document.getElementById('hvoChart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: hvoRows.map(r => monthLabel(r.month)),
+      datasets: [
+        {
+          label: 'HVO100',
+          data:  hvoRows.map(r => r.hvo),
+          borderColor: '#1B3D2F',
+          backgroundColor: 'rgba(27,61,47,0.07)',
+          borderWidth: 2,
+          pointRadius: hvoRows.length > 36 ? 0 : 3,
+          pointHoverRadius: 5,
+          tension: 0.3,
+          fill: true
+        },
+        ...(base && base.hvo ? [{
+          label: 'Basis',
+          data:  hvoRows.map(() => base.hvo),
+          borderColor: 'rgba(192,57,43,0.6)',
+          borderWidth: 1.5,
+          borderDash: [5, 4],
+          pointRadius: 0,
+          fill: false
+        }] : [])
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, font: { size: 11 }, color: '#5D7A6A' }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, color: '#5D7A6A' }, grid: { color: '#E8F0EB' } }
+      }
+    }
+  });
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+function renderTable(data, baseMonth) {
+  const src    = getSource();
+  const impact = getImpact();
+  const base   = data.find(r => r.month === baseMonth);
+
+  document.getElementById('th-diesel').textContent = `Diesel (${src.currency}/L)`;
+  document.getElementById('th-hvo').textContent    = `HVO100 (${src.currency}/L)`;
+  document.getElementById('table-title').textContent = `Månedlige snitt – ${src.flag} ${src.label}`;
+
+  // Data freshness note
+  const allMonths   = data.filter(r => r.diesel != null);
+  const latestMonth = allMonths[allMonths.length - 1]?.month;
+  const now         = new Date();
+  const currentYM   = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const noteEl      = document.getElementById('data-freshness-note');
+  if (latestMonth) {
+    const isCurrentMonth = latestMonth === currentYM;
+    noteEl.style.display = 'inline-flex';
+    if (isCurrentMonth) {
+      const dayOfMonth = now.getDate();
+      noteEl.className = 'data-note';
+      noteEl.innerHTML = `⚠ Siste måned (${monthLabel(latestMonth)}) er delvis – snitt basert på data t.o.m. ${dayOfMonth}. ${now.toLocaleString('no-NO', {month:'long'})}`;
+    } else {
+      noteEl.className = 'data-note complete';
+      noteEl.innerHTML = `✓ Data t.o.m. ${monthLabel(latestMonth)} (fullstendig månedssnitt)`;
+    }
+  } else {
+    noteEl.style.display = 'none';
+  }
+
+  const badge = (v, type) => {
+    if (v == null) return '—';
+    const cls = Math.abs(v) < 0.002 ? 'flat' : v > 0 ? 'up' : 'down';
+    const lbl = type === 'pct'
+      ? fmtPct(v)
+      : (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
+    return `<span class="badge ${cls}">${lbl}</span>`;
+  };
+
+  // Vis bare måneder fra og med basismåneden
+  const rows = [...data].filter(r => r.diesel != null && r.month >= baseMonth).reverse();
+
+  document.getElementById('tableBody').innerHTML = rows.map(r => {
+    const isBase = r.month === baseMonth;
+    const dc  = base ? r.diesel / base.diesel - 1 : null;
+    const hc  = base && r.hvo && base.hvo ? r.hvo / base.hvo - 1 : null;
+    const sur = dc != null ? dc * impact : null;
+    return `<tr class="${isBase ? 'base-row' : ''}">
+      <td><strong>${monthLabel(r.month)}</strong>${isBase ? ' <span class="badge ng">BASIS</span>' : ''}</td>
+      <td class="col-diesel">${fmt(r.diesel)}</td>
+      <td class="col-hvo">${r.hvo ? fmt(r.hvo) : '—'}</td>
+      <td class="col-diesel-vs">${badge(dc, 'pct')}</td>
+      <td class="col-hvo-vs">${badge(hc, 'pct')}</td>
+      <td>${badge(sur, 'sur')}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Pure Canvas charting ──────────────────────────────────────────────────────
+
+const C = {
+  ng:      '#e85c0d',
+  ngDark:  '#c94e0a',
+  bright:  '#e85c0d',
+  red:     '#C0392B',
+  green:   '#2E7D50',
+  grid:    '#ede8e2',
+  text:    '#6B6B6B',
+  bg:      '#FFFFFF',
+};
+
+function getCanvas(id) {
+  const el  = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  const rect = el.parentElement.getBoundingClientRect();
+  const w = Math.floor(rect.width)  || 600;
+  const h = Math.floor(rect.height) || 260;
+  el.width  = w * dpr;
+  el.height = h * dpr;
+  el.style.width  = w + 'px';
+  el.style.height = h + 'px';
+  const ctx = el.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+function drawBarChart(id, labels, values, colors, opts = {}) {
+  const { ctx, w, h } = getCanvas(id);
+  const pad = { top: 36, right: 16, bottom: 42, left: 52 };
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top  - pad.bottom;
+
+  const minV = Math.min(0, ...values);
+  const maxV = Math.max(0, ...values);
+  const span = maxV - minV || 1;
+  const vMin = minV - span * 0.10;
+  const vMax = maxV + span * 0.10;
+  const vSpan = vMax - vMin;
+
+  const yOf = v => pad.top + ch * (1 - (v - vMin) / vSpan);
+  const y0  = yOf(0);
+
+  // Grid lines
+  ctx.font = `10px -apple-system, sans-serif`;
+  ctx.fillStyle = C.text;
+  const steps = 5;
+  for (let i = 0; i <= steps; i++) {
+    const v = vMin + (vSpan * i / steps);
+    const y = yOf(v);
+    ctx.strokeStyle = C.grid;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
+    ctx.textAlign = 'right';
+    ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1) + '%', pad.left - 5, y + 3);
+  }
+
+  // Zero line
+  ctx.strokeStyle = C.ng;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(pad.left, y0); ctx.lineTo(pad.left + cw, y0); ctx.stroke();
+
+  // Bars
+  const n = values.length;
+  const gap = Math.max(1, cw * 0.008);
+  const bw  = Math.max(1, (cw - gap * (n - 1)) / n);
+
+  // X tick label interval
+  const maxLabels = Math.floor(cw / 48);
+  const step = Math.max(1, Math.ceil(n / maxLabels));
+
+  const fontSize = bw >= 14 ? 9 : bw >= 8 ? 8 : 7;
+  const showLabels = bw >= 6;
+
+  values.forEach((v, i) => {
+    const x  = pad.left + i * (bw + gap);
+    const y  = v >= 0 ? yOf(v) : y0;
+    const bh = Math.abs(yOf(v) - y0);
+
+    ctx.fillStyle = colors[i];
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(x, y, bw, bh, 2) : ctx.rect(x, y, bw, bh);
+    ctx.fill();
+
+    // Bar value label (horizontal, at tip of bar)
+    if (showLabels && bh > 3) {
+      const label = (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.font = `bold ${fontSize}px -apple-system, sans-serif`;
+      ctx.fillStyle = colors[i].startsWith('rgba(192') ? '#A93226' : colors[i].startsWith('rgba(39') ? '#1E8449' : '#2D6A4F';
+      const lx = x + bw / 2;
+      const ly = v >= 0 ? y - 4 : y + bh + fontSize + 2;
+      ctx.fillText(label, lx, ly);
+      ctx.restore();
+    }
+
+    // X-axis tick label
+    if (i % step === 0 || i === n - 1) {
+      ctx.save();
+      ctx.translate(x + bw / 2, h - pad.bottom + 8);
+      ctx.rotate(-Math.PI / 4);
+      ctx.textAlign = 'right';
+      ctx.font = `9px -apple-system, sans-serif`;
+      ctx.fillStyle = C.text;
+      ctx.fillText(labels[i], 0, 0);
+      ctx.restore();
+    }
+  });
+}
+
+function drawLineChart(id, datasets, opts = {}) {
+  const { ctx, w, h } = getCanvas(id);
+  const pad = { top: 16, right: 16, bottom: 36, left: 50 };
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top  - pad.bottom;
+
+  // Compute range across all datasets
+  const allVals = datasets.flatMap(d => d.data.filter(v => v != null));
+  if (!allVals.length) return;
+  const minV = Math.min(...allVals);
+  const maxV = Math.max(...allVals);
+  const span = maxV - minV || 1;
+  const vMin = minV - span * 0.06;
+  const vMax = maxV + span * 0.06;
+  const vSpan = vMax - vMin;
+  const labels = datasets[0].labels;
+  const n = labels.length;
+
+  const xOf = i => pad.left + (i / (n - 1)) * cw;
+  const yOf = v => pad.top + ch * (1 - (v - vMin) / vSpan);
+
+  // Grid
+  ctx.font = `10px -apple-system, sans-serif`;
+  ctx.fillStyle = C.text;
+  const steps = 4;
+  for (let i = 0; i <= steps; i++) {
+    const v = vMin + (vSpan * i / steps);
+    const y = yOf(v);
+    ctx.strokeStyle = C.grid;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
+    ctx.textAlign = 'right';
+    ctx.fillText(v.toFixed(1), pad.left - 5, y + 3);
+  }
+
+  // X labels
+  const maxLabels = Math.floor(cw / 60);
+  const step = Math.max(1, Math.ceil(n / maxLabels));
+  ctx.textAlign = 'center';
+  ctx.font = `10px -apple-system, sans-serif`;
+  ctx.fillStyle = C.text;
+  for (let i = 0; i < n; i += step) {
+    ctx.fillText(labels[i], xOf(i), h - pad.bottom + 14);
+  }
+
+  // Draw datasets
+  datasets.forEach(ds => {
+    const pts = ds.data.map((v, i) => v != null ? { x: xOf(i), y: yOf(v) } : null);
+
+    // Fill area
+    if (ds.fill && pts.some(p => p)) {
+      ctx.beginPath();
+      let started = false;
+      pts.forEach((p, i) => {
+        if (!p) return;
+        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+        else ctx.lineTo(p.x, p.y);
+      });
+      // close down to baseline
+      const lastPt = [...pts].reverse().find(p => p);
+      const firstPt = pts.find(p => p);
+      if (lastPt && firstPt) {
+        ctx.lineTo(lastPt.x, pad.top + ch);
+        ctx.lineTo(firstPt.x, pad.top + ch);
+      }
+      ctx.closePath();
+      ctx.fillStyle = ds.fillColor || 'rgba(45,106,79,0.07)';
+      ctx.fill();
+    }
+
+    // Line
+    ctx.beginPath();
+    ctx.strokeStyle = ds.color;
+    ctx.lineWidth = ds.lineWidth || 2;
+    ctx.setLineDash(ds.dash || []);
+    let started = false;
+    pts.forEach(p => {
+      if (!p) { started = false; return; }
+      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Dots (only if sparse enough)
+    if (n <= 48) {
+      pts.forEach(p => {
+        if (!p) return;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = ds.color;
+        ctx.fill();
+      });
+    }
+  });
+}
+
+// ── Surcharge bar chart ───────────────────────────────────────────────────────
+function renderSurchargeChart(data, baseMonth) {
+  const src    = getSource();
+  const impact = getImpact();
+  const base   = data.find(r => r.month === baseMonth);
+  if (!base) return;
+
+  const n = getPeriodMths('surcharge');
+  const rows = data.filter(r => r.diesel != null && r.month >= baseMonth).slice(0, n).map(r => ({
+    month: r.month,
+    val:   parseFloat(((r.diesel / base.diesel - 1) * impact * 100).toFixed(2))
+  }));
+
+  document.getElementById('surcharge-chart-title').textContent =
+    `Dieseltillegg per måned – ${src.flag} ${src.label}  ·  basis: ${monthLabel(baseMonth)}  ·  andel: ${Math.round(impact * 100)}%`;
+
+  drawBarChart(
+    'surchargeChart',
+    rows.map(r => monthLabel(r.month)),
+    rows.map(r => r.val),
+    rows.map(r => r.month === baseMonth ? C.bright : r.val > 0 ? 'rgba(192,57,43,0.75)' : 'rgba(39,174,96,0.75)')
+  );
+}
+
+// ── Price line charts ─────────────────────────────────────────────────────────
+function renderCharts(data, baseMonth) {
+  const src  = getSource();
+  const nd   = getPeriodMths('diesel');
+  const nh   = getPeriodMths('hvo');
+  const base = data.find(r => r.month === baseMonth);
+
+  const dieselRows = data.filter(r => r.diesel != null).slice(-nd);
+  const hvoRows    = data.filter(r => r.hvo    != null).slice(-nh);
+
+  document.getElementById('diesel-chart-title').textContent =
+    `Diesel eks. mva (${src.currency}/L) – ${src.flag} ${src.label}`;
+  document.getElementById('hvo-chart-title').textContent =
+    `HVO100 eks. mva (${src.currency}/L) – ${src.flag} ${src.label}`;
+
+  const dLabels = dieselRows.map(r => monthLabel(r.month));
+  drawLineChart('dieselChart', [
+    { labels: dLabels, data: dieselRows.map(r => r.diesel), color: C.ng, fill: true, fillColor: 'rgba(232,92,13,0.08)' },
+    ...(base ? [{ labels: dLabels, data: dLabels.map(() => base.diesel), color: 'rgba(192,57,43,0.55)', dash: [6,4], lineWidth: 1.5, fill: false }] : [])
+  ]);
+
+  if (!hvoRows.length) {
+    const { ctx, w, h } = getCanvas('hvoChart');
+    ctx.fillStyle = C.text;
+    ctx.font = '13px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Ingen HVO-data for valgt periode', w / 2, h / 2);
+    return;
+  }
+
+  const hLabels = hvoRows.map(r => monthLabel(r.month));
+  drawLineChart('hvoChart', [
+    { labels: hLabels, data: hvoRows.map(r => r.hvo), color: C.ngDark, fill: true, fillColor: 'rgba(201,78,10,0.07)' },
+    ...(base && base.hvo ? [{ labels: hLabels, data: hLabels.map(() => base.hvo), color: 'rgba(192,57,43,0.55)', dash: [6,4], lineWidth: 1.5, fill: false }] : [])
+  ]);
+}
+
+// ── Main render ───────────────────────────────────────────────────────────────
+function render() {
+  const data = getFilteredData();
+  const base = getBaseMonth();
+  if (!base) return;
+
+  renderKPIs(data, base);
+  renderTable(data, base);
+
+  document.getElementById('last-updated').textContent =
+    'Oppdatert: ' + new Date().toLocaleDateString('no-NO', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  try { renderSurchargeChart(data, base); } catch(e) { console.error('Surcharge chart:', e); }
+  try { renderCharts(data, base); }         catch(e) { console.error('Price charts:', e); }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+['baseMonth', 'impactFactor'].forEach(id =>
+  document.getElementById(id).addEventListener('change', render)
+);
+
+// View month slider
+document.getElementById('viewMonthSlider').addEventListener('input', function() {
+  const m = _viewMonthData[parseInt(this.value, 10)];
+  document.getElementById('viewMonthLabel').textContent = m ? monthLabel(m.month) : '—';
+  renderKPIs(getFilteredData(), getBaseMonth());
+});
+
+// Year range sliders — constrain each other, then full re-render
+document.getElementById('yearFrom').addEventListener('input', function() {
+  const to = document.getElementById('yearTo');
+  if (parseInt(this.value) > parseInt(to.value)) to.value = this.value;
+  document.getElementById('yearFromLabel').textContent = this.value;
+  document.getElementById('yearToLabel').textContent   = to.value;
+  populateBaseMonths();
+  populateViewMonthSlider();
+  render();
+});
+document.getElementById('yearTo').addEventListener('input', function() {
+  const from = document.getElementById('yearFrom');
+  if (parseInt(this.value) < parseInt(from.value)) from.value = this.value;
+  document.getElementById('yearToLabel').textContent   = this.value;
+  document.getElementById('yearFromLabel').textContent = from.value;
+  populateBaseMonths();
+  populateViewMonthSlider();
+  render();
+});
+
+// Redraw charts on resize
+window.addEventListener('resize', () => { try { render(); } catch(e) {} });
+
+populateYearSliders();
+populateBaseMonths();
+populateViewMonthSlider();
+render();
+
+// ── News sidebar toggle ────────────────────────────────────────────────────────
+function toggleNewsSidebar() {
+  const sidebar = document.getElementById('newsSidebar');
+  sidebar.classList.toggle('collapsed');
+}
+
+// ── News widget ───────────────────────────────────────────────────────────────
+const NEWS_FEEDS = [
+  { url: 'https://news.google.com/rss/search?q=drivstoffpris+diesel+Norge&hl=no&gl=NO&ceid=NO:no',  label: 'NO' },
+  { url: 'https://news.google.com/rss/search?q=bensinpris+dieselpris+Sverige&hl=sv&gl=SE&ceid=SE:sv', label: 'SE' },
+  { url: 'https://news.google.com/rss/search?q=r%C3%A5oljepris+oljepris&hl=no&gl=NO&ceid=NO:no',    label: 'Råolje' },
+  { url: 'https://news.google.com/rss/search?q=HVO+biodrivstoff+drivstoff&hl=no&gl=NO&ceid=NO:no',  label: 'HVO' },
+];
+const RSS2JSON = 'https://api.rss2json.com/v1/api.json?num=5&rss_url=';
+
+function relTime(dateStr) {
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 3600)  return Math.round(diff / 60)  + ' min siden';
+  if (diff < 86400) return Math.round(diff / 3600) + ' t siden';
+  return Math.round(diff / 86400) + ' d siden';
+}
+
+function stripHtml(html) {
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  return d.textContent || '';
+}
+
+async function loadNews() {
+  const list = document.getElementById('newsList');
+  const btn  = document.getElementById('newsRefreshBtn');
+  list.innerHTML = '<div class="news-loading">Henter…</div>';
+  btn.disabled = true;
+
+  const allItems = [];
+  const seen = new Set();
+
+  await Promise.allSettled(NEWS_FEEDS.map(async feed => {
+    try {
+      const res  = await fetch(RSS2JSON + encodeURIComponent(feed.url));
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json.status !== 'ok') return;
+      for (const item of json.items || []) {
+        if (seen.has(item.link)) continue;
+        seen.add(item.link);
+        allItems.push({
+          title:  item.title,
+          link:   item.link,
+          source: item.author || feed.label,
+          date:   item.pubDate,
+        });
+      }
+    } catch(e) {}
+  }));
+
+  if (!allItems.length) {
+    list.innerHTML = '<div class="news-loading">Ikke tilgjengelig</div>';
+    btn.disabled = false;
+    return;
+  }
+
+  allItems.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  list.innerHTML = allItems.slice(0, 20).map(item => `
+    <a class="news-item" href="${item.link}" target="_blank" rel="noopener">
+      <div class="news-item-meta">
+        <span class="news-item-time">${relTime(item.date)}</span>
+        <span class="news-item-source">${item.source}</span>
+      </div>
+      <div class="news-item-headline">${item.title}</div>
+    </a>
+  `).join('');
+
+  btn.disabled = false;
+}
+
+loadNews();
+// Auto-refresh hvert 30. minutt
+setInterval(loadNews, 30 * 60 * 1000);
+</script>
+</body>
+</html>
