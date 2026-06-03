@@ -514,8 +514,8 @@ def fetch_ck_no():
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    # FETCH_MODE=weekly  → Preem SE, Circle K SE, Circle K DK
-    # FETCH_MODE=daily   → Circle K NO only
+    # FETCH_MODE=weekly  → Preem SE, Circle K SE (monthly XLS/Excel sources)
+    # FETCH_MODE=daily   → Circle K DK, Circle K NO (daily-updated sources)
     # FETCH_MODE=all     → everything (default)
     mode = os.environ.get("FETCH_MODE", "all").lower()
     run_weekly = mode in ("weekly", "all")
@@ -576,6 +576,7 @@ def main():
                 for r in ck_se_daily
             ]
 
+    if run_daily:
         ck_dk_monthly = fetch_ck_dk()
         if ck_dk_monthly:
             synced_sources.append("DK_ck")

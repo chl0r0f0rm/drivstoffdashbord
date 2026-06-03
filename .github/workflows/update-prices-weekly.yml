@@ -1,4 +1,4 @@
-name: Update fuel prices (weekly)
+name: Update fuel prices – SE weekly
 
 on:
   schedule:
@@ -24,7 +24,7 @@ jobs:
         run: git pull --rebase origin main
 
       - name: Install dependencies
-        run: pip install requests xlrd==1.2.0 beautifulsoup4 pdfplumber lxml
+        run: pip install requests xlrd==1.2.0 beautifulsoup4 lxml
 
       - name: Fetch and upsert price data
         env:
@@ -37,6 +37,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/
-          git diff --staged --quiet || git commit -m "chore: weekly price update $(date -u +%Y-%m-%d)"
+          git add data/preem_SE_månedlig.csv data/circklek_SE_månedlig.csv data/preem_SE_daglig.csv data/circklek_SE_daglig.csv
+          git diff --staged --quiet || git commit -m "chore: weekly SE price update $(date -u +%Y-%m-%d)"
           git push origin main
