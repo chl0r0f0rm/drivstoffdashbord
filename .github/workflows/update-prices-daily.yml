@@ -37,6 +37,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/circklek_NO_daglig.csv data/circklek_DK_månedlig.csv
+          git add data/circklek_NO_daglig.csv data/circklek_DK_månedlig.csv data/circklek_DK_daglig.csv
           git diff --staged --quiet || git commit -m "chore: daily NO+DK price update $(date -u +%Y-%m-%d)"
           git push origin main
