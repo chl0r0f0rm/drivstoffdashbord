@@ -20,6 +20,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Pull latest changes
+        run: git pull --rebase origin main
+
       - name: Install dependencies
         run: pip install requests xlrd==1.2.0 beautifulsoup4 pdfplumber lxml
 
@@ -33,7 +36,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main
           git add data/
           git diff --staged --quiet || git commit -m "chore: update price data $(date -u +%Y-%m-%d)"
           git push origin main
