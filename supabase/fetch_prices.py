@@ -396,6 +396,101 @@ def fetch_ck_dk():
     return monthly_rows
 
 
+# ── Circle K Norge ───────────────────────────────────────────────────────────
+
+CK_NO_URL = "https://www.circlek.no/bedrift/produkter/drivstoff/priser"
+
+PRODUCT_ALIASES = {
+    "diesel":  ["diesel"],
+    "hvo":     ["hvo100", "anleggsbio hvo100"],
+}
+
+def fetch_ck_no():
+    print("\n── Circle K Norge ───────────────────────────────────────────────────")
+    try:
+        resp = requests.get(CK_NO_URL, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+        resp.raise_for_status()
+    except requests.RequestException as error:
+        print(f"  Failed to load page: {error}")
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    prices = {}
+    date_effective = None
+
+    for table in soup.find_all("table"):
+        headers_text = " ".join(th.get_text(" ", strip=True).lower() for th in table.find_all("th"))
+        if "gjeldende fra" not in headers_text and "pris eks" not in headers_text:
+            continue
+
+        for row in table.find_all("tr"):
+            cells = row.find_all("td")
+            if len(cells) < 4:
+                continue
+
+            cell_texts = [c.get_text(" ", strip=True) for c in cells]
+            row_text = " ".join(cell_texts).lower()
+
+            # Extract numeric value from a cell (handles "Pris eks. mva.: 14,83" or "14,83")
+            def extract_number(text):
+                m = re.search(r"(\d+)[,.](\d+)", text)
+                return round(float(m.group(1) + "." + m.group(2)), 4) if m else None
+
+            # Extract date from a cell (handles "Gjeldende fra: 2026-06-02" or "2026-06-02")
+            def extract_date(text):
+                m = re.search(r"(\d{4}-\d{2}-\d{2})", text)
+                return m.group(1) if m else None
+
+            # Find which product this row is
+            matched_product = None
+            for product_key, aliases in PRODUCT_ALIASES.items():
+                for alias in aliases:
+                    if alias in row_text:
+                        matched_product = product_key
+                        break
+                if matched_product:
+                    break
+
+            if not matched_product:
+                continue
+
+            # Skip "anleggs" variants (they are a different product tier)
+            if "anleggsdiesel" in row_text:
+                continue
+
+            # Find price ex. VAT and effective date across all cells
+            price_val = None
+            row_date = None
+            for i, cell_text in enumerate(cell_texts):
+                v = extract_number(cell_text)
+                d = extract_date(cell_text)
+                if d:
+                    row_date = d
+                # Heuristic: the ex-VAT price is in the cell after "Produkt" column,
+                # value is between 10 and 30 NOK/L
+                if v and 10 < v < 30 and price_val is None:
+                    price_val = v
+
+            if price_val:
+                prices[matched_product] = price_val
+            if row_date:
+                date_effective = row_date
+
+    if not prices.get("diesel"):
+        print("  Could not find diesel price on page")
+        return []
+
+    fetch_date = date_effective or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    row = {
+        "date":   fetch_date,
+        "diesel": prices.get("diesel"),
+        "hvo":    prices.get("hvo"),
+    }
+    print(f"  Diesel: {row['diesel']} NOK/L  HVO: {row['hvo']} NOK/L  (gjeldende fra {fetch_date})")
+    return [row]
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -464,6 +559,25 @@ def main():
             {"source": "DK_ck", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
             for r in ck_dk_monthly
         ]
+
+    ck_no_daily = fetch_ck_no()
+    if ck_no_daily:
+        n = append_csv(
+            os.path.join(DATA_DIR, "circklek_NO_daglig.csv"),
+            ck_no_daily, ["date", "diesel", "hvo"], "date",
+        )
+        report.append(f"NO_ck: +{n} rows (date: {ck_no_daily[-1]['date']})")
+        daily_upsert += [
+            {"source": "NO_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
+            for r in ck_no_daily
+        ]
+        # Also update monthly average for price_data
+        for r in ck_no_daily:
+            month = r["date"][:7]
+            monthly_upsert.append({
+                "source": "NO_ck", "month": month,
+                "diesel": r["diesel"], "hvo": r["hvo"],
+            })
 
     print("\n── Supabase upsert ───────────────────────────────────────────────────")
     supabase_upsert(monthly_upsert, table="price_data")

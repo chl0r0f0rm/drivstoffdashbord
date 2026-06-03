@@ -616,6 +616,10 @@
         <span class="tab-title">🇩🇰 Danmark – Circle K</span>
         <span class="tab-sync">—</span>
       </div>
+      <div class="tab" data-country="NO_ck" onclick="setCountry(this)">
+        <span class="tab-title">🇳🇴 Norge – Circle K</span>
+        <span class="tab-sync">—</span>
+      </div>
     </div>
     <div id="source-ref" style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;"></div>
   </div>
@@ -768,6 +772,7 @@ const SOURCE_META = {
   SE_preem: { label: 'Preem Sverige',    currency: 'SEK', flag: '🇸🇪', hasDaily: true,  sourceUrl: 'https://www.preem.se/foretag/listpriser/',                                sourceFile: 'prishistorik-listpriser-2008-2026.xls' },
   SE_ck:    { label: 'Circle K Sverige', currency: 'SEK', flag: '🇸🇪', hasDaily: true,  sourceUrl: 'https://www.circlek.se/media-assets/uploads/2026-06/Prishistorik_B2B.xls', sourceFile: 'Prishistorik_B2B.xls' },
   DK_ck:    { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: false, sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser',               sourceFile: 'HistoriskePriserEksklMoms_0.pdf' },
+  NO_ck:    { label: 'Circle K Norge',   currency: 'NOK', flag: '🇳🇴', hasDaily: true,  sourceUrl: 'https://www.circlek.no/bedrift/produkter/drivstoff/priser',               sourceFile: 'Bulk-listepris (eks. mva)' },
 };
 
 const SUPABASE_URL  = 'https://fnkdbuqsschkvpzeumbz.supabase.co';
