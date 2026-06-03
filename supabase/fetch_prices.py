@@ -582,6 +582,7 @@ def main():
 
     ck_no_daily = fetch_ck_no()
     if ck_no_daily:
+        synced_sources.append("NO_ck")
         n = append_csv(
             os.path.join(DATA_DIR, "circklek_NO_daglig.csv"),
             ck_no_daily, ["date", "diesel", "hvo"], "date",
