@@ -514,6 +514,14 @@ def fetch_ck_no():
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
+    # FETCH_MODE=weekly  → Preem SE, Circle K SE, Circle K DK
+    # FETCH_MODE=daily   → Circle K NO only
+    # FETCH_MODE=all     → everything (default)
+    mode = os.environ.get("FETCH_MODE", "all").lower()
+    run_weekly = mode in ("weekly", "all")
+    run_daily  = mode in ("daily",  "all")
+    print(f"FETCH_MODE={mode}  (weekly={run_weekly}, daily={run_daily})")
+
     os.makedirs(DATA_DIR, exist_ok=True)
 
     monthly_upsert = []
@@ -521,66 +529,67 @@ def main():
     report = []
     synced_sources = []
 
-    preem_monthly, preem_daily = fetch_preem_se()
-    if preem_monthly:
-        synced_sources.append("SE_preem")
-        n = append_csv(
-            os.path.join(DATA_DIR, "preem_SE_månedlig.csv"),
-            preem_monthly, ["month", "diesel_avg", "hvo_avg"], "month",
-        )
-        report.append(f"SE_preem: +{n} months (latest: {preem_monthly[-1]['month']})")
-        monthly_upsert += [
-            {"source": "SE_preem", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
-            for r in preem_monthly
-        ]
-    if preem_daily:
-        n = append_csv(
-            os.path.join(DATA_DIR, "preem_SE_daglig.csv"),
-            preem_daily, ["date", "diesel", "hvo"], "date",
-        )
-        report.append(f"SE_preem daily: +{n} days")
-        daily_upsert += [
-            {"source": "SE_preem", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
-            for r in preem_daily
-        ]
+    if run_weekly:
+        preem_monthly, preem_daily = fetch_preem_se()
+        if preem_monthly:
+            synced_sources.append("SE_preem")
+            n = append_csv(
+                os.path.join(DATA_DIR, "preem_SE_månedlig.csv"),
+                preem_monthly, ["month", "diesel_avg", "hvo_avg"], "month",
+            )
+            report.append(f"SE_preem: +{n} months (latest: {preem_monthly[-1]['month']})")
+            monthly_upsert += [
+                {"source": "SE_preem", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
+                for r in preem_monthly
+            ]
+        if preem_daily:
+            n = append_csv(
+                os.path.join(DATA_DIR, "preem_SE_daglig.csv"),
+                preem_daily, ["date", "diesel", "hvo"], "date",
+            )
+            report.append(f"SE_preem daily: +{n} days")
+            daily_upsert += [
+                {"source": "SE_preem", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
+                for r in preem_daily
+            ]
 
-    ck_se_monthly, ck_se_daily = fetch_ck_se()
-    if ck_se_monthly:
-        synced_sources.append("SE_ck")
-        n = append_csv(
-            os.path.join(DATA_DIR, "circklek_SE_månedlig.csv"),
-            ck_se_monthly, ["month", "diesel_avg", "hvo_avg"], "month",
-        )
-        report.append(f"SE_ck: +{n} months (latest: {ck_se_monthly[-1]['month']})")
-        monthly_upsert += [
-            {"source": "SE_ck", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
-            for r in ck_se_monthly
-        ]
-    if ck_se_daily:
-        n = append_csv(
-            os.path.join(DATA_DIR, "circklek_SE_daglig.csv"),
-            ck_se_daily, ["date", "diesel", "hvo"], "date",
-        )
-        report.append(f"SE_ck daily: +{n} days")
-        daily_upsert += [
-            {"source": "SE_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
-            for r in ck_se_daily
-        ]
+        ck_se_monthly, ck_se_daily = fetch_ck_se()
+        if ck_se_monthly:
+            synced_sources.append("SE_ck")
+            n = append_csv(
+                os.path.join(DATA_DIR, "circklek_SE_månedlig.csv"),
+                ck_se_monthly, ["month", "diesel_avg", "hvo_avg"], "month",
+            )
+            report.append(f"SE_ck: +{n} months (latest: {ck_se_monthly[-1]['month']})")
+            monthly_upsert += [
+                {"source": "SE_ck", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
+                for r in ck_se_monthly
+            ]
+        if ck_se_daily:
+            n = append_csv(
+                os.path.join(DATA_DIR, "circklek_SE_daglig.csv"),
+                ck_se_daily, ["date", "diesel", "hvo"], "date",
+            )
+            report.append(f"SE_ck daily: +{n} days")
+            daily_upsert += [
+                {"source": "SE_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
+                for r in ck_se_daily
+            ]
 
-    ck_dk_monthly = fetch_ck_dk()
-    if ck_dk_monthly:
-        synced_sources.append("DK_ck")
-        n = append_csv(
-            os.path.join(DATA_DIR, "circklek_DK_månedlig.csv"),
-            ck_dk_monthly, ["month", "diesel_avg", "hvo_avg"], "month",
-        )
-        report.append(f"DK_ck: +{n} months (latest: {ck_dk_monthly[-1]['month']})")
-        monthly_upsert += [
-            {"source": "DK_ck", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
-            for r in ck_dk_monthly
-        ]
+        ck_dk_monthly = fetch_ck_dk()
+        if ck_dk_monthly:
+            synced_sources.append("DK_ck")
+            n = append_csv(
+                os.path.join(DATA_DIR, "circklek_DK_månedlig.csv"),
+                ck_dk_monthly, ["month", "diesel_avg", "hvo_avg"], "month",
+            )
+            report.append(f"DK_ck: +{n} months (latest: {ck_dk_monthly[-1]['month']})")
+            monthly_upsert += [
+                {"source": "DK_ck", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
+                for r in ck_dk_monthly
+            ]
 
-    ck_no_daily = fetch_ck_no()
+    ck_no_daily = fetch_ck_no() if run_daily else []
     if ck_no_daily:
         synced_sources.append("NO_ck")
         n = append_csv(
