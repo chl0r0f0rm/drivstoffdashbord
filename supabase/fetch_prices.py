@@ -11,6 +11,7 @@ Required env vars:
 import csv
 import os
 import re
+import sys
 from datetime import datetime, timezone
 from io import BytesIO
 
@@ -28,6 +29,7 @@ MONTH_MAP_DK = {
     "maj": "05", "juni": "06", "juli": "07", "august": "08",
     "september": "09", "oktober": "10", "november": "11", "december": "12",
 }
+MONTH_HEADER_DK = re.compile(r"^(\w+)\s+(20\d{2})\s+ekskl", re.IGNORECASE)
 
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
@@ -51,10 +53,20 @@ def supabase_upsert_source_sync(sources):
         print(f"  Sync timestamp upsert failed: {resp.status_code} {resp.text[:200]}")
 
 
+UPSERT_ON_CONFLICT = {
+    "price_data": "source,month",
+    "daily_price_data": "source,date",
+    "price_source_sync": "source",
+}
+
+
 def supabase_upsert(rows, table="price_data"):
     if not rows:
-        return
+        return True
+    on_conflict = UPSERT_ON_CONFLICT.get(table)
     url = f"{SUPABASE_URL}/rest/v1/{table}"
+    if on_conflict:
+        url += f"?on_conflict={on_conflict}"
     headers = {
         "apikey": SUPABASE_SERVICE_KEY,
         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
@@ -62,13 +74,16 @@ def supabase_upsert(rows, table="price_data"):
         "Prefer": "resolution=merge-duplicates",
     }
     batch_size = 100
+    failed = False
     for i in range(0, len(rows), batch_size):
         chunk = rows[i:i + batch_size]
         resp = requests.post(url, json=chunk, headers=headers, timeout=30)
         if resp.ok:
             print(f"  [{table}] Upserted rows {i + 1}–{i + len(chunk)}")
         else:
+            failed = True
             print(f"  [{table}] Upsert failed: {resp.status_code} {resp.text[:200]}")
+    return not failed
 
 
 # ── CSV helpers ───────────────────────────────────────────────────────────────
@@ -357,40 +372,45 @@ def fetch_ck_dk():
         return []
 
     monthly_rows = []
-    current_year = None
+    pending_month = None
+
+    def parse_dk_prices(line):
+        numbers = re.findall(r"\d+,\d+", line)
+        if len(numbers) < 3:
+            return None, None
+        def to_float(value):
+            return float(value.replace(",", "."))
+        diesel = round(to_float(numbers[2]), 4)
+        hvo = round(to_float(numbers[5]), 4) if len(numbers) > 5 else None
+        return diesel, hvo
 
     with pdfplumber.open(BytesIO(resp.content)) as pdf:
         for page in pdf.pages:
             text = page.extract_text() or ""
             for line in text.split("\n"):
-                year_match = re.search(r"\b(20\d{2})\b", line)
-                if year_match and len(line.strip()) < 10:
-                    current_year = year_match.group(1)
-
-                if "snit" not in line.lower():
+                stripped = line.strip()
+                header_match = MONTH_HEADER_DK.match(stripped)
+                if header_match:
+                    month_key = header_match.group(1).lower()
+                    year = header_match.group(2)
+                    if month_key in MONTH_MAP_DK:
+                        pending_month = f"{year}-{MONTH_MAP_DK[month_key]}"
                     continue
 
-                month_num = None
-                for part in line.split():
-                    key = part.lower().rstrip(":")
-                    if key in MONTH_MAP_DK:
-                        month_num = MONTH_MAP_DK[key]
-                        break
+                if not pending_month or not re.search(r"\bsnit\b", stripped, re.IGNORECASE):
+                    continue
 
-                numbers = re.findall(r"\d+,\d+", line)
-                if len(numbers) >= 3 and month_num and current_year:
-                    try:
-                        def to_float(s):
-                            return float(s.replace(",", "."))
-                        diesel = round(to_float(numbers[2]), 4)
-                        hvo = round(to_float(numbers[5]), 4) if len(numbers) > 5 else None
+                try:
+                    diesel, hvo = parse_dk_prices(stripped)
+                    if diesel:
                         monthly_rows.append({
-                            "month": f"{current_year}-{month_num}",
+                            "month": pending_month,
                             "diesel_avg": diesel,
                             "hvo_avg": hvo,
                         })
-                    except (ValueError, IndexError):
-                        pass
+                except (ValueError, IndexError):
+                    pass
+                pending_month = None
 
     print(f"  {len(monthly_rows)} months")
     return monthly_rows
@@ -580,8 +600,9 @@ def main():
             })
 
     print("\n── Supabase upsert ───────────────────────────────────────────────────")
-    supabase_upsert(monthly_upsert, table="price_data")
-    supabase_upsert(daily_upsert,   table="daily_price_data")
+    upsert_ok = True
+    upsert_ok = supabase_upsert(monthly_upsert, table="price_data") and upsert_ok
+    upsert_ok = supabase_upsert(daily_upsert,   table="daily_price_data") and upsert_ok
     supabase_upsert_source_sync(synced_sources)
 
     print("\n── Summary ───────────────────────────────────────────────────────────")
@@ -590,6 +611,9 @@ def main():
             print(f"  {line}")
     else:
         print("  No new data found.")
+
+    if not upsert_ok:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

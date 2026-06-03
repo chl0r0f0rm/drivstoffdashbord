@@ -31,6 +31,24 @@ begin
 end
 $$;
 create index if not exists price_data_source_month on price_data (source, month);
+
+create table if not exists price_source_sync (
+  source     text primary key,
+  updated_at timestamptz not null default now()
+);
+alter table price_source_sync enable row level security;
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename  = 'price_source_sync'
+      and policyname = 'public read sync'
+  ) then
+    create policy "public read sync" on price_source_sync for select using (true);
+  end if;
+end
+$$;
 """
 
 def run_sql(sql, label):

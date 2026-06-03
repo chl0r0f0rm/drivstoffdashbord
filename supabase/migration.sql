@@ -492,3 +492,16 @@ insert into price_data (source, month, diesel, hvo) values
   ('DK_ck','2026-05',17.82,27.72),
   ('DK_ck','2026-06',16.99,26.8)
 on conflict (source, month) do nothing;
+
+-- ── Source sync timestamps ─────────────────────────────────────────────────────
+
+create table if not exists price_source_sync (
+  source     text primary key,
+  updated_at timestamptz not null default now()
+);
+
+alter table price_source_sync enable row level security;
+
+create policy "public read sync"
+  on price_source_sync for select
+  using (true);
