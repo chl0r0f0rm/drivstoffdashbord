@@ -11,7 +11,7 @@ Required env vars:
 import csv
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 
 import requests
@@ -32,10 +32,29 @@ MONTH_MAP_DK = {
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
 
-def supabase_upsert(rows):
+def supabase_upsert_source_sync(sources):
+    if not sources:
+        return
+    url = f"{SUPABASE_URL}/rest/v1/price_source_sync"
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates",
+    }
+    now = datetime.now(timezone.utc).isoformat()
+    rows = [{"source": source, "updated_at": now} for source in sources]
+    resp = requests.post(url, json=rows, headers=headers, timeout=30)
+    if resp.ok:
+        print(f"  Sync timestamps updated for: {', '.join(sources)}")
+    else:
+        print(f"  Sync timestamp upsert failed: {resp.status_code} {resp.text[:200]}")
+
+
+def supabase_upsert(rows, table="price_data"):
     if not rows:
         return
-    url = f"{SUPABASE_URL}/rest/v1/price_data"
+    url = f"{SUPABASE_URL}/rest/v1/{table}"
     headers = {
         "apikey": SUPABASE_SERVICE_KEY,
         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
@@ -47,9 +66,9 @@ def supabase_upsert(rows):
         chunk = rows[i:i + batch_size]
         resp = requests.post(url, json=chunk, headers=headers, timeout=30)
         if resp.ok:
-            print(f"  Upserted rows {i + 1}–{i + len(chunk)}")
+            print(f"  [{table}] Upserted rows {i + 1}–{i + len(chunk)}")
         else:
-            print(f"  Upsert failed: {resp.status_code} {resp.text[:200]}")
+            print(f"  [{table}] Upsert failed: {resp.status_code} {resp.text[:200]}")
 
 
 # ── CSV helpers ───────────────────────────────────────────────────────────────
@@ -382,57 +401,74 @@ def fetch_ck_dk():
 def main():
     os.makedirs(DATA_DIR, exist_ok=True)
 
-    upsert_rows = []
+    monthly_upsert = []
+    daily_upsert   = []
     report = []
+    synced_sources = []
 
     preem_monthly, preem_daily = fetch_preem_se()
     if preem_monthly:
+        synced_sources.append("SE_preem")
         n = append_csv(
             os.path.join(DATA_DIR, "preem_SE_månedlig.csv"),
             preem_monthly, ["month", "diesel_avg", "hvo_avg"], "month",
         )
         report.append(f"SE_preem: +{n} months (latest: {preem_monthly[-1]['month']})")
-        upsert_rows += [
+        monthly_upsert += [
             {"source": "SE_preem", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
             for r in preem_monthly
         ]
     if preem_daily:
-        append_csv(
+        n = append_csv(
             os.path.join(DATA_DIR, "preem_SE_daglig.csv"),
             preem_daily, ["date", "diesel", "hvo"], "date",
         )
+        report.append(f"SE_preem daily: +{n} days")
+        daily_upsert += [
+            {"source": "SE_preem", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
+            for r in preem_daily
+        ]
 
     ck_se_monthly, ck_se_daily = fetch_ck_se()
     if ck_se_monthly:
+        synced_sources.append("SE_ck")
         n = append_csv(
             os.path.join(DATA_DIR, "circklek_SE_månedlig.csv"),
             ck_se_monthly, ["month", "diesel_avg", "hvo_avg"], "month",
         )
         report.append(f"SE_ck: +{n} months (latest: {ck_se_monthly[-1]['month']})")
-        upsert_rows += [
+        monthly_upsert += [
             {"source": "SE_ck", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
             for r in ck_se_monthly
         ]
     if ck_se_daily:
-        append_csv(
+        n = append_csv(
             os.path.join(DATA_DIR, "circklek_SE_daglig.csv"),
             ck_se_daily, ["date", "diesel", "hvo"], "date",
         )
+        report.append(f"SE_ck daily: +{n} days")
+        daily_upsert += [
+            {"source": "SE_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
+            for r in ck_se_daily
+        ]
 
     ck_dk_monthly = fetch_ck_dk()
     if ck_dk_monthly:
+        synced_sources.append("DK_ck")
         n = append_csv(
             os.path.join(DATA_DIR, "circklek_DK_månedlig.csv"),
             ck_dk_monthly, ["month", "diesel_avg", "hvo_avg"], "month",
         )
         report.append(f"DK_ck: +{n} months (latest: {ck_dk_monthly[-1]['month']})")
-        upsert_rows += [
+        monthly_upsert += [
             {"source": "DK_ck", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
             for r in ck_dk_monthly
         ]
 
     print("\n── Supabase upsert ───────────────────────────────────────────────────")
-    supabase_upsert(upsert_rows)
+    supabase_upsert(monthly_upsert, table="price_data")
+    supabase_upsert(daily_upsert,   table="daily_price_data")
+    supabase_upsert_source_sync(synced_sources)
 
     print("\n── Summary ───────────────────────────────────────────────────────────")
     if report:
