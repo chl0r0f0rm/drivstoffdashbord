@@ -16,7 +16,6 @@ from datetime import datetime, timezone
 from io import BytesIO
 
 import requests
-import xlrd
 from bs4 import BeautifulSoup
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
@@ -140,6 +139,11 @@ def monthly_avg(values):
 def fetch_preem_se():
     print("\n── Preem SE ─────────────────────────────────────────────────────────")
     try:
+        import xlrd
+    except ImportError:
+        print("  xlrd not installed — skipping Preem SE")
+        return [], []
+    try:
         page = requests.get("https://www.preem.se/foretag/listpriser/", timeout=30)
         page.raise_for_status()
     except requests.RequestException as error:
@@ -242,6 +246,11 @@ def fetch_preem_se():
 
 def fetch_ck_se():
     print("\n── Circle K SE ──────────────────────────────────────────────────────")
+    try:
+        import xlrd
+    except ImportError:
+        print("  xlrd not installed — skipping Circle K SE")
+        return [], []
     now = datetime.now()
     candidates = []
     for delta in range(4):
