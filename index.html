@@ -701,7 +701,7 @@
 <aside class="news-sidebar" id="newsSidebar">
   <div class="news-sidebar-header">
     <span class="news-sidebar-title">Siste nytt</span>
-    <button class="news-refresh-btn" id="newsRefreshBtn" onclick="loadNews()" title="Oppdater">↻</button>
+    <button class="news-refresh-btn" id="newsRefreshBtn" onclick="loadNews(true)" title="Oppdater">↻</button>
     <button class="news-collapse-btn" id="newsCollapseBtn" onclick="toggleNewsSidebar()" title="Vis/skjul nyheter">‹</button>
   </div>
   <div id="newsList" class="news-list">
@@ -1527,9 +1527,28 @@ function stripHtml(html) {
   return d.textContent || '';
 }
 
-async function loadNews() {
+const NEWS_CACHE_KEY = 'drivstoff_news_cache';
+const NEWS_CACHE_TTL_MS = 30 * 60 * 1000;
+
+async function loadNews(forceRefresh = false) {
   const list = document.getElementById('newsList');
   const btn  = document.getElementById('newsRefreshBtn');
+  if (!list || !btn) return;
+
+  if (!forceRefresh) {
+    try {
+      const raw = sessionStorage.getItem(NEWS_CACHE_KEY);
+      if (raw) {
+        const { html, timestamp } = JSON.parse(raw);
+        if (Date.now() - timestamp < NEWS_CACHE_TTL_MS) {
+          list.innerHTML = html;
+          btn.disabled = false;
+          return;
+        }
+      }
+    } catch (cacheError) {}
+  }
+
   list.innerHTML = '<div class="news-loading">Henter…</div>';
   btn.disabled = true;
 
@@ -1538,7 +1557,7 @@ async function loadNews() {
 
   await Promise.allSettled(NEWS_FEEDS.map(async feed => {
     try {
-      const res  = await fetch(RSS2JSON + encodeURIComponent(feed.url));
+      const res = await fetch(RSS2JSON + encodeURIComponent(feed.url));
       if (!res.ok) return;
       const json = await res.json();
       if (json.status !== 'ok') return;
@@ -1552,7 +1571,7 @@ async function loadNews() {
           date:   item.pubDate,
         });
       }
-    } catch(e) {}
+    } catch (fetchError) {}
   }));
 
   if (!allItems.length) {
@@ -1563,7 +1582,7 @@ async function loadNews() {
 
   allItems.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  list.innerHTML = allItems.slice(0, 20).map(item => `
+  const html = allItems.slice(0, 20).map(item => `
     <a class="news-item" href="${item.link}" target="_blank" rel="noopener">
       <div class="news-item-meta">
         <span class="news-item-time">${relTime(item.date)}</span>
@@ -1573,12 +1592,16 @@ async function loadNews() {
     </a>
   `).join('');
 
+  list.innerHTML = html;
   btn.disabled = false;
+
+  try {
+    sessionStorage.setItem(NEWS_CACHE_KEY, JSON.stringify({ html, timestamp: Date.now() }));
+  } catch (storageError) {}
 }
 
 loadNews();
-// Auto-refresh hvert 30. minutt
-setInterval(loadNews, 30 * 60 * 1000);
+setInterval(() => loadNews(true), NEWS_CACHE_TTL_MS);
 </script>
 </body>
 </html>
