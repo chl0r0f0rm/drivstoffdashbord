@@ -824,7 +824,7 @@ async function fetchPriceData() {
       { headers: supabaseHeaders }
     ),
     fetch(
-      `${SUPABASE_URL}/rest/v1/daily_price_data?select=source,date,diesel,hvo&order=date.asc`,
+      `${SUPABASE_URL}/rest/v1/daily_price_data?select=source,date,diesel,hvo&source=in.(NO_ck,DK_ck)&order=date.asc`,
       { headers: supabaseHeaders }
     ),
   ]);
