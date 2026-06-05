@@ -1,6 +1,7 @@
 name = "drivstoffdashbord"
-compatibility_date = "2025-01-01"
+compatibility_date = "2026-06-05"
 
 [assets]
 directory = "."
 not_found_handling = "single-page-application"
+html_handling = "auto-trailing-slash"
