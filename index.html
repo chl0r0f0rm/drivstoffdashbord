@@ -966,7 +966,7 @@ function populateBaseMonths() {
     return `<option value="${r.month}"${isDefault ? ' selected' : ''}>${monthLabel(r.month)}</option>`;
   }).join('');
 
-  // If no 2026-02 in this source, default to the latest month
+  if (!reversed.length) return;
   if (!data.find(r => r.month === '2026-02')) {
     sel.value = reversed[0].month;
   } else if (prev && sel.querySelector(`option[value="${prev}"]`)) {
@@ -1604,13 +1604,14 @@ function renderDailyTable() {
 
 // ── Main render ───────────────────────────────────────────────────────────────
 function render() {
+  renderDailyTable();
+
   const data = getFilteredData();
   const base = getBaseMonth();
   if (!base) return;
 
   renderKPIs(data, base);
   renderTable(data, base);
-  renderDailyTable();
 
   const headerSync = getSourceLastSyncText(getSource());
   document.getElementById('last-updated').textContent =
