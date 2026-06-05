@@ -626,6 +626,9 @@
     <div id="source-ref" style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;"></div>
   </div>
 
+  <!-- Monthly sections (KPIs, charts, monthly table) — hidden for daily-only sources -->
+  <div id="monthly-sections">
+
   <!-- KPIs -->
   <div class="kpi-grid" id="kpi-grid"></div>
 
@@ -719,6 +722,8 @@
       <tbody id="tableBody"></tbody>
     </table>
   </div>
+
+  </div><!-- /#monthly-sections -->
 
   <!-- Daily prices table (shown only for sources with daily data) -->
   <div id="daily-section" style="display:none">
@@ -1561,25 +1566,18 @@ function setDailyPeriod(btn) {
 
 function renderDailyTable() {
   const src = getSource();
-  const section = document.getElementById('daily-section');
+  if (!src || !src.hasDaily) return;
 
-  if (!src || !src.hasDaily) {
-    section.style.display = 'none';
-    return;
-  }
-
-  section.style.display = '';
   document.getElementById('daily-table-title').textContent =
     `Daglige priser – ${src.label}`;
+  document.getElementById('th-daily-diesel').textContent = `Diesel (${src.currency}/L)`;
+  document.getElementById('th-daily-hvo').textContent    = `HVO100 (${src.currency}/L)`;
 
   if (!src.dailyData || !src.dailyData.length) {
     document.getElementById('dailyTableBody').innerHTML =
       `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Ingen daglige data lastet enda</td></tr>`;
-    console.warn('renderDailyTable: dailyData empty for', activeCountry, src);
     return;
   }
-  document.getElementById('th-daily-diesel').textContent = `Diesel (${src.currency}/L)`;
-  document.getElementById('th-daily-hvo').textContent    = `HVO100 (${src.currency}/L)`;
 
   let rows = [...src.dailyData].reverse();
 
@@ -1598,14 +1596,15 @@ function renderDailyTable() {
   };
 
   document.getElementById('dailyTableBody').innerHTML = rows.map((r, i) => {
+    const d = r.diesel != null ? Number(r.diesel) : null;
+    const h = r.hvo    != null ? Number(r.hvo)    : null;
     const prev = rows[i + 1];
-    const delta = (prev && r.diesel != null && prev.diesel != null)
-      ? r.diesel - prev.diesel
-      : null;
+    const prevD = prev && prev.diesel != null ? Number(prev.diesel) : null;
+    const delta = (d != null && prevD != null) ? d - prevD : null;
     return `<tr>
       <td><strong>${r.date}</strong></td>
-      <td>${r.diesel != null ? r.diesel.toFixed(4) : '—'}</td>
-      <td>${r.hvo    != null ? r.hvo.toFixed(4)    : '—'}</td>
+      <td>${d != null ? d.toFixed(4) : '—'}</td>
+      <td>${h != null ? h.toFixed(4) : '—'}</td>
       <td>${deltaLabel(delta)}</td>
     </tr>`;
   }).join('');
@@ -1613,16 +1612,22 @@ function renderDailyTable() {
 
 // ── Main render ───────────────────────────────────────────────────────────────
 function render() {
-  renderDailyTable();
-
+  const src  = getSource();
   const data = getFilteredData();
   const base = getBaseMonth();
-  if (!base) return;
+  const hasMonthly = !!(data.length && base);
+
+  document.getElementById('monthly-sections').style.display = hasMonthly ? '' : 'none';
+  document.getElementById('daily-section').style.display    = (src && src.hasDaily) ? '' : 'none';
+
+  try { renderDailyTable(); } catch(e) { console.error('Daily table:', e); }
+
+  if (!hasMonthly) return;
 
   renderKPIs(data, base);
   renderTable(data, base);
 
-  const headerSync = getSourceLastSyncText(getSource());
+  const headerSync = getSourceLastSyncText(src);
   document.getElementById('last-updated').textContent =
     headerSync !== '—' ? headerSync : '—';
 
