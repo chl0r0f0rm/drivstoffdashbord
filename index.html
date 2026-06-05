@@ -776,10 +776,10 @@
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────────────
 const SOURCE_META = {
-  SE_preem: { label: 'Preem Sverige',    currency: 'SEK', flag: '🇸🇪', hasDaily: true,  sourceUrl: 'https://www.preem.se/foretag/listpriser/',                                sourceFile: 'prishistorik-listpriser-2008-2026.xls' },
-  SE_ck:    { label: 'Circle K Sverige', currency: 'SEK', flag: '🇸🇪', hasDaily: true,  sourceUrl: 'https://www.circlek.se/media-assets/uploads/2026-06/Prishistorik_B2B.xls', sourceFile: 'Prishistorik_B2B.xls' },
-  DK_ck:    { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true,  sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser',               sourceFile: 'HistoriskePriserEksklMoms_0.pdf' },
-  NO_ck:    { label: 'Circle K Norge',   currency: 'NOK', flag: '🇳🇴', hasDaily: true,  sourceUrl: 'https://www.circlek.no/bedrift/produkter/drivstoff/priser',               sourceFile: 'Bulk-listepris (eks. mva)' },
+  SE_preem: { label: 'Preem Sverige',    currency: 'SEK', flag: '🇸🇪', hasDaily: false, sourceUrl: 'https://www.preem.se/foretag/listpriser/',                              sourceFile: 'prishistorik-listpriser-2008-2026.xls' },
+  SE_ck:    { label: 'Circle K Sverige', currency: 'SEK', flag: '🇸🇪', hasDaily: false, sourceUrl: 'https://www.circlek.se/media-assets/uploads/2026-06/Prishistorik_B2B.xls', sourceFile: 'Prishistorik_B2B.xls' },
+  DK_ck:    { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true,  sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser',             sourceFile: 'HistoriskePriserEksklMoms_0.pdf' },
+  NO_ck:    { label: 'Circle K Norge',   currency: 'NOK', flag: '🇳🇴', hasDaily: true,  sourceUrl: 'https://www.circlek.no/bedrift/produkter/drivstoff/priser',             sourceFile: 'Bulk-listepris (eks. mva)' },
 };
 
 const SUPABASE_URL  = 'https://fnkdbuqsschkvpzeumbz.supabase.co';
@@ -899,15 +899,19 @@ function getYearRange() {
 }
 
 function getFilteredData() {
+  const src = getSource();
+  if (!src || !src.data) return [];
   const { from, to } = getYearRange();
-  return getSource().data.filter(r => {
+  return src.data.filter(r => {
     const y = parseInt(r.month.substring(0, 4), 10);
     return y >= from && y <= to;
   });
 }
 
 function populateYearSliders() {
-  const data = getSource().data.filter(r => r.diesel != null);
+  const src = getSource();
+  if (!src || !src.data) return;
+  const data = src.data.filter(r => r.diesel != null);
   if (!data.length) return;
   const years = data.map(r => parseInt(r.month.substring(0, 4), 10));
   const minY  = Math.min(...years);
@@ -1612,13 +1616,15 @@ function renderDailyTable() {
 
 // ── Main render ───────────────────────────────────────────────────────────────
 function render() {
-  const src  = getSource();
+  const src = getSource();
+  if (!src) return;
+
   const data = getFilteredData();
   const base = getBaseMonth();
   const hasMonthly = !!(data.length && base);
 
   document.getElementById('monthly-sections').style.display = hasMonthly ? '' : 'none';
-  document.getElementById('daily-section').style.display    = (src && src.hasDaily) ? '' : 'none';
+  document.getElementById('daily-section').style.display    = src.hasDaily ? '' : 'none';
 
   try { renderDailyTable(); } catch(e) { console.error('Daily table:', e); }
 
