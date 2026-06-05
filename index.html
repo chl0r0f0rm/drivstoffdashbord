@@ -825,7 +825,9 @@ async function fetchPriceData() {
   ]);
   if (!priceRes.ok) throw new Error(`Supabase fetch failed: ${priceRes.status}`);
   const rows = await priceRes.json();
+  if (!dailyRes.ok) console.error('daily_price_data fetch failed:', dailyRes.status, await dailyRes.text().catch(()=>''));
   const dailyRows = dailyRes.ok ? await dailyRes.json() : [];
+  console.log('daily rows fetched:', dailyRows.length, dailyRows.map(r=>r.source+'/'+r.date));
   SOURCE_SYNC = {};
   if (syncRes.ok) {
     const syncRows = await syncRes.json();
@@ -1561,14 +1563,21 @@ function renderDailyTable() {
   const src = getSource();
   const section = document.getElementById('daily-section');
 
-  if (!src.hasDaily || !src.dailyData || !src.dailyData.length) {
+  if (!src || !src.hasDaily) {
     section.style.display = 'none';
     return;
   }
 
   section.style.display = '';
   document.getElementById('daily-table-title').textContent =
-    `Daglige priser – ${src.flag} ${src.label}`;
+    `Daglige priser – ${src.label}`;
+
+  if (!src.dailyData || !src.dailyData.length) {
+    document.getElementById('dailyTableBody').innerHTML =
+      `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Ingen daglige data lastet enda</td></tr>`;
+    console.warn('renderDailyTable: dailyData empty for', activeCountry, src);
+    return;
+  }
   document.getElementById('th-daily-diesel').textContent = `Diesel (${src.currency}/L)`;
   document.getElementById('th-daily-hvo').textContent    = `HVO100 (${src.currency}/L)`;
 
