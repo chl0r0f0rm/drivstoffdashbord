@@ -15,6 +15,8 @@ import sys
 from datetime import datetime, timezone
 from io import BytesIO
 
+from collections import defaultdict
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -32,6 +34,44 @@ MONTH_HEADER_DK = re.compile(r"^(\w+)\s+(20\d{2})\s+ekskl", re.IGNORECASE)
 
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
+
+def compute_monthly_from_daily(sources):
+    """Fetches all daily_price_data rows for given sources, returns monthly averages."""
+    if not sources:
+        return []
+    source_filter = ",".join(f"source.eq.{s}" for s in sources)
+    url = (
+        f"{SUPABASE_URL}/rest/v1/daily_price_data"
+        f"?select=source,date,diesel,hvo"
+        f"&or=({source_filter})"
+        f"&order=date.asc"
+        f"&limit=10000"
+    )
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    }
+    resp = requests.get(url, headers=headers, timeout=30)
+    if not resp.ok:
+        print(f"  compute_monthly_from_daily: fetch failed {resp.status_code}")
+        return []
+    rows = resp.json()
+    monthly = defaultdict(lambda: {"diesel": [], "hvo": []})
+    for row in rows:
+        month = row["date"][:7]
+        key = (row["source"], month)
+        if row.get("diesel") is not None:
+            monthly[key]["diesel"].append(float(row["diesel"]))
+        if row.get("hvo") is not None:
+            monthly[key]["hvo"].append(float(row["hvo"]))
+    result = []
+    for (source, month), vals in sorted(monthly.items()):
+        diesel_avg = round(sum(vals["diesel"]) / len(vals["diesel"]), 4) if vals["diesel"] else None
+        hvo_avg    = round(sum(vals["hvo"])    / len(vals["hvo"]),    4) if vals["hvo"]    else None
+        result.append({"source": source, "month": month, "diesel": diesel_avg, "hvo": hvo_avg})
+    print(f"  compute_monthly_from_daily: {len(result)} month-rows from {len(rows)} daily rows")
+    return result
+
 
 def supabase_upsert_source_sync(sources):
     if not sources:
@@ -706,12 +746,6 @@ def main():
                 {"source": "DK_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
                 for r in ck_dk_daily
             ]
-            for r in ck_dk_daily:
-                month = r["date"][:7]
-                monthly_upsert.append({
-                    "source": "DK_ck", "month": month,
-                    "diesel": r["diesel"], "hvo": r["hvo"],
-                })
 
     ck_no_daily = fetch_ck_no() if run_daily else []
     if ck_no_daily:
@@ -725,18 +759,20 @@ def main():
             {"source": "NO_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
             for r in ck_no_daily
         ]
-        # Also update monthly average for price_data
-        for r in ck_no_daily:
-            month = r["date"][:7]
-            monthly_upsert.append({
-                "source": "NO_ck", "month": month,
-                "diesel": r["diesel"], "hvo": r["hvo"],
-            })
 
     print("\n── Supabase upsert ───────────────────────────────────────────────────")
     upsert_ok = True
     upsert_ok = supabase_upsert(monthly_upsert, table="price_data") and upsert_ok
     upsert_ok = supabase_upsert(daily_upsert,   table="daily_price_data") and upsert_ok
+
+    # Compute true monthly averages from all accumulated daily data for web-scraped sources
+    daily_sources = [s for s in ("NO_ck", "DK_ck") if s in synced_sources]
+    if daily_sources:
+        print("\n── Monthly averages from daily data ──────────────────────────────────")
+        monthly_from_daily = compute_monthly_from_daily(daily_sources)
+        if monthly_from_daily:
+            upsert_ok = supabase_upsert(monthly_from_daily, table="price_data") and upsert_ok
+            report.append(f"Monthly averages recomputed: {', '.join(daily_sources)}")
     supabase_upsert_source_sync(synced_sources)
 
     print("\n── Summary ───────────────────────────────────────────────────────────")
