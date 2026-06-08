@@ -746,16 +746,7 @@ def main():
                 {"source": "SE_preem", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
                 for r in preem_monthly
             ]
-        if preem_daily:
-            n = append_csv(
-                os.path.join(DATA_DIR, "preem_SE_daglig.csv"),
-                preem_daily, ["date", "diesel", "hvo"], "date",
-            )
-            report.append(f"SE_preem daily: +{n} days")
-            daily_upsert += [
-                {"source": "SE_preem", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
-                for r in preem_daily
-            ]
+        # SE_preem daily rows from XLS are synthetic — not stored in daily_price_data
 
         ck_se_monthly, ck_se_daily = fetch_ck_se()
         if ck_se_monthly:
@@ -769,16 +760,7 @@ def main():
                 {"source": "SE_ck", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
                 for r in ck_se_monthly
             ]
-        if ck_se_daily:
-            n = append_csv(
-                os.path.join(DATA_DIR, "circklek_SE_daglig.csv"),
-                ck_se_daily, ["date", "diesel", "hvo"], "date",
-            )
-            report.append(f"SE_ck daily: +{n} days")
-            daily_upsert += [
-                {"source": "SE_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
-                for r in ck_se_daily
-            ]
+        # SE_ck daily rows from XLS are synthetic — only live scraper writes daily_price_data for SE_ck
 
     if run_daily:
         ck_dk_monthly, ck_dk_daily = fetch_ck_dk()
