@@ -751,7 +751,7 @@
     <table id="priceTable">
       <thead>
         <tr>
-          <th>Måned</th>
+          <th id="th-month">Måned</th>
           <th id="th-diesel" class="col-diesel">Diesel</th>
           <th id="th-hvo" class="col-hvo">HVO100</th>
           <th class="col-diesel-vs">Diesel vs basis</th>
@@ -902,9 +902,13 @@ let dieselChart = null, hvoChart = null, surchargeChart = null;
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmt    = (v, d=2) => v != null ? v.toFixed(d) : '—';
 const fmtPct = v => v != null ? (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%' : '—';
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Des'];
 const monthLabel = m => {
-  const [y, mo] = m.split('-');
-  return ['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Des'][+mo - 1] + ' ' + y;
+  const parts = m.split('-');
+  const y = parts[0], mo = parts[1], day = parts[2];
+  return day
+    ? `${parseInt(day, 10)}. ${MONTH_NAMES[+mo - 1]} ${y}`
+    : MONTH_NAMES[+mo - 1] + ' ' + y;
 };
 
 function toggleFuel(btn) {
@@ -955,8 +959,17 @@ function getYearRange() {
 
 function getFilteredData() {
   const src = getSource();
-  if (!src || !src.data) return [];
+  if (!src) return [];
   const { from, to } = getYearRange();
+  if (src.hasBothViews && activeView === 'daily' && src.dailyData && src.dailyData.length) {
+    return src.dailyData
+      .filter(r => {
+        const y = parseInt(r.date.substring(0, 4), 10);
+        return y >= from && y <= to;
+      })
+      .map(r => ({ month: r.date, diesel: r.diesel != null ? Number(r.diesel) : null, hvo: r.hvo != null ? Number(r.hvo) : null }));
+  }
+  if (!src.data) return [];
   return src.data.filter(r => {
     const y = parseInt(r.month.substring(0, 4), 10);
     return y >= from && y <= to;
@@ -965,8 +978,12 @@ function getFilteredData() {
 
 function populateYearSliders() {
   const src = getSource();
-  if (!src || !src.data) return;
-  const data = src.data.filter(r => r.diesel != null);
+  if (!src) return;
+  const raw = (src.hasBothViews && activeView === 'daily' && src.dailyData && src.dailyData.length)
+    ? src.dailyData.map(r => ({ month: r.date, diesel: r.diesel }))
+    : src.data;
+  if (!raw) return;
+  const data = raw.filter(r => r.diesel != null);
   if (!data.length) return;
   const years = data.map(r => parseInt(r.month.substring(0, 4), 10));
   const minY  = Math.min(...years);
@@ -1033,8 +1050,10 @@ function populateBaseMonths() {
   }).join('');
 
   if (!reversed.length) return;
+  const src = getSource();
+  const isDailyView = src && src.hasBothViews && activeView === 'daily';
   if (!data.find(r => r.month === '2026-02')) {
-    sel.value = reversed[0].month;
+    sel.value = isDailyView ? data[0].month : reversed[0].month;
   } else if (prev && sel.querySelector(`option[value="${prev}"]`)) {
     sel.value = prev;
   }
@@ -1128,7 +1147,7 @@ function renderSurchargeChart(data, baseMonth) {
   }));
 
   document.getElementById('surcharge-chart-title').textContent =
-    `Dieseltillegg per måned – ${src.flag} ${src.label}  ·  basis: ${monthLabel(baseMonth)}  ·  andel: ${Math.round(impact * 100)}%`;
+    `Dieseltillegg per ${(src.hasBothViews && activeView === 'daily') ? 'dag' : 'måned'} – ${src.flag} ${src.label}  ·  basis: ${monthLabel(baseMonth)}  ·  andel: ${Math.round(impact * 100)}%`;
 
   if (surchargeChart) { surchargeChart.destroy(); surchargeChart = null; }
 
@@ -1289,7 +1308,7 @@ function renderTable(data, baseMonth) {
 
   document.getElementById('th-diesel').textContent = `Diesel (${src.currency}/L)`;
   document.getElementById('th-hvo').textContent    = `HVO100 (${src.currency}/L)`;
-  document.getElementById('table-title').textContent = `Månedlige snitt – ${src.flag} ${src.label}`;
+  // table-title is set in render() based on view mode
 
   // Data freshness note
   const allMonths   = data.filter(r => r.diesel != null);
@@ -1566,7 +1585,7 @@ function renderSurchargeChart(data, baseMonth) {
   }));
 
   document.getElementById('surcharge-chart-title').textContent =
-    `Dieseltillegg per måned – ${src.flag} ${src.label}  ·  basis: ${monthLabel(baseMonth)}  ·  andel: ${Math.round(impact * 100)}%`;
+    `Dieseltillegg per ${(src.hasBothViews && activeView === 'daily') ? 'dag' : 'måned'} – ${src.flag} ${src.label}  ·  basis: ${monthLabel(baseMonth)}  ·  andel: ${Math.round(impact * 100)}%`;
 
   drawBarChart(
     'surchargeChart',
@@ -1678,16 +1697,22 @@ function render() {
   const base = getBaseMonth();
   const hasMonthly = !!(data.length && base);
 
-  // Show/hide view toggle for sources with both monthly and daily data
-  const hasBothViews = !!(src.hasBothViews && hasMonthly && src.hasDaily);
+  // hasBothViews: toggle shown, full dashboard for both views (no simple daily table)
+  const hasBothViews = !!(src.hasBothViews && src.hasDaily);
   document.getElementById('view-toggle').style.display = hasBothViews ? '' : 'none';
 
-  // Determine which sections to show
-  const showMonthly = hasMonthly && (!hasBothViews || activeView === 'monthly');
-  const showDaily   = src.hasDaily && (!hasBothViews || activeView === 'daily');
+  const showMonthly = hasBothViews ? hasMonthly : hasMonthly;
+  const showDaily   = hasBothViews ? false : src.hasDaily;
 
   document.getElementById('monthly-sections').style.display = showMonthly ? '' : 'none';
   document.getElementById('daily-section').style.display    = showDaily   ? '' : 'none';
+
+  // Update labels based on view mode
+  const isDaily = hasBothViews && activeView === 'daily';
+  document.getElementById('th-month').textContent = isDaily ? 'Dato' : 'Måned';
+  document.getElementById('table-title').textContent = isDaily
+    ? `Daglige priser – ${src.label}`
+    : `Månedlige snitt – ${src.label}`;
 
   try { renderDailyTable(); } catch(e) { console.error('Daily table:', e); }
 

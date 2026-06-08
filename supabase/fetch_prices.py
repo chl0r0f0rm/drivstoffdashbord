@@ -760,7 +760,16 @@ def main():
                 {"source": "SE_ck", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
                 for r in ck_se_monthly
             ]
-        # SE_ck daily rows from XLS are synthetic — only live scraper writes daily_price_data for SE_ck
+        if ck_se_daily:
+            n = append_csv(
+                os.path.join(DATA_DIR, "circklek_SE_daglig.csv"),
+                ck_se_daily, ["date", "diesel", "hvo"], "date",
+            )
+            report.append(f"SE_ck daily (XLS): +{n} days")
+            daily_upsert += [
+                {"source": "SE_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
+                for r in ck_se_daily
+            ]
 
     if run_daily:
         ck_dk_monthly, ck_dk_daily = fetch_ck_dk()
