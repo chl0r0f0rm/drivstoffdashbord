@@ -482,9 +482,9 @@ def fetch_ck_dk():
                 price_soup = BeautifulSoup(r.text, "html.parser")
             prices, date_effective = _scrape_ck_dk_daily(price_soup)
             if prices.get("diesel"):
-                fetch_date = date_effective or datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                daily_rows = [{"date": fetch_date, "diesel": prices["diesel"], "hvo": prices.get("hvo")}]
-                print(f"  Daily: Diesel {prices['diesel']} DKK/L  HVO {prices.get('hvo')} DKK/L  (fra {fetch_date})")
+                today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                daily_rows = [{"date": today, "diesel": prices["diesel"], "hvo": prices.get("hvo")}]
+                print(f"  Daily: Diesel {prices['diesel']} DKK/L  HVO {prices.get('hvo')} DKK/L  (fra {date_effective or '?'}, lagres som {today})")
                 break
         except Exception as error:
             print(f"  Daily scrape from {url} failed: {error}")
@@ -646,13 +646,13 @@ def fetch_ck_no():
         print("  Could not find diesel price on page")
         return []
 
-    fetch_date = date_effective or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     row = {
-        "date":   fetch_date,
+        "date":   today,
         "diesel": prices.get("diesel"),
         "hvo":    prices.get("hvo"),
     }
-    print(f"  Diesel: {row['diesel']} NOK/L  HVO: {row['hvo']} NOK/L  (gjeldende fra {fetch_date})")
+    print(f"  Diesel: {row['diesel']} NOK/L  HVO: {row['hvo']} NOK/L  (gjeldende fra {date_effective or '?'}, lagres som {today})")
     return [row]
 
 
