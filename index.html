@@ -942,6 +942,9 @@ function setView(mode) {
   document.querySelectorAll('.view-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.view === mode)
   );
+  populateYearSliders();
+  populateBaseMonths();
+  populateViewMonthSlider();
   render();
 }
 
@@ -1063,10 +1066,10 @@ function populateBaseMonths() {
 function renderKPIs(data, baseMonth) {
   const src    = getSource();
   const impact = getImpact();
+  const isDailyView = !!(src && src.hasBothViews && activeView === 'daily');
   const base   = data.find(r => r.month === baseMonth);
   const withDiesel = data.filter(r => r.diesel != null);
 
-  // Use slider-selected month (falls back to latest)
   const selected = getViewMonth() || withDiesel[withDiesel.length - 1];
   const selectedIdx = withDiesel.findIndex(r => r.month === selected.month);
   const prev = selectedIdx > 0 ? withDiesel[selectedIdx - 1] : null;
@@ -1080,7 +1083,9 @@ function renderKPIs(data, baseMonth) {
 
   const surPct   = (surcharge >= 0 ? '+' : '') + (surcharge * 100).toFixed(1) + '%';
   const isLatest = selected.month === withDiesel[withDiesel.length - 1].month;
-  const afterBase = selected.month > baseMonth; // kun vis tillegg når valgt måned er etter basismåned
+  const afterBase = selected.month > baseMonth;
+  const prevPeriodLabel = isDailyView ? 'fra forrige dag' : 'fra forrige mnd';
+  const afterBaseHint = isDailyView ? 'Velg dato etter basis' : 'Velg måned etter basis';
 
   // Gjennomsnittlig dieseltillegg fra basismåned t.o.m. valgt måned
   const periodRows = withDiesel.filter(r => r.month > baseMonth && r.month <= selected.month);
@@ -1110,12 +1115,12 @@ function renderKPIs(data, baseMonth) {
     <div class="kpi-ng" style="background:var(--key-number-bg-1);color:var(--key-number-text-1)">
       <div class="kpi-ng-label">Dieseltillegg${isLatest ? ' nå' : ''}</div>
       <div class="kpi-ng-value">${afterBase ? surPct : '—'}</div>
-      <div class="kpi-ng-sub">${afterBase ? 'vs basis ' + monthLabel(baseMonth) : 'Velg måned etter basis'}</div>
+      <div class="kpi-ng-sub">${afterBase ? 'vs basis ' + monthLabel(baseMonth) : afterBaseHint}</div>
     </div>
     <div class="kpi-ng" style="background:var(--key-number-bg-2);color:var(--key-number-text-2)">
       <div class="kpi-ng-label">Diesel – ${monthLabel(selected.month)}</div>
       <div class="kpi-ng-value">${fmt(selected.diesel)} <span style="font-size:1rem;font-weight:500">${src.currency}/L</span></div>
-      <div class="kpi-ng-sub">${momDiesel != null ? fmtPct(momDiesel) + ' fra forrige mnd' : ''}</div>
+      <div class="kpi-ng-sub">${momDiesel != null ? fmtPct(momDiesel) + ' ' + prevPeriodLabel : ''}</div>
     </div>
     <div class="kpi-ng" style="background:var(--key-number-bg-3);color:var(--key-number-text-3)">
       <div class="kpi-ng-label">HVO100 – ${monthLabel(selected.month)}</div>
@@ -1694,14 +1699,15 @@ function render() {
   if (!src) return;
 
   const data = getFilteredData();
-  const base = getBaseMonth();
-  const hasMonthly = !!(data.length && base);
+  const baseKey = getBaseMonth();
+  const baseRow = data.find(r => r.month === baseKey);
+  const hasRenderableData = !!(data.length && baseRow);
 
   // hasBothViews: toggle shown, full dashboard for both views (no simple daily table)
   const hasBothViews = !!(src.hasBothViews && src.hasDaily);
   document.getElementById('view-toggle').style.display = hasBothViews ? '' : 'none';
 
-  const showMonthly = hasBothViews ? hasMonthly : hasMonthly;
+  const showMonthly = hasRenderableData;
   const showDaily   = hasBothViews ? false : src.hasDaily;
 
   document.getElementById('monthly-sections').style.display = showMonthly ? '' : 'none';
@@ -1716,17 +1722,17 @@ function render() {
 
   try { renderDailyTable(); } catch(e) { console.error('Daily table:', e); }
 
-  if (!hasMonthly) return;
+  if (!hasRenderableData) return;
 
-  renderKPIs(data, base);
-  renderTable(data, base);
+  renderKPIs(data, baseKey);
+  renderTable(data, baseKey);
 
   const headerSync = getSourceLastSyncText(src);
   document.getElementById('last-updated').textContent =
     headerSync !== '—' ? headerSync : '—';
 
-  try { renderSurchargeChart(data, base); } catch(e) { console.error('Surcharge chart:', e); }
-  try { renderCharts(data, base); }         catch(e) { console.error('Price charts:', e); }
+  try { renderSurchargeChart(data, baseKey); } catch(e) { console.error('Surcharge chart:', e); }
+  try { renderCharts(data, baseKey); }         catch(e) { console.error('Price charts:', e); }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
