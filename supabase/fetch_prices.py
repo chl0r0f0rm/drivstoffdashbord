@@ -561,6 +561,65 @@ def fetch_ck_dk():
     return monthly_rows, daily_rows
 
 
+# ── Circle K SE (daglig listpris) ────────────────────────────────────────────
+
+CK_SE_DAILY_URL = "https://www.circlek.se/foretag/drivmedel/priser"
+
+SE_DAILY_PRODUCT_MAP = {
+    "miles diesel": "diesel",
+    "hvo100":       "hvo",
+}
+
+
+def fetch_ck_se_daily():
+    print("\n── Circle K SE (daglig listpris) ────────────────────────────────────")
+    try:
+        resp = requests.get(
+            CK_SE_DAILY_URL, timeout=30, headers={"User-Agent": "Mozilla/5.0"}
+        )
+        resp.raise_for_status()
+    except requests.RequestException as error:
+        print(f"  Failed to load page: {error}")
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    prices = {}
+
+    for table in soup.find_all("table"):
+        for row in table.find_all("tr"):
+            cells = row.find_all("td")
+            if len(cells) < 3:
+                continue
+            cell_texts = [c.get_text(" ", strip=True) for c in cells]
+            row_text = " ".join(cell_texts).lower()
+
+            matched_product = None
+            for product_key, product_name in SE_DAILY_PRODUCT_MAP.items():
+                if product_key in row_text:
+                    matched_product = product_name
+                    break
+
+            if not matched_product:
+                continue
+
+            for cell_text in cell_texts:
+                m = re.search(r"(\d+)[,.](\d+)", cell_text)
+                if m:
+                    val = float(m.group(1) + "." + m.group(2))
+                    if 15 < val < 35:  # SEK/L range for diesel/HVO
+                        prices[matched_product] = round(val, 4)
+                        break
+
+    if not prices.get("diesel"):
+        print("  Could not find diesel price on Circle K SE page")
+        return []
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    row = {"date": today, "diesel": prices.get("diesel"), "hvo": prices.get("hvo")}
+    print(f"  Diesel: {row['diesel']} SEK/L  HVO: {row.get('hvo')} SEK/L  (lagres som {today})")
+    return [row]
+
+
 # ── Circle K Norge ───────────────────────────────────────────────────────────
 
 CK_NO_URL = "https://www.circlek.no/bedrift/produkter/drivstoff/priser"
@@ -746,6 +805,20 @@ def main():
                 {"source": "DK_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
                 for r in ck_dk_daily
             ]
+
+    ck_se_live = fetch_ck_se_daily() if run_daily else []
+    if ck_se_live:
+        if "SE_ck" not in synced_sources:
+            synced_sources.append("SE_ck")
+        n = append_csv(
+            os.path.join(DATA_DIR, "circklek_SE_daglig.csv"),
+            ck_se_live, ["date", "diesel", "hvo"], "date",
+        )
+        report.append(f"SE_ck daily live: +{n} rows (date: {ck_se_live[-1]['date']})")
+        daily_upsert += [
+            {"source": "SE_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
+            for r in ck_se_live
+        ]
 
     ck_no_daily = fetch_ck_no() if run_daily else []
     if ck_no_daily:

@@ -450,6 +450,39 @@
 
   /* ── Fuel type toggles ── */
   .fuel-toggles { display: flex; gap: 6px; align-items: center; }
+
+  #view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  #view-toggle .view-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .view-btn {
+    padding: 5px 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.78rem; font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .view-btn.active {
+    background: var(--ng-mid);
+    border-color: var(--ng-mid);
+    color: #fff;
+  }
+  .view-btn:hover:not(.active) {
+    border-color: var(--ng-mid);
+    color: var(--ng-mid);
+  }
   .fuel-toggle {
     padding: 5px 14px;
     border: 1.5px solid var(--border);
@@ -626,6 +659,13 @@
     <div id="source-ref" style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;"></div>
   </div>
 
+  <!-- View toggle (shown only for sources with both monthly and daily data) -->
+  <div id="view-toggle" style="display:none">
+    <span class="view-label">Vis:</span>
+    <button class="view-btn active" data-view="monthly" onclick="setView('monthly')">Månedlig</button>
+    <button class="view-btn"        data-view="daily"   onclick="setView('daily')">Daglig</button>
+  </div>
+
   <!-- Monthly sections (KPIs, charts, monthly table) — hidden for daily-only sources -->
   <div id="monthly-sections">
 
@@ -776,8 +816,8 @@
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────────────
 const SOURCE_META = {
-  SE_preem: { label: 'Preem Sverige',    currency: 'SEK', flag: '🇸🇪', hasDaily: false, sourceUrl: 'https://www.preem.se/foretag/listpriser/',                              sourceFile: 'prishistorik-listpriser-2008-2026.xls' },
-  SE_ck:    { label: 'Circle K Sverige', currency: 'SEK', flag: '🇸🇪', hasDaily: false, sourceUrl: 'https://www.circlek.se/media-assets/uploads/2026-06/Prishistorik_B2B.xls', sourceFile: 'Prishistorik_B2B.xls' },
+  SE_preem: { label: 'Preem Sverige',    currency: 'SEK', flag: '🇸🇪', hasDaily: false, hasBothViews: false, sourceUrl: 'https://www.preem.se/foretag/listpriser/',                 sourceFile: 'prishistorik-listpriser-2008-2026.xls' },
+  SE_ck:    { label: 'Circle K Sverige', currency: 'SEK', flag: '🇸🇪', hasDaily: true,  hasBothViews: true,  sourceUrl: 'https://www.circlek.se/foretag/drivmedel/priser',         sourceFile: 'Prishistorik_B2B.xls' },
   DK_ck:    { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true,  sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser',             sourceFile: 'HistoriskePriserEksklMoms_0.pdf' },
   NO_ck:    { label: 'Circle K Norge',   currency: 'NOK', flag: '🇳🇴', hasDaily: true,  sourceUrl: 'https://www.circlek.no/bedrift/produkter/drivstoff/priser',             sourceFile: 'Bulk-listepris (eks. mva)' },
 };
@@ -824,7 +864,7 @@ async function fetchPriceData() {
       { headers: supabaseHeaders }
     ),
     fetch(
-      `${SUPABASE_URL}/rest/v1/daily_price_data?select=source,date,diesel,hvo&source=in.(NO_ck,DK_ck)&order=date.asc`,
+      `${SUPABASE_URL}/rest/v1/daily_price_data?select=source,date,diesel,hvo&source=in.(NO_ck,DK_ck,SE_ck)&order=date.asc`,
       { headers: supabaseHeaders }
     ),
   ]);
@@ -856,6 +896,7 @@ async function fetchPriceData() {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let activeCountry = 'SE_preem';
+let activeView = 'monthly'; // 'monthly' | 'daily'
 let dieselChart = null, hvoChart = null, surchargeChart = null;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -877,12 +918,26 @@ function setCountry(el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   activeCountry = el.dataset.country;
-  const headerSync = getSourceLastSyncText(getSource());
+  const src = getSource();
+  // Default view: monthly for sources with both views, daily for daily-only sources
+  activeView = (src && src.hasBothViews) ? 'monthly' : 'daily';
+  document.querySelectorAll('.view-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === activeView)
+  );
+  const headerSync = getSourceLastSyncText(src);
   document.getElementById('last-updated').textContent =
     headerSync !== '—' ? headerSync : '—';
   populateYearSliders();
   populateBaseMonths();
   populateViewMonthSlider();
+  render();
+}
+
+function setView(mode) {
+  activeView = mode;
+  document.querySelectorAll('.view-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === mode)
+  );
   render();
 }
 
@@ -1623,8 +1678,16 @@ function render() {
   const base = getBaseMonth();
   const hasMonthly = !!(data.length && base);
 
-  document.getElementById('monthly-sections').style.display = hasMonthly ? '' : 'none';
-  document.getElementById('daily-section').style.display    = src.hasDaily ? '' : 'none';
+  // Show/hide view toggle for sources with both monthly and daily data
+  const hasBothViews = !!(src.hasBothViews && hasMonthly && src.hasDaily);
+  document.getElementById('view-toggle').style.display = hasBothViews ? '' : 'none';
+
+  // Determine which sections to show
+  const showMonthly = hasMonthly && (!hasBothViews || activeView === 'monthly');
+  const showDaily   = src.hasDaily && (!hasBothViews || activeView === 'daily');
+
+  document.getElementById('monthly-sections').style.display = showMonthly ? '' : 'none';
+  document.getElementById('daily-section').style.display    = showDaily   ? '' : 'none';
 
   try { renderDailyTable(); } catch(e) { console.error('Daily table:', e); }
 
