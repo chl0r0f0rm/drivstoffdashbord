@@ -148,6 +148,22 @@ def append_csv(filepath, new_rows, fieldnames, key_column):
     return len(rows_to_add)
 
 
+def merge_csv_rows(filepath, new_rows, fieldnames, key_column):
+    merged = {}
+    if os.path.exists(filepath):
+        with open(filepath, "r", encoding="utf-8") as file_handle:
+            for row in csv.DictReader(file_handle):
+                merged[row[key_column]] = row
+    for row in new_rows:
+        merged[row[key_column]] = row
+    with open(filepath, "w", newline="", encoding="utf-8") as file_handle:
+        writer = csv.DictWriter(file_handle, fieldnames=fieldnames)
+        writer.writeheader()
+        for key in sorted(merged.keys()):
+            writer.writerow(merged[key])
+    return len(new_rows)
+
+
 def gap_fill_daily_rows(latest_row, existing_dates):
     """Fill missing calendar days from last stored date through today with current price."""
     today = date.fromisoformat(latest_row["date"])
@@ -404,10 +420,23 @@ def fetch_ck_se():
 CK_DK_HIST_URL  = "https://www.circlek.dk/erhverv/braendstof/historiskepriser"
 CK_DK_PRICE_URL = "https://www.circlek.dk/erhverv/braendstof/priser"
 
-DK_PRODUCT_ALIASES = {
-    "diesel": ["diesel"],
-    "hvo":    ["hvo100", "hvo 100"],
-}
+def _match_dk_daily_product(row_text):
+    """Match miles diesel (not plus/truck) and HVO100 station prices (kr/l)."""
+    lower = row_text.lower()
+    compact = lower.replace(" ", "")
+    if "leveret" in lower or "kr./m3" in lower or "kr./m³" in lower:
+        return None
+    if "hvo" in lower and "100" in lower:
+        return "hvo"
+    if "diesel" not in lower:
+        return None
+    if any(skip in lower for skip in ("plus", "truck", "marine", "off-road")):
+        return None
+    if "+" in lower:
+        return None
+    if "milesdiesel" in compact or "miles diesel" in lower:
+        return "diesel"
+    return None
 
 def _scrape_ck_dk_daily(soup):
     prices = {}
@@ -440,15 +469,7 @@ def _scrape_ck_dk_daily(soup):
                     return f"{m.group(3)}-{m.group(2).zfill(2)}-{m.group(1).zfill(2)}"
                 return None
 
-            matched_product = None
-            for product_key, aliases in DK_PRODUCT_ALIASES.items():
-                for alias in aliases:
-                    if alias in row_text:
-                        matched_product = product_key
-                        break
-                if matched_product:
-                    break
-
+            matched_product = _match_dk_daily_product(row_text)
             if not matched_product:
                 continue
 
@@ -539,16 +560,18 @@ def fetch_ck_dk():
         return [], daily_rows
 
     monthly_rows = []
+    pdf_daily_rows = []
     pending_month = None
 
     def parse_dk_prices(line):
+        # Columns: miles95, miles+95, miles diesel, miles truck, miles+ diesel, HVO100, ...
         numbers = re.findall(r"\d+,\d+", line)
-        if len(numbers) < 3:
+        if len(numbers) < 6:
             return None, None
         def to_float(value):
             return float(value.replace(",", "."))
         diesel = round(to_float(numbers[2]), 4)
-        hvo = round(to_float(numbers[5]), 4) if len(numbers) > 5 else None
+        hvo = round(to_float(numbers[5]), 4)
         return diesel, hvo
 
     with pdfplumber.open(BytesIO(resp.content)) as pdf:
@@ -564,22 +587,50 @@ def fetch_ck_dk():
                         pending_month = f"{year}-{MONTH_MAP_DK[month_key]}"
                     continue
 
-                if not pending_month or not re.search(r"\bsnit\b", stripped, re.IGNORECASE):
+                if not pending_month:
                     continue
 
+                if re.search(r"\bsnit\b", stripped, re.IGNORECASE):
+                    try:
+                        diesel, hvo = parse_dk_prices(stripped)
+                        if diesel:
+                            monthly_rows.append({
+                                "month": pending_month,
+                                "diesel_avg": diesel,
+                                "hvo_avg": hvo,
+                            })
+                    except (ValueError, IndexError):
+                        pass
+                    pending_month = None
+                    continue
+
+                day_match = re.match(r"^(\d{1,2})\s", stripped)
+                if not day_match:
+                    continue
                 try:
                     diesel, hvo = parse_dk_prices(stripped)
-                    if diesel:
-                        monthly_rows.append({
-                            "month": pending_month,
-                            "diesel_avg": diesel,
-                            "hvo_avg": hvo,
-                        })
+                    if not diesel:
+                        continue
+                    year, month = pending_month.split("-")
+                    day = int(day_match.group(1))
+                    pdf_daily_rows.append({
+                        "date": f"{year}-{month}-{day:02d}",
+                        "diesel": diesel,
+                        "hvo": hvo,
+                    })
                 except (ValueError, IndexError):
                     pass
-                pending_month = None
 
-    print(f"  {len(monthly_rows)} months")
+    if pdf_daily_rows:
+        print(f"  PDF daily: {len(pdf_daily_rows)} days ({pdf_daily_rows[0]['date']} – {pdf_daily_rows[-1]['date']})")
+        daily_by_date = {row["date"]: row for row in pdf_daily_rows}
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        for row in daily_rows:
+            if row["date"] == today or row["date"] not in daily_by_date:
+                daily_by_date[row["date"]] = row
+        daily_rows = [daily_by_date[key] for key in sorted(daily_by_date)]
+
+    print(f"  {len(monthly_rows)} months, {len(daily_rows)} daily rows")
     return monthly_rows, daily_rows
 
 
@@ -814,8 +865,8 @@ def main():
         if ck_dk_daily:
             if "DK_ck" not in synced_sources:
                 synced_sources.append("DK_ck")
-            n = append_csv(dk_csv, ck_dk_daily, ["date", "diesel", "hvo"], "date")
-            report.append(f"DK_ck daily: +{n} rows (through {ck_dk_daily[-1]['date']})")
+            merge_csv_rows(dk_csv, ck_dk_daily, ["date", "diesel", "hvo"], "date")
+            report.append(f"DK_ck daily: {len(ck_dk_daily)} rows (through {ck_dk_daily[-1]['date']})")
             daily_upsert += [
                 {"source": "DK_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
                 for r in ck_dk_daily
