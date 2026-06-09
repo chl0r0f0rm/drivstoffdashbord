@@ -12,7 +12,7 @@ import csv
 import os
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from io import BytesIO
 
 from collections import defaultdict
@@ -146,6 +146,28 @@ def append_csv(filepath, new_rows, fieldnames, key_column):
             writer.writeheader()
         writer.writerows(rows_to_add)
     return len(rows_to_add)
+
+
+def gap_fill_daily_rows(latest_row, existing_dates):
+    """Fill missing calendar days from last stored date through today with current price."""
+    today = date.fromisoformat(latest_row["date"])
+    if existing_dates:
+        last_stored = max(date.fromisoformat(d) for d in existing_dates)
+        start = last_stored + timedelta(days=1)
+    else:
+        start = today
+    if start > today:
+        return []
+    filled = []
+    current = start
+    while current <= today:
+        filled.append({
+            "date": str(current),
+            "diesel": latest_row["diesel"],
+            "hvo": latest_row.get("hvo"),
+        })
+        current += timedelta(days=1)
+    return filled
 
 
 # ── Excel date helper ─────────────────────────────────────────────────────────
@@ -785,13 +807,15 @@ def main():
                 for r in ck_dk_monthly
             ]
         if ck_dk_daily:
+            dk_csv = os.path.join(DATA_DIR, "circklek_DK_daglig.csv")
+            ck_dk_daily = gap_fill_daily_rows(
+                ck_dk_daily[0], read_existing_keys(dk_csv, "date")
+            )
+        if ck_dk_daily:
             if "DK_ck" not in synced_sources:
                 synced_sources.append("DK_ck")
-            n = append_csv(
-                os.path.join(DATA_DIR, "circklek_DK_daglig.csv"),
-                ck_dk_daily, ["date", "diesel", "hvo"], "date",
-            )
-            report.append(f"DK_ck daily: +{n} rows (date: {ck_dk_daily[-1]['date']})")
+            n = append_csv(dk_csv, ck_dk_daily, ["date", "diesel", "hvo"], "date")
+            report.append(f"DK_ck daily: +{n} rows (through {ck_dk_daily[-1]['date']})")
             daily_upsert += [
                 {"source": "DK_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
                 for r in ck_dk_daily
@@ -799,13 +823,15 @@ def main():
 
     ck_se_live = fetch_ck_se_daily() if run_daily else []
     if ck_se_live:
+        se_live_csv = os.path.join(DATA_DIR, "circklek_SE_daglig.csv")
+        ck_se_live = gap_fill_daily_rows(
+            ck_se_live[0], read_existing_keys(se_live_csv, "date")
+        )
+    if ck_se_live:
         if "SE_ck" not in synced_sources:
             synced_sources.append("SE_ck")
-        n = append_csv(
-            os.path.join(DATA_DIR, "circklek_SE_daglig.csv"),
-            ck_se_live, ["date", "diesel", "hvo"], "date",
-        )
-        report.append(f"SE_ck daily live: +{n} rows (date: {ck_se_live[-1]['date']})")
+        n = append_csv(se_live_csv, ck_se_live, ["date", "diesel", "hvo"], "date")
+        report.append(f"SE_ck daily live: +{n} rows (through {ck_se_live[-1]['date']})")
         daily_upsert += [
             {"source": "SE_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
             for r in ck_se_live
@@ -813,12 +839,14 @@ def main():
 
     ck_no_daily = fetch_ck_no() if run_daily else []
     if ck_no_daily:
-        synced_sources.append("NO_ck")
-        n = append_csv(
-            os.path.join(DATA_DIR, "circklek_NO_daglig.csv"),
-            ck_no_daily, ["date", "diesel", "hvo"], "date",
+        no_csv = os.path.join(DATA_DIR, "circklek_NO_daglig.csv")
+        ck_no_daily = gap_fill_daily_rows(
+            ck_no_daily[0], read_existing_keys(no_csv, "date")
         )
-        report.append(f"NO_ck: +{n} rows (date: {ck_no_daily[-1]['date']})")
+    if ck_no_daily:
+        synced_sources.append("NO_ck")
+        n = append_csv(no_csv, ck_no_daily, ["date", "diesel", "hvo"], "date")
+        report.append(f"NO_ck: +{n} rows (through {ck_no_daily[-1]['date']})")
         daily_upsert += [
             {"source": "NO_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
             for r in ck_no_daily
