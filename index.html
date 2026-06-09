@@ -843,7 +843,11 @@ function formatSyncTime(iso) {
 function getSourceLastSyncText(src) {
   const formatted = formatSyncTime(src.lastSyncAt);
   if (formatted) return 'Sist oppdatert: ' + formatted;
-  const withDiesel = src.data.filter(r => r.diesel != null);
+  if (src.dailyData && src.dailyData.length) {
+    const latest = src.dailyData[src.dailyData.length - 1];
+    return 'Siste pris: ' + monthLabel(latest.date);
+  }
+  const withDiesel = (src.data || []).filter(r => r.diesel != null);
   const latest = withDiesel[withDiesel.length - 1];
   if (latest) return 'Siste måned: ' + monthLabel(latest.month);
   return '—';
@@ -1722,14 +1726,14 @@ function render() {
 
   try { renderDailyTable(); } catch(e) { console.error('Daily table:', e); }
 
+  const headerSync = getSourceLastSyncText(src);
+  document.getElementById('last-updated').textContent =
+    headerSync !== '—' ? headerSync : '—';
+
   if (!hasRenderableData) return;
 
   renderKPIs(data, baseKey);
   renderTable(data, baseKey);
-
-  const headerSync = getSourceLastSyncText(src);
-  document.getElementById('last-updated').textContent =
-    headerSync !== '—' ? headerSync : '—';
 
   try { renderSurchargeChart(data, baseKey); } catch(e) { console.error('Surcharge chart:', e); }
   try { renderCharts(data, baseKey); }         catch(e) { console.error('Price charts:', e); }
