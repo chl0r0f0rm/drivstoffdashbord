@@ -457,7 +457,14 @@
     gap: 8px;
     margin-bottom: 20px;
   }
-  #view-toggle .view-label {
+  #dk-vat-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  #view-toggle .view-label,
+  #dk-vat-toggle .view-label {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-muted);
@@ -660,6 +667,11 @@
   </div>
 
   <!-- View toggle (shown only for sources with both monthly and daily data) -->
+  <div id="dk-vat-toggle" style="display:none">
+    <span class="view-label">Moms:</span>
+    <button class="view-btn active" data-vat="ekskl" onclick="setDkVat('ekskl')">Ekskl. moms</button>
+    <button class="view-btn"        data-vat="inkl" onclick="setDkVat('inkl')">Inkl. moms</button>
+  </div>
   <div id="view-toggle" style="display:none">
     <span class="view-label">Vis:</span>
     <button class="view-btn active" data-view="monthly" onclick="setView('monthly')">Månedlig</button>
@@ -818,7 +830,8 @@
 const SOURCE_META = {
   SE_preem: { label: 'Preem Sverige',    currency: 'SEK', flag: '🇸🇪', hasDaily: false, hasBothViews: false, sourceUrl: 'https://www.preem.se/foretag/listpriser/',                 sourceFile: 'prishistorik-listpriser-2008-2026.xls' },
   SE_ck:    { label: 'Circle K Sverige', currency: 'SEK', flag: '🇸🇪', hasDaily: true,  hasBothViews: true,  sourceUrl: 'https://www.circlek.se/foretag/drivmedel/priser',         sourceFile: 'Prishistorik_B2B.xls' },
-  DK_ck:    { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true,  sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser',             sourceFile: 'miles diesel (ekskl. moms)' },
+  DK_ck:      { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true, hasBothViews: true, sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser', sourceFile: 'miles diesel (ekskl. moms)' },
+  DK_ck_inkl: { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true, hasBothViews: true, sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser', sourceFile: 'miles diesel (inkl. moms)' },
   NO_ck:    { label: 'Circle K Norge',   currency: 'NOK', flag: '🇳🇴', hasDaily: true,  sourceUrl: 'https://www.circlek.no/bedrift/produkter/drivstoff/priser',             sourceFile: 'Bulk-listepris (eks. mva)' },
 };
 
@@ -868,7 +881,7 @@ async function fetchPriceData() {
       { headers: supabaseHeaders }
     ),
     fetch(
-      `${SUPABASE_URL}/rest/v1/daily_price_data?select=source,date,diesel,hvo&source=in.(NO_ck,DK_ck,SE_ck)&order=date.asc`,
+      `${SUPABASE_URL}/rest/v1/daily_price_data?select=source,date,diesel,hvo&source=in.(NO_ck,DK_ck,DK_ck_inkl,SE_ck)&order=date.asc&limit=15000`,
       { headers: supabaseHeaders }
     ),
   ]);
@@ -883,14 +896,17 @@ async function fetchPriceData() {
     for (const row of syncRows) SOURCE_SYNC[row.source] = row.updated_at;
   }
   for (const [key, meta] of Object.entries(SOURCE_META)) {
+    const isDkSource = key === 'DK_ck' || key === 'DK_ck_inkl';
     SOURCES[key] = {
       ...meta,
       lastSyncAt: SOURCE_SYNC[key] || null,
       data: rows
         .filter(r => r.source === key)
+        .filter(r => !isDkSource || r.month >= '2022-01')
         .map(({ month, diesel, hvo }) => ({ month, diesel, hvo })),
       dailyData: dailyRows
         .filter(r => r.source === key)
+        .filter(r => !isDkSource || r.date >= '2022-01-01')
         .map(({ date, diesel, hvo }) => ({ date, diesel, hvo })),
     };
   }
@@ -901,6 +917,7 @@ async function fetchPriceData() {
 // ── State ─────────────────────────────────────────────────────────────────────
 let activeCountry = 'SE_preem';
 let activeView = 'monthly'; // 'monthly' | 'daily'
+let activeDkVat = 'ekskl';  // 'ekskl' | 'inkl'
 let dieselChart = null, hvoChart = null, surchargeChart = null;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -926,11 +943,14 @@ function setCountry(el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   activeCountry = el.dataset.country;
+  if (activeCountry !== 'DK_ck') activeDkVat = 'ekskl';
   const src = getSource();
-  // Default view: monthly for sources with both views, daily for daily-only sources
   activeView = (src && src.hasBothViews) ? 'monthly' : 'daily';
-  document.querySelectorAll('.view-btn').forEach(b =>
+  document.querySelectorAll('.view-btn[data-view]').forEach(b =>
     b.classList.toggle('active', b.dataset.view === activeView)
+  );
+  document.querySelectorAll('.view-btn[data-vat]').forEach(b =>
+    b.classList.toggle('active', b.dataset.vat === activeDkVat)
   );
   const headerSync = getSourceLastSyncText(src);
   document.getElementById('last-updated').textContent =
@@ -943,7 +963,7 @@ function setCountry(el) {
 
 function setView(mode) {
   activeView = mode;
-  document.querySelectorAll('.view-btn').forEach(b =>
+  document.querySelectorAll('.view-btn[data-view]').forEach(b =>
     b.classList.toggle('active', b.dataset.view === mode)
   );
   populateYearSliders();
@@ -952,7 +972,24 @@ function setView(mode) {
   render();
 }
 
-const getSource     = () => SOURCES[activeCountry];
+function setDkVat(vat) {
+  activeDkVat = vat;
+  document.querySelectorAll('.view-btn[data-vat]').forEach(b =>
+    b.classList.toggle('active', b.dataset.vat === vat)
+  );
+  populateBaseMonths();
+  populateViewMonthSlider();
+  render();
+}
+
+function getDataSourceKey() {
+  if (activeCountry === 'DK_ck') {
+    return activeDkVat === 'inkl' ? 'DK_ck_inkl' : 'DK_ck';
+  }
+  return activeCountry;
+}
+
+const getSource     = () => SOURCES[getDataSourceKey()];
 const getBaseMonth  = () => document.getElementById('baseMonth').value;
 const getImpact     = () => parseFloat(document.getElementById('impactFactor').value) / 100;
 
@@ -1710,6 +1747,7 @@ function render() {
   // hasBothViews: toggle shown, full dashboard for both views (no simple daily table)
   const hasBothViews = !!(src.hasBothViews && src.hasDaily);
   document.getElementById('view-toggle').style.display = hasBothViews ? '' : 'none';
+  document.getElementById('dk-vat-toggle').style.display = activeCountry === 'DK_ck' ? '' : 'none';
 
   const showMonthly = hasRenderableData;
   const showDaily   = hasBothViews ? false : src.hasDaily;

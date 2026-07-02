@@ -30,7 +30,12 @@ MONTH_MAP_DK = {
     "maj": "05", "juni": "06", "juli": "07", "august": "08",
     "september": "09", "oktober": "10", "november": "11", "december": "12",
 }
-MONTH_HEADER_DK = re.compile(r"^(\w+)\s+(20\d{2})\s+ekskl", re.IGNORECASE)
+MONTH_HEADER_DK = re.compile(
+    r"^(\w+)\s+(20\d{2})\s+(?:ekskl|inkl)",
+    re.IGNORECASE,
+)
+DK_MIN_MONTH = "2022-01"
+DK_MIN_DATE = "2022-01-01"
 
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
@@ -162,6 +167,35 @@ def merge_csv_rows(filepath, new_rows, fieldnames, key_column):
         for key in sorted(merged.keys()):
             writer.writerow(merged[key])
     return len(new_rows)
+
+
+def write_csv_full(filepath, rows, fieldnames, key_column):
+    with open(filepath, "w", newline="", encoding="utf-8") as file_handle:
+        writer = csv.DictWriter(file_handle, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in sorted(rows, key=lambda item: item[key_column]):
+            writer.writerow(row)
+    return len(rows)
+
+
+def supabase_delete_before(source, table, date_column, before_value):
+    if not SUPABASE_SERVICE_KEY:
+        print(f"  Skip delete (no service key): {table} {source} < {before_value}")
+        return True
+    url = (
+        f"{SUPABASE_URL}/rest/v1/{table}"
+        f"?source=eq.{source}&{date_column}=lt.{before_value}"
+    )
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    }
+    resp = requests.delete(url, headers=headers, timeout=30)
+    if resp.ok:
+        print(f"  Deleted {table} rows for {source} before {before_value}")
+    else:
+        print(f"  Delete failed ({table} {source}): {resp.status_code} {resp.text[:200]}")
+    return resp.ok
 
 
 def gap_fill_daily_rows(latest_row, existing_dates):
@@ -417,89 +451,106 @@ def fetch_ck_se():
 
 # ── Circle K DK ───────────────────────────────────────────────────────────────
 
-CK_DK_HIST_URL  = "https://www.circlek.dk/erhverv/braendstof/historiskepriser"
-CK_DK_PRICE_URL = "https://www.circlek.dk/erhverv/braendstof/priser"
+CK_DK_HIST_URL = "https://www.circlek.dk/erhverv/braendstof/historiskepriser"
 
-def _match_dk_daily_product(row_text):
-    """Match miles diesel (not plus/truck) and HVO100 station prices (kr/l)."""
-    lower = row_text.lower()
-    compact = lower.replace(" ", "")
-    if "leveret" in lower or "kr./m3" in lower or "kr./m³" in lower:
-        return None
-    if "hvo" in lower and "100" in lower:
-        return "hvo"
-    if "diesel" not in lower:
-        return None
-    if any(skip in lower for skip in ("plus", "truck", "marine", "off-road")):
-        return None
-    if "+" in lower:
-        return None
-    if "milesdiesel" in compact or "miles diesel" in lower:
-        return "diesel"
+STATION_PRICE_PATTERN = re.compile(r"\d+,\d+")
+
+
+def _find_dk_pdf_url(soup, vat_type):
+    for anchor in soup.find_all("a", href=True):
+        href = anchor["href"]
+        text = anchor.get_text(strip=True).lower()
+        if ".pdf" not in href.lower():
+            continue
+        if "afgifter" in text:
+            continue
+        if vat_type == "ekskl" and "ekskl" in text and "moms" in text:
+            return href if href.startswith("http") else f"https://www.circlek.dk{href}"
+        if vat_type == "inkl" and "inkl" in text and "moms" in text:
+            return href if href.startswith("http") else f"https://www.circlek.dk{href}"
     return None
 
-def _scrape_ck_dk_daily(soup):
-    prices = {}
-    date_effective = None
 
-    for table in soup.find_all("table"):
-        headers_text = " ".join(
-            th.get_text(" ", strip=True).lower() for th in table.find_all("th")
-        )
-        if not any(kw in headers_text for kw in ("gælder fra", "ekskl", "pris")):
+def _extract_dk_month_from_page(text):
+    for line in text.split("\n"):
+        header_match = MONTH_HEADER_DK.match(line.strip())
+        if not header_match:
             continue
+        month_key = header_match.group(1).lower()
+        year = header_match.group(2)
+        if month_key in MONTH_MAP_DK:
+            return f"{year}-{MONTH_MAP_DK[month_key]}"
+    return None
 
-        for row in table.find_all("tr"):
-            cells = row.find_all("td")
-            if len(cells) < 2:
+
+def _parse_dk_station_prices(line):
+    numbers = STATION_PRICE_PATTERN.findall(line)
+    if len(numbers) < 6:
+        return None, None
+    diesel = round(float(numbers[2].replace(",", ".")), 4)
+    hvo = round(float(numbers[5].replace(",", ".")), 4)
+    return diesel, hvo
+
+
+def _parse_ck_dk_pdf(pdf_bytes, min_month=DK_MIN_MONTH):
+    try:
+        import pdfplumber
+    except ImportError:
+        print("  pdfplumber not installed — skipping DK PDF")
+        return [], []
+
+    monthly_rows = []
+    daily_rows = []
+    current_month = None
+
+    with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text() or ""
+            page_month = _extract_dk_month_from_page(text)
+            if page_month:
+                current_month = page_month
+
+            if not current_month or current_month < min_month:
                 continue
-            cell_texts = [c.get_text(" ", strip=True) for c in cells]
-            row_text = " ".join(cell_texts).lower()
 
-            def extract_number(text):
-                m = re.search(r"(\d+)[,.](\d+)", text)
-                return round(float(m.group(1) + "." + m.group(2)), 4) if m else None
+            year, month = current_month.split("-")
+            for line in text.split("\n"):
+                stripped = line.strip()
+                if re.search(r"\bsnit\b", stripped, re.IGNORECASE):
+                    diesel, hvo = _parse_dk_station_prices(stripped)
+                    if diesel:
+                        monthly_rows.append({
+                            "month": current_month,
+                            "diesel_avg": diesel,
+                            "hvo_avg": hvo,
+                        })
+                    continue
 
-            def extract_date(text):
-                m = re.search(r"(\d{4}-\d{2}-\d{2})", text)
-                if m:
-                    return m.group(1)
-                m = re.search(r"(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})", text)
-                if m:
-                    return f"{m.group(3)}-{m.group(2).zfill(2)}-{m.group(1).zfill(2)}"
-                return None
+                day_match = re.match(r"^(\d{1,2})\s", stripped)
+                if not day_match:
+                    continue
+                diesel, hvo = _parse_dk_station_prices(stripped)
+                if not diesel:
+                    continue
+                day = int(day_match.group(1))
+                date_value = f"{year}-{month}-{day:02d}"
+                if date_value < DK_MIN_DATE:
+                    continue
+                daily_rows.append({
+                    "date": date_value,
+                    "diesel": diesel,
+                    "hvo": hvo,
+                })
 
-            matched_product = _match_dk_daily_product(row_text)
-            if not matched_product:
-                continue
-
-            price_val = None
-            row_date = None
-            for cell_text in cell_texts:
-                v = extract_number(cell_text)
-                d = extract_date(cell_text)
-                if d:
-                    row_date = d
-                # DKK/L prices are typically between 8–25 DKK
-                if v and 8 < v < 25 and price_val is None:
-                    price_val = v
-
-            if price_val:
-                prices[matched_product] = price_val
-            if row_date:
-                date_effective = row_date
-
-    return prices, date_effective
+    monthly_by_month = {row["month"]: row for row in monthly_rows}
+    daily_by_date = {row["date"]: row for row in daily_rows}
+    monthly_rows = [monthly_by_month[key] for key in sorted(monthly_by_month)]
+    daily_rows = [daily_by_date[key] for key in sorted(daily_by_date)]
+    return monthly_rows, daily_rows
 
 
 def fetch_ck_dk():
     print("\n── Circle K DK ──────────────────────────────────────────────────────")
-    try:
-        import pdfplumber
-    except ImportError:
-        print("  pdfplumber not installed — skipping DK")
-        return [], []
-
     try:
         page_resp = requests.get(
             CK_DK_HIST_URL,
@@ -509,129 +560,33 @@ def fetch_ck_dk():
         page_resp.raise_for_status()
     except requests.RequestException as error:
         print(f"  Failed to load Circle K DK page: {error}")
-        return [], []
+        return {}
 
     soup = BeautifulSoup(page_resp.text, "html.parser")
+    results = {}
 
-    # ── Try to scrape today's price from the prices page ──────────────────────
-    daily_rows = []
-    for url in (CK_DK_PRICE_URL, CK_DK_HIST_URL):
+    for vat_type, source_key in (("ekskl", "DK_ck"), ("inkl", "DK_ck_inkl")):
+        pdf_url = _find_dk_pdf_url(soup, vat_type)
+        if not pdf_url:
+            print(f"  No {vat_type} moms PDF found")
+            continue
+
+        print(f"  {source_key} PDF: {pdf_url}")
         try:
-            if url == CK_DK_HIST_URL:
-                price_soup = soup
-            else:
-                r = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
-                r.raise_for_status()
-                price_soup = BeautifulSoup(r.text, "html.parser")
-            prices, date_effective = _scrape_ck_dk_daily(price_soup)
-            if prices.get("diesel"):
-                today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                daily_rows = [{"date": today, "diesel": prices["diesel"], "hvo": prices.get("hvo")}]
-                print(f"  Daily: Diesel {prices['diesel']} DKK/L  HVO {prices.get('hvo')} DKK/L  (fra {date_effective or '?'}, lagres som {today})")
-                break
-        except Exception as error:
-            print(f"  Daily scrape from {url} failed: {error}")
+            resp = requests.get(pdf_url, timeout=60, headers={"User-Agent": "Mozilla/5.0"})
+            resp.raise_for_status()
+        except requests.RequestException as error:
+            print(f"  PDF download failed ({source_key}): {error}")
+            continue
 
-    if not daily_rows:
-        print("  No daily price found — using today's date as fallback will be skipped")
+        monthly_rows, daily_rows = _parse_ck_dk_pdf(resp.content)
+        print(
+            f"  {source_key}: {len(monthly_rows)} months, {len(daily_rows)} daily rows"
+            + (f" ({daily_rows[0]['date']} – {daily_rows[-1]['date']})" if daily_rows else "")
+        )
+        results[source_key] = {"monthly": monthly_rows, "daily": daily_rows}
 
-    # ── Fetch historical PDF for monthly averages ──────────────────────────────
-    pdf_url = None
-    for a in soup.find_all("a", href=True):
-        href = a["href"]
-        text = a.get_text(strip=True).lower()
-        if ".pdf" in href.lower() and "ekskl" in text and "moms" in text and "afgifter" not in text:
-            pdf_url = href
-            break
-
-    if not pdf_url:
-        print("  No matching PDF found on Circle K DK page")
-        return [], daily_rows
-
-    if not pdf_url.startswith("http"):
-        pdf_url = "https://www.circlek.dk" + pdf_url
-    print(f"  PDF: {pdf_url}")
-
-    try:
-        resp = requests.get(pdf_url, timeout=60)
-        resp.raise_for_status()
-    except requests.RequestException as error:
-        print(f"  PDF download failed: {error}")
-        return [], daily_rows
-
-    monthly_rows = []
-    pdf_daily_rows = []
-    pending_month = None
-
-    def parse_dk_prices(line):
-        # Columns: miles95, miles+95, miles diesel, miles truck, miles+ diesel, HVO100, ...
-        numbers = re.findall(r"\d+,\d+", line)
-        if len(numbers) < 6:
-            return None, None
-        def to_float(value):
-            return float(value.replace(",", "."))
-        diesel = round(to_float(numbers[2]), 4)
-        hvo = round(to_float(numbers[5]), 4)
-        return diesel, hvo
-
-    with pdfplumber.open(BytesIO(resp.content)) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text() or ""
-            for line in text.split("\n"):
-                stripped = line.strip()
-                header_match = MONTH_HEADER_DK.match(stripped)
-                if header_match:
-                    month_key = header_match.group(1).lower()
-                    year = header_match.group(2)
-                    if month_key in MONTH_MAP_DK:
-                        pending_month = f"{year}-{MONTH_MAP_DK[month_key]}"
-                    continue
-
-                if not pending_month:
-                    continue
-
-                if re.search(r"\bsnit\b", stripped, re.IGNORECASE):
-                    try:
-                        diesel, hvo = parse_dk_prices(stripped)
-                        if diesel:
-                            monthly_rows.append({
-                                "month": pending_month,
-                                "diesel_avg": diesel,
-                                "hvo_avg": hvo,
-                            })
-                    except (ValueError, IndexError):
-                        pass
-                    pending_month = None
-                    continue
-
-                day_match = re.match(r"^(\d{1,2})\s", stripped)
-                if not day_match:
-                    continue
-                try:
-                    diesel, hvo = parse_dk_prices(stripped)
-                    if not diesel:
-                        continue
-                    year, month = pending_month.split("-")
-                    day = int(day_match.group(1))
-                    pdf_daily_rows.append({
-                        "date": f"{year}-{month}-{day:02d}",
-                        "diesel": diesel,
-                        "hvo": hvo,
-                    })
-                except (ValueError, IndexError):
-                    pass
-
-    if pdf_daily_rows:
-        print(f"  PDF daily: {len(pdf_daily_rows)} days ({pdf_daily_rows[0]['date']} – {pdf_daily_rows[-1]['date']})")
-        daily_by_date = {row["date"]: row for row in pdf_daily_rows}
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        for row in daily_rows:
-            if row["date"] == today or row["date"] not in daily_by_date:
-                daily_by_date[row["date"]] = row
-        daily_rows = [daily_by_date[key] for key in sorted(daily_by_date)]
-
-    print(f"  {len(monthly_rows)} months, {len(daily_rows)} daily rows")
-    return monthly_rows, daily_rows
+    return results
 
 
 # ── Circle K SE (daglig listpris) ────────────────────────────────────────────
@@ -845,32 +800,39 @@ def main():
             ]
 
     if run_daily:
-        ck_dk_monthly, ck_dk_daily = fetch_ck_dk()
-        if ck_dk_monthly:
-            synced_sources.append("DK_ck")
-            n = append_csv(
-                os.path.join(DATA_DIR, "circklek_DK_månedlig.csv"),
-                ck_dk_monthly, ["month", "diesel_avg", "hvo_avg"], "month",
-            )
-            report.append(f"DK_ck: +{n} months (latest: {ck_dk_monthly[-1]['month']})")
-            monthly_upsert += [
-                {"source": "DK_ck", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
-                for r in ck_dk_monthly
-            ]
-        if ck_dk_daily:
-            dk_csv = os.path.join(DATA_DIR, "circklek_DK_daglig.csv")
-            ck_dk_daily = gap_fill_daily_rows(
-                ck_dk_daily[0], read_existing_keys(dk_csv, "date")
-            )
-        if ck_dk_daily:
-            if "DK_ck" not in synced_sources:
-                synced_sources.append("DK_ck")
-            merge_csv_rows(dk_csv, ck_dk_daily, ["date", "diesel", "hvo"], "date")
-            report.append(f"DK_ck daily: {len(ck_dk_daily)} rows (through {ck_dk_daily[-1]['date']})")
-            daily_upsert += [
-                {"source": "DK_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
-                for r in ck_dk_daily
-            ]
+        dk_results = fetch_ck_dk()
+        for source_key, suffix in (("DK_ck", ""), ("DK_ck_inkl", "_inkl")):
+            dk_data = dk_results.get(source_key, {})
+            ck_dk_monthly = dk_data.get("monthly", [])
+            ck_dk_daily = dk_data.get("daily", [])
+            if not ck_dk_monthly and not ck_dk_daily:
+                continue
+
+            synced_sources.append(source_key)
+            supabase_delete_before(source_key, "price_data", "month", DK_MIN_MONTH)
+            supabase_delete_before(source_key, "daily_price_data", "date", DK_MIN_DATE)
+
+            if ck_dk_monthly:
+                monthly_path = os.path.join(DATA_DIR, f"circklek_DK_månedlig{suffix}.csv")
+                write_csv_full(monthly_path, ck_dk_monthly, ["month", "diesel_avg", "hvo_avg"], "month")
+                report.append(
+                    f"{source_key}: {len(ck_dk_monthly)} months (latest: {ck_dk_monthly[-1]['month']})"
+                )
+                monthly_upsert += [
+                    {"source": source_key, "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
+                    for r in ck_dk_monthly
+                ]
+
+            if ck_dk_daily:
+                daily_path = os.path.join(DATA_DIR, f"circklek_DK_daglig{suffix}.csv")
+                write_csv_full(daily_path, ck_dk_daily, ["date", "diesel", "hvo"], "date")
+                report.append(
+                    f"{source_key} daily: {len(ck_dk_daily)} rows (through {ck_dk_daily[-1]['date']})"
+                )
+                daily_upsert += [
+                    {"source": source_key, "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
+                    for r in ck_dk_daily
+                ]
 
     ck_se_live = fetch_ck_se_daily() if run_daily else []
     if ck_se_live:
@@ -909,7 +871,7 @@ def main():
     upsert_ok = supabase_upsert(daily_upsert,   table="daily_price_data") and upsert_ok
 
     # Compute true monthly averages from all accumulated daily data for web-scraped sources
-    daily_sources = [s for s in ("NO_ck", "DK_ck") if s in synced_sources]
+    daily_sources = [s for s in ("NO_ck",) if s in synced_sources]
     if daily_sources:
         print("\n── Monthly averages from daily data ──────────────────────────────────")
         monthly_from_daily = compute_monthly_from_daily(daily_sources)

@@ -82,7 +82,7 @@ def build_insert_batches(sql_file, batch_size=50):
     with open(sql_file, encoding='utf-8') as f:
         content = f.read()
 
-    sources = ['SE_preem', 'SE_ck', 'DK_ck']
+    sources = ['SE_preem', 'SE_ck', 'DK_ck', 'DK_ck_inkl']
     batches = []
 
     for source in sources:
