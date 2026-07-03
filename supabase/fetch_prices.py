@@ -40,27 +40,45 @@ DK_MIN_DATE = "2022-01-01"
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
 
-def compute_monthly_from_daily(sources):
-    """Fetches all daily_price_data rows for given sources, returns monthly averages."""
+def fetch_all_daily_rows(sources):
     if not sources:
         return []
-    source_filter = ",".join(f"source.eq.{s}" for s in sources)
-    url = (
-        f"{SUPABASE_URL}/rest/v1/daily_price_data"
-        f"?select=source,date,diesel,hvo"
-        f"&or=({source_filter})"
-        f"&order=date.asc"
-        f"&limit=10000"
-    )
     headers = {
         "apikey": SUPABASE_SERVICE_KEY,
         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
     }
-    resp = requests.get(url, headers=headers, timeout=30)
-    if not resp.ok:
-        print(f"  compute_monthly_from_daily: fetch failed {resp.status_code}")
+    page_size = 1000
+    rows = []
+    for source in sources:
+        offset = 0
+        while True:
+            url = (
+                f"{SUPABASE_URL}/rest/v1/daily_price_data"
+                f"?select=source,date,diesel,hvo"
+                f"&source=eq.{source}"
+                f"&order=date.asc"
+                f"&limit={page_size}"
+                f"&offset={offset}"
+            )
+            resp = requests.get(url, headers=headers, timeout=30)
+            if not resp.ok:
+                print(f"  compute_monthly_from_daily: fetch failed {resp.status_code}")
+                return []
+            chunk = resp.json()
+            if not chunk:
+                break
+            rows.extend(chunk)
+            if len(chunk) < page_size:
+                break
+            offset += page_size
+    return rows
+
+
+def compute_monthly_from_daily(sources):
+    """Fetches all daily_price_data rows for given sources, returns monthly averages."""
+    if not sources:
         return []
-    rows = resp.json()
+    rows = fetch_all_daily_rows(sources)
     monthly = defaultdict(lambda: {"diesel": [], "hvo": []})
     for row in rows:
         month = row["date"][:7]

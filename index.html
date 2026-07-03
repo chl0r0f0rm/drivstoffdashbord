@@ -870,26 +870,42 @@ function renderSourceSyncLabels() {
   // Sync time is shown in source-ref for the active source only — tabs have no variable content
 }
 
+async function fetchAllSupabaseRows(endpoint) {
+  const pageSize = 1000;
+  let offset = 0;
+  const rows = [];
+  while (true) {
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const url = `${endpoint}${separator}limit=${pageSize}&offset=${offset}`;
+    const res = await fetch(url, { headers: supabaseHeaders });
+    if (!res.ok) throw new Error(`Supabase fetch failed: ${res.status}`);
+    const chunk = await res.json();
+    if (!chunk.length) break;
+    rows.push(...chunk);
+    if (chunk.length < pageSize) break;
+    offset += pageSize;
+  }
+  return rows;
+}
+
+const DAILY_SOURCE_KEYS = ['NO_ck', 'DK_ck', 'DK_ck_inkl', 'SE_ck'];
+
 async function fetchPriceData() {
-  const [priceRes, syncRes, dailyRes] = await Promise.all([
-    fetch(
-      `${SUPABASE_URL}/rest/v1/price_data?select=source,month,diesel,hvo&order=month.asc`,
-      { headers: supabaseHeaders }
+  const [rows, syncRes, ...dailyChunks] = await Promise.all([
+    fetchAllSupabaseRows(
+      `${SUPABASE_URL}/rest/v1/price_data?select=source,month,diesel,hvo&order=month.asc`
     ),
     fetch(
       `${SUPABASE_URL}/rest/v1/price_source_sync?select=source,updated_at`,
       { headers: supabaseHeaders }
     ),
-    fetch(
-      `${SUPABASE_URL}/rest/v1/daily_price_data?select=source,date,diesel,hvo&source=in.(NO_ck,DK_ck,DK_ck_inkl,SE_ck)&order=date.asc&limit=15000`,
-      { headers: supabaseHeaders }
+    ...DAILY_SOURCE_KEYS.map(source =>
+      fetchAllSupabaseRows(
+        `${SUPABASE_URL}/rest/v1/daily_price_data?select=source,date,diesel,hvo&source=eq.${source}&order=date.asc`
+      )
     ),
   ]);
-  if (!priceRes.ok) throw new Error(`Supabase fetch failed: ${priceRes.status}`);
-  const rows = await priceRes.json();
-  if (!dailyRes.ok) console.error('daily_price_data fetch failed:', dailyRes.status, await dailyRes.text().catch(()=>''));
-  const dailyRows = dailyRes.ok ? await dailyRes.json() : [];
-  console.log('daily rows fetched:', dailyRows.length, dailyRows.map(r=>r.source+'/'+r.date));
+  const dailyRows = dailyChunks.flat();
   SOURCE_SYNC = {};
   if (syncRes.ok) {
     const syncRows = await syncRes.json();
