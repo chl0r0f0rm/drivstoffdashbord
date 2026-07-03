@@ -411,6 +411,14 @@
     margin-bottom: 24px;
     overflow-x: auto;
   }
+  #compareTable th.col-group {
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--ng-bg);
+  }
+  #compareTable td.price-cell { text-align: right; font-variant-numeric: tabular-nums; }
+  #compareTable.hide-diesel .col-diesel { display: none; }
+  #compareTable.hide-hvo .col-hvo { display: none; }
   table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
   th {
     background: var(--ng-bg);
@@ -605,11 +613,11 @@
 
   <!-- Controls -->
   <div class="controls">
-    <div class="control-group">
+    <div class="control-group" id="base-month-control">
       <label>Basismåned</label>
       <select id="baseMonth"></select>
     </div>
-    <div class="control-group">
+    <div class="control-group" id="impact-control">
       <label>Drivstoffandel (%)</label>
       <input type="number" id="impactFactor" value="30" min="1" max="100" step="1" style="width:88px">
     </div>
@@ -630,7 +638,7 @@
     </div>
 
     <!-- Vis måned -->
-    <div class="slider-group">
+    <div class="slider-group" id="view-month-slider-group">
       <label style="font-size:0.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">Vis måned</label>
       <div class="slider-row">
         <input type="range" id="viewMonthSlider" min="0" max="0" value="0" step="1">
@@ -661,6 +669,9 @@
       <div class="tab" data-country="NO_ck" onclick="setCountry(this)">
         <span class="flag-icon"><svg viewBox="0 0 22 15" width="22" height="15" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="15" fill="#EF2B2D"/><rect y="5" width="22" height="5" fill="#fff"/><rect x="7" width="5" height="15" fill="#fff"/><rect y="6" width="22" height="3" fill="#002868"/><rect x="8" width="3" height="15" fill="#002868"/></svg></span>
         <span class="tab-title">Norge – Circle K</span>
+      </div>
+      <div class="tab" data-country="ALL" onclick="setCountry(this)">
+        <span class="tab-title">Alle land</span>
       </div>
     </div>
     <div id="source-ref" style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;"></div>
@@ -805,6 +816,36 @@
     </div>
   </div>
 
+  <!-- Cross-country daily comparison -->
+  <div id="compare-section" style="display:none">
+    <p class="section-label">Daglig sammenligning</p>
+    <div class="table-card">
+      <div class="card-header">
+        <div>
+          <span class="card-title">Diesel og HVO per dato – alle land</span>
+          <div class="data-note">Ekskl. mva/moms · ulike valutaer (SEK / DKK / NOK)</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div class="fuel-toggles">
+            <button class="fuel-toggle active" data-fuel="diesel" onclick="toggleCompareFuel(this)">Diesel</button>
+            <button class="fuel-toggle active" data-fuel="hvo" onclick="toggleCompareFuel(this)">HVO100</button>
+          </div>
+          <div class="period-btns" id="periodCompare" style="margin:0">
+            <button data-days="30"  onclick="setComparePeriod(this)" class="active">30 dager</button>
+            <button data-days="90"  onclick="setComparePeriod(this)">90 dager</button>
+            <button data-days="180" onclick="setComparePeriod(this)">6 mnd</button>
+            <button data-days="365" onclick="setComparePeriod(this)">1 år</button>
+            <button data-days="0"   onclick="setComparePeriod(this)">Alt</button>
+          </div>
+        </div>
+      </div>
+      <table id="compareTable">
+        <thead id="compareTableHead"></thead>
+        <tbody id="compareTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
 </div><!-- /.main-col -->
 </div><!-- /.page-body -->
 </div><!-- /.container -->
@@ -834,6 +875,12 @@ const SOURCE_META = {
   DK_ck_inkl: { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true, hasBothViews: true, sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser', sourceFile: 'miles diesel (inkl. moms)' },
   NO_ck:    { label: 'Circle K Norge',   currency: 'NOK', flag: '🇳🇴', hasDaily: true,  sourceUrl: 'https://www.circlek.no/bedrift/produkter/drivstoff/priser',             sourceFile: 'Bulk-listepris (eks. mva)' },
 };
+
+const COMPARE_DAILY_SOURCES = [
+  { key: 'SE_ck', short: 'SE Circle K', currency: 'SEK' },
+  { key: 'DK_ck', short: 'DK Circle K', currency: 'DKK' },
+  { key: 'NO_ck', short: 'NO Circle K', currency: 'NOK' },
+];
 
 const SUPABASE_URL  = 'https://fnkdbuqsschkvpzeumbz.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZua2RidXFzc2Noa3ZwemV1bWJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NTM5MjQsImV4cCI6MjA5MTEyOTkyNH0.bI5r0wyEME9BIBqBAINKkzvYCmHlY1QtZwVYHYRiLpI';
@@ -934,6 +981,7 @@ async function fetchPriceData() {
 let activeCountry = 'SE_preem';
 let activeView = 'monthly'; // 'monthly' | 'daily'
 let activeDkVat = 'ekskl';  // 'ekskl' | 'inkl'
+let activeCompareDays = 30;
 let dieselChart = null, hvoChart = null, surchargeChart = null;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -960,6 +1008,20 @@ function setCountry(el) {
   el.classList.add('active');
   activeCountry = el.dataset.country;
   if (activeCountry !== 'DK_ck') activeDkVat = 'ekskl';
+
+  const isCompareView = activeCountry === 'ALL';
+  document.getElementById('base-month-control').style.display = isCompareView ? 'none' : '';
+  document.getElementById('impact-control').style.display = isCompareView ? 'none' : '';
+  document.getElementById('view-month-slider-group').style.display = isCompareView ? 'none' : '';
+
+  if (isCompareView) {
+    populateYearSliders();
+    document.getElementById('last-updated').textContent = '—';
+    document.getElementById('source-ref').textContent = 'Daglig sammenligning · ekskl. mva/moms';
+    render();
+    return;
+  }
+
   const src = getSource();
   activeView = (src && src.hasBothViews) ? 'monthly' : 'daily';
   document.querySelectorAll('.view-btn[data-view]').forEach(b =>
@@ -1037,11 +1099,16 @@ function getFilteredData() {
 }
 
 function populateYearSliders() {
-  const src = getSource();
-  if (!src) return;
-  const raw = (src.hasBothViews && activeView === 'daily' && src.dailyData && src.dailyData.length)
-    ? src.dailyData.map(r => ({ month: r.date, diesel: r.diesel }))
-    : src.data;
+  let raw;
+  if (activeCountry === 'ALL') {
+    raw = buildCompareRows().map(r => ({ month: r.date, diesel: 1 }));
+  } else {
+    const src = getSource();
+    if (!src) return;
+    raw = (src.hasBothViews && activeView === 'daily' && src.dailyData && src.dailyData.length)
+      ? src.dailyData.map(r => ({ month: r.date, diesel: r.diesel }))
+      : src.data;
+  }
   if (!raw) return;
   const data = raw.filter(r => r.diesel != null);
   if (!data.length) return;
@@ -1750,8 +1817,94 @@ function renderDailyTable() {
   }).join('');
 }
 
+function buildCompareRows() {
+  const byDate = new Map();
+  for (const { key } of COMPARE_DAILY_SOURCES) {
+    const src = SOURCES[key];
+    if (!src || !src.dailyData) continue;
+    for (const row of src.dailyData) {
+      if (!byDate.has(row.date)) byDate.set(row.date, { date: row.date });
+      const entry = byDate.get(row.date);
+      entry[`${key}_diesel`] = row.diesel;
+      entry[`${key}_hvo`] = row.hvo;
+    }
+  }
+  return [...byDate.values()].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function toggleCompareFuel(btn) {
+  btn.classList.toggle('active');
+  const table = document.getElementById('compareTable');
+  table.classList.toggle('hide-diesel', !document.querySelector('#compare-section [data-fuel="diesel"]').classList.contains('active'));
+  table.classList.toggle('hide-hvo', !document.querySelector('#compare-section [data-fuel="hvo"]').classList.contains('active'));
+}
+
+function setComparePeriod(btn) {
+  document.querySelectorAll('#periodCompare button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeCompareDays = parseInt(btn.dataset.days, 10);
+  renderCompareTable();
+}
+
+function renderCompareTable() {
+  const head = document.getElementById('compareTableHead');
+  const body = document.getElementById('compareTableBody');
+  if (!head || !body) return;
+
+  const headerRow1 = ['<tr><th rowspan="2">Dato</th>'];
+  const headerRow2 = ['<tr>'];
+  for (const col of COMPARE_DAILY_SOURCES) {
+    headerRow1.push(`<th colspan="2" class="col-group">${col.short} (${col.currency})</th>`);
+    headerRow2.push(`<th class="col-diesel">Diesel</th><th class="col-hvo">HVO100</th>`);
+  }
+  headerRow1.push('</tr>');
+  headerRow2.push('</tr>');
+  head.innerHTML = headerRow1.join('') + headerRow2.join('');
+
+  let rows = buildCompareRows();
+  const { from, to } = getYearRange();
+  rows = rows.filter(r => {
+    const y = parseInt(r.date.substring(0, 4), 10);
+    return y >= from && y <= to;
+  });
+
+  if (activeCompareDays > 0) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - activeCompareDays);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    rows = rows.filter(r => r.date >= cutoffStr);
+  }
+
+  if (!rows.length) {
+    const colSpan = 1 + COMPARE_DAILY_SOURCES.length * 2;
+    body.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;color:var(--text-muted);padding:16px">Ingen daglige data for valgt periode</td></tr>`;
+    return;
+  }
+
+  const fmtPrice = v => v != null ? Number(v).toFixed(4) : '—';
+  body.innerHTML = rows.map(r => {
+    const cells = COMPARE_DAILY_SOURCES.map(col => (
+      `<td class="price-cell col-diesel">${fmtPrice(r[`${col.key}_diesel`])}</td>` +
+      `<td class="price-cell col-hvo">${fmtPrice(r[`${col.key}_hvo`])}</td>`
+    )).join('');
+    return `<tr><td><strong>${monthLabel(r.date)}</strong></td>${cells}</tr>`;
+  }).join('');
+}
+
 // ── Main render ───────────────────────────────────────────────────────────────
 function render() {
+  const isCompareView = activeCountry === 'ALL';
+  document.getElementById('compare-section').style.display = isCompareView ? '' : 'none';
+
+  if (isCompareView) {
+    document.getElementById('monthly-sections').style.display = 'none';
+    document.getElementById('daily-section').style.display = 'none';
+    document.getElementById('view-toggle').style.display = 'none';
+    document.getElementById('dk-vat-toggle').style.display = 'none';
+    renderCompareTable();
+    return;
+  }
+
   const src = getSource();
   if (!src) return;
 
