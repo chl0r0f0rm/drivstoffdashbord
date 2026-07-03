@@ -533,7 +533,10 @@ def _parse_ck_dk_pdf(pdf_bytes, min_month=DK_MIN_MONTH):
                 if not diesel:
                     continue
                 day = int(day_match.group(1))
-                date_value = f"{year}-{month}-{day:02d}"
+                try:
+                    date_value = date(int(year), int(month), day).isoformat()
+                except ValueError:
+                    continue
                 if date_value < DK_MIN_DATE:
                     continue
                 daily_rows.append({
