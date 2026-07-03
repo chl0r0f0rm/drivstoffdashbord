@@ -25,9 +25,9 @@
     --key-number-bg-2: #fff0e0; --key-number-text-2: #1a1a1a;
     --key-number-bg-3: #1a1a1a; --key-number-text-3: #ffffff;
     --key-number-bg-4: #fff8f0; --key-number-text-4: #e85c0d;
-    --red:        #C0392B;
+    --red:        #D9584A;
     --red-light:  #FDECEA;
-    --green:      #2E7D50;
+    --green:      #48A876;
     --green-light:#E5F4EC;
     --blue:       #2471A3;
     --blue-light: #EAF4FB;
@@ -303,7 +303,28 @@
   .period-btns button.active { background: var(--ng-mid); border-color: var(--ng-mid); color: white; }
 
   /* ── Country tabs ── */
-  .country-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .country-bar { margin-bottom: 20px; }
+  .country-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .country-bar-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 34px;
+  }
+  #source-ref {
+    margin-left: auto;
+    flex: 0 0 280px;
+    max-width: 280px;
+    min-height: 2.9em;
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+    white-space: normal;
+    word-break: break-word;
+  }
+  .source-ref-line { display: block; }
   .tab {
     display: flex;
     align-items: center;
@@ -364,6 +385,27 @@
     opacity: 0.7;
     align-self: end;
   }
+  .kpi-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 700;
+    opacity: 1;
+  }
+  .kpi-arrow.kpi-change-up,
+  .kpi-change-value.kpi-change-up { color: var(--red); }
+  .kpi-arrow.kpi-change-down,
+  .kpi-change-value.kpi-change-down { color: var(--green); }
+  .kpi-ng[style*="key-number-text-1"] .kpi-arrow.kpi-change-up,
+  .kpi-ng[style*="key-number-text-1"] .kpi-change-value.kpi-change-up,
+  .kpi-ng[style*="key-number-text-3"] .kpi-arrow.kpi-change-up,
+  .kpi-ng[style*="key-number-text-3"] .kpi-change-value.kpi-change-up { color: #ffc4bc; }
+  .kpi-ng[style*="key-number-text-1"] .kpi-arrow.kpi-change-down,
+  .kpi-ng[style*="key-number-text-1"] .kpi-change-value.kpi-change-down,
+  .kpi-ng[style*="key-number-text-3"] .kpi-arrow.kpi-change-down,
+  .kpi-ng[style*="key-number-text-3"] .kpi-change-value.kpi-change-down { color: #9ee4bc; }
+  .kpi-change-suffix { font-weight: 500; color: inherit; opacity: 0.85; }
+  .kpi-arrow { font-size: 0.9rem; line-height: 1; }
 
   /* ── Surcharge chart ── */
   .surcharge-card {
@@ -419,6 +461,13 @@
   #compareTable td.price-cell { text-align: right; font-variant-numeric: tabular-nums; }
   #compareTable.hide-diesel .col-diesel { display: none; }
   #compareTable.hide-hvo .col-hvo { display: none; }
+  tr.compare-month-avg td {
+    background: var(--ng-bg);
+    font-weight: 600;
+    border-top: 2px solid var(--border);
+    border-bottom: 2px solid var(--border);
+  }
+  tr.compare-month-avg:hover td { background: #E8F0EC; }
   table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
   th {
     background: var(--ng-bg);
@@ -459,25 +508,29 @@
   /* ── Fuel type toggles ── */
   .fuel-toggles { display: flex; gap: 6px; align-items: center; }
 
-  #view-toggle {
+  #view-controls {
     display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 8px;
-    margin-bottom: 20px;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-bottom: 0;
   }
-  #dk-vat-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  #view-toggle .view-label,
-  #dk-vat-toggle .view-label {
+  #view-controls[hidden] { display: none !important; }
+  #view-controls.hide-vat .vat-control { display: none !important; }
+  #view-controls .view-label {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-muted);
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    white-space: nowrap;
+  }
+  #view-controls .view-control-gap {
+    width: 0;
+    flex-shrink: 0;
   }
   .view-btn {
     padding: 5px 18px;
@@ -488,6 +541,8 @@
     font-size: 0.78rem; font-weight: 600;
     cursor: pointer;
     transition: background .15s, color .15s, border-color .15s;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .view-btn.active {
     background: var(--ng-mid);
@@ -651,9 +706,9 @@
     </div>
   </div>
 
-  <!-- Country tabs + source ref -->
-  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
-    <div class="country-tabs" style="margin-bottom:0;flex:1;min-width:200px;">
+  <!-- Country tabs + meta -->
+  <div class="country-bar">
+    <div class="country-tabs">
       <div class="tab active" data-country="SE_preem" onclick="setCountry(this)">
         <span class="flag-icon"><svg viewBox="0 0 22 15" width="22" height="15" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="15" fill="#006AA7"/><rect y="6" width="22" height="3" fill="#FECC02"/><rect x="8" width="3" height="15" fill="#FECC02"/></svg></span>
         <span class="tab-title">Sverige – Preem</span>
@@ -674,19 +729,17 @@
         <span class="tab-title">Alle land</span>
       </div>
     </div>
-    <div id="source-ref" style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;"></div>
-  </div>
-
-  <!-- View toggle (shown only for sources with both monthly and daily data) -->
-  <div id="dk-vat-toggle" style="display:none">
-    <span class="view-label">Moms:</span>
-    <button class="view-btn active" data-vat="ekskl" onclick="setDkVat('ekskl')">Ekskl. moms</button>
-    <button class="view-btn"        data-vat="inkl" onclick="setDkVat('inkl')">Inkl. moms</button>
-  </div>
-  <div id="view-toggle" style="display:none">
-    <span class="view-label">Vis:</span>
-    <button class="view-btn active" data-view="monthly" onclick="setView('monthly')">Månedlig</button>
-    <button class="view-btn"        data-view="daily"   onclick="setView('daily')">Daglig</button>
+    <div class="country-bar-footer">
+      <div id="view-controls" class="hide-vat" hidden>
+        <span class="view-label vat-control">Moms:</span>
+        <button class="view-btn vat-control active" data-vat="ekskl" onclick="setDkVat('ekskl')">Ekskl. moms</button>
+        <button class="view-btn vat-control" data-vat="inkl" onclick="setDkVat('inkl')">Inkl. moms</button>
+      </div>
+      <div id="source-ref">
+        <span class="source-ref-line">&nbsp;</span>
+        <span class="source-ref-line">&nbsp;</span>
+      </div>
+    </div>
   </div>
 
   <!-- Monthly sections (KPIs, charts, monthly table) — hidden for daily-only sources -->
@@ -786,6 +839,23 @@
     </table>
   </div>
 
+  <div id="daily-history-section" class="table-card" style="display:none;margin-top:20px">
+    <div class="card-header">
+      <span class="card-title" id="daily-history-title">Daglige priser</span>
+    </div>
+    <table id="dailyHistoryTable">
+      <thead>
+        <tr>
+          <th>Dato</th>
+          <th id="th-daily-history-diesel">Diesel</th>
+          <th id="th-daily-history-hvo">HVO100</th>
+          <th>Δ diesel</th>
+        </tr>
+      </thead>
+      <tbody id="dailyHistoryTableBody"></tbody>
+    </table>
+  </div>
+
   </div><!-- /#monthly-sections -->
 
   <!-- Daily prices table (shown only for sources with daily data) -->
@@ -795,9 +865,9 @@
       <div class="card-header">
         <span class="card-title" id="daily-table-title">Daglige priser</span>
         <div class="period-btns" id="periodDaily" style="margin:0">
-          <button data-days="30"  onclick="setDailyPeriod(this)" class="active">30 dager</button>
+          <button data-days="30"  onclick="setDailyPeriod(this)">30 dager</button>
           <button data-days="90"  onclick="setDailyPeriod(this)">90 dager</button>
-          <button data-days="180" onclick="setDailyPeriod(this)">6 mnd</button>
+          <button data-days="180" onclick="setDailyPeriod(this)" class="active">6 mnd</button>
           <button data-days="365" onclick="setDailyPeriod(this)">1 år</button>
           <button data-days="0"   onclick="setDailyPeriod(this)">Alt</button>
         </div>
@@ -831,9 +901,9 @@
             <button class="fuel-toggle active" data-fuel="hvo" onclick="toggleCompareFuel(this)">HVO100</button>
           </div>
           <div class="period-btns" id="periodCompare" style="margin:0">
-            <button data-days="30"  onclick="setComparePeriod(this)" class="active">30 dager</button>
+            <button data-days="30"  onclick="setComparePeriod(this)">30 dager</button>
             <button data-days="90"  onclick="setComparePeriod(this)">90 dager</button>
-            <button data-days="180" onclick="setComparePeriod(this)">6 mnd</button>
+            <button data-days="180" onclick="setComparePeriod(this)" class="active">6 mnd</button>
             <button data-days="365" onclick="setComparePeriod(this)">1 år</button>
             <button data-days="0"   onclick="setComparePeriod(this)">Alt</button>
           </div>
@@ -963,10 +1033,12 @@ async function fetchPriceData() {
     SOURCES[key] = {
       ...meta,
       lastSyncAt: SOURCE_SYNC[key] || null,
-      data: rows
-        .filter(r => r.source === key)
-        .filter(r => !isDkSource || r.month >= '2022-01')
-        .map(({ month, diesel, hvo }) => ({ month, diesel, hvo })),
+      data: sanitizeMonthlyData(
+        rows
+          .filter(r => r.source === key)
+          .filter(r => !isDkSource || r.month >= '2022-01')
+          .map(({ month, diesel, hvo }) => ({ month, diesel, hvo }))
+      ),
       dailyData: dailyRows
         .filter(r => r.source === key)
         .filter(r => !isDkSource || r.date >= '2022-01-01')
@@ -979,14 +1051,38 @@ async function fetchPriceData() {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let activeCountry = 'SE_preem';
-let activeView = 'monthly'; // 'monthly' | 'daily'
 let activeDkVat = 'ekskl';  // 'ekskl' | 'inkl'
-let activeCompareDays = 30;
+let activeCompareDays = 180;
 let dieselChart = null, hvoChart = null, surchargeChart = null;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmt    = (v, d=2) => v != null ? v.toFixed(d) : '—';
 const fmtPct = v => v != null ? (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%' : '—';
+
+function kpiChangeHtml(change, suffix = '') {
+  if (change == null) return '';
+  const suffixHtml = suffix ? ` <span class="kpi-change-suffix">${suffix}</span>` : '';
+  if (Math.abs(change) < 0.00005) {
+    return `<span class="kpi-change"><span class="kpi-change-value">0,0%</span>${suffixHtml}</span>`;
+  }
+  const isUp = change > 0;
+  const cls = isUp ? 'kpi-change-up' : 'kpi-change-down';
+  const arrow = isUp ? '↑' : '↓';
+  return `<span class="kpi-change"><span class="kpi-arrow ${cls}" aria-hidden="true">${arrow}</span><span class="kpi-change-value ${cls}">${fmtPct(change)}</span>${suffixHtml}</span>`;
+}
+
+function kpiChangePpHtml(deltaPp, suffix = '') {
+  if (deltaPp == null) return '';
+  const suffixHtml = suffix ? ` <span class="kpi-change-suffix">${suffix}</span>` : '';
+  if (Math.abs(deltaPp) < 0.05) {
+    return `<span class="kpi-change"><span class="kpi-change-value">0,0 pp</span>${suffixHtml}</span>`;
+  }
+  const isUp = deltaPp > 0;
+  const cls = isUp ? 'kpi-change-up' : 'kpi-change-down';
+  const arrow = isUp ? '↑' : '↓';
+  const sign = isUp ? '+' : '';
+  return `<span class="kpi-change"><span class="kpi-arrow ${cls}" aria-hidden="true">${arrow}</span><span class="kpi-change-value ${cls}">${sign}${deltaPp.toFixed(1)} pp</span>${suffixHtml}</span>`;
+}
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Des'];
 const monthLabel = m => {
   const parts = m.split('-');
@@ -995,6 +1091,31 @@ const monthLabel = m => {
     ? `${parseInt(day, 10)}. ${MONTH_NAMES[+mo - 1]} ${y}`
     : MONTH_NAMES[+mo - 1] + ' ' + y;
 };
+
+function drawChartXLabels(ctx, monthKeys, xAt, w, h, pad) {
+  const n = monthKeys.length;
+  if (!n) return;
+  const cw = w - pad.left - pad.right;
+  const step = Math.max(1, Math.ceil(n / Math.max(1, Math.floor(cw / 44))));
+  const indices = new Set([0, n - 1]);
+  for (let i = 0; i < n; i += step) indices.add(i);
+
+  const monthY = h - pad.bottom + 10;
+  const yearY  = h - pad.bottom + 21;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = C.text;
+
+  [...indices].sort((a, b) => a - b).forEach(i => {
+    const parts = monthKeys[i].split('-');
+    const year = parts[0];
+    const mo = MONTH_NAMES[+parts[1] - 1] || '';
+    const x = xAt(i);
+    ctx.font = `9px -apple-system, sans-serif`;
+    ctx.fillText(mo, x, monthY);
+    ctx.font = `8px -apple-system, sans-serif`;
+    ctx.fillText(year, x, yearY);
+  });
+}
 
 function toggleFuel(btn) {
   btn.classList.toggle('active');
@@ -1017,33 +1138,20 @@ function setCountry(el) {
   if (isCompareView) {
     populateYearSliders();
     document.getElementById('last-updated').textContent = '—';
-    document.getElementById('source-ref').textContent = 'Daglig sammenligning · ekskl. mva/moms';
+    document.getElementById('source-ref').innerHTML =
+      '<span class="source-ref-line">Daglig sammenligning</span>' +
+      '<span class="source-ref-line">ekskl. mva/moms</span>';
     render();
     return;
   }
 
   const src = getSource();
-  activeView = (src && src.hasBothViews) ? 'monthly' : 'daily';
-  document.querySelectorAll('.view-btn[data-view]').forEach(b =>
-    b.classList.toggle('active', b.dataset.view === activeView)
-  );
   document.querySelectorAll('.view-btn[data-vat]').forEach(b =>
     b.classList.toggle('active', b.dataset.vat === activeDkVat)
   );
   const headerSync = getSourceLastSyncText(src);
   document.getElementById('last-updated').textContent =
     headerSync !== '—' ? headerSync : '—';
-  populateYearSliders();
-  populateBaseMonths();
-  populateViewMonthSlider();
-  render();
-}
-
-function setView(mode) {
-  activeView = mode;
-  document.querySelectorAll('.view-btn[data-view]').forEach(b =>
-    b.classList.toggle('active', b.dataset.view === mode)
-  );
   populateYearSliders();
   populateBaseMonths();
   populateViewMonthSlider();
@@ -1058,6 +1166,15 @@ function setDkVat(vat) {
   populateBaseMonths();
   populateViewMonthSlider();
   render();
+}
+
+function updateViewControls() {
+  const isCompareView = activeCountry === 'ALL';
+  const showVat = !isCompareView && activeCountry === 'DK_ck';
+  const bar = document.getElementById('view-controls');
+  bar.classList.toggle('hide-vat', !showVat);
+  if (showVat) bar.removeAttribute('hidden');
+  else bar.setAttribute('hidden', '');
 }
 
 function getDataSourceKey() {
@@ -1079,23 +1196,63 @@ function getYearRange() {
   };
 }
 
-function getFilteredData() {
-  const src = getSource();
-  if (!src) return [];
-  const { from, to } = getYearRange();
-  if (src.hasBothViews && activeView === 'daily' && src.dailyData && src.dailyData.length) {
-    return src.dailyData
-      .filter(r => {
-        const y = parseInt(r.date.substring(0, 4), 10);
-        return y >= from && y <= to;
-      })
-      .map(r => ({ month: r.date, diesel: r.diesel != null ? Number(r.diesel) : null, hvo: r.hvo != null ? Number(r.hvo) : null }));
+function getCurrentYearMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function monthDiffMonths(a, b) {
+  const [ay, am] = a.split('-').map(Number);
+  const [by, bm] = b.split('-').map(Number);
+  return (ay - by) * 12 + (am - bm);
+}
+
+function getValidMonthCap(rows) {
+  const nowYm = getCurrentYearMonth();
+  let valid = (rows || [])
+    .filter(r => r.diesel != null && r.month <= nowYm)
+    .sort((a, b) => a.month.localeCompare(b.month));
+  if (!valid.length) return nowYm;
+
+  while (valid.length >= 2) {
+    const last = valid[valid.length - 1];
+    const prev = valid[valid.length - 2];
+    if (monthDiffMonths(last.month, prev.month) > 3) valid = valid.slice(0, -1);
+    else break;
   }
-  if (!src.data) return [];
+  return valid[valid.length - 1].month;
+}
+
+function sanitizeMonthlyData(rows) {
+  if (!rows?.length) return rows || [];
+  const cap = getValidMonthCap(rows);
+  return rows.filter(r => r.month <= cap);
+}
+
+function getFilteredMonthlyData() {
+  const src = getSource();
+  if (!src || !src.data) return [];
+  const { from, to } = getYearRange();
+  const monthCap = getValidMonthCap(src.data);
   return src.data.filter(r => {
     const y = parseInt(r.month.substring(0, 4), 10);
-    return y >= from && y <= to;
+    return y >= from && y <= to && r.month <= monthCap;
   });
+}
+
+function getFilteredDailyData() {
+  const src = getSource();
+  if (!src || !src.dailyData) return [];
+  const { from, to } = getYearRange();
+  const currentYearMonth = getCurrentYearMonth();
+  return src.dailyData.filter(r => {
+    const y = parseInt(r.date.substring(0, 4), 10);
+    return y >= from && y <= to && r.date.slice(0, 7) <= currentYearMonth;
+  });
+}
+
+function getFilteredData() {
+  return getFilteredMonthlyData();
 }
 
 function populateYearSliders() {
@@ -1105,9 +1262,9 @@ function populateYearSliders() {
   } else {
     const src = getSource();
     if (!src) return;
-    raw = (src.hasBothViews && activeView === 'daily' && src.dailyData && src.dailyData.length)
-      ? src.dailyData.map(r => ({ month: r.date, diesel: r.diesel }))
-      : src.data;
+    raw = src.data && src.data.length
+      ? src.data
+      : (src.dailyData || []).map(r => ({ month: r.date, diesel: r.diesel }));
   }
   if (!raw) return;
   const data = raw.filter(r => r.diesel != null);
@@ -1145,7 +1302,7 @@ function getViewMonth() {
   const idx = parseInt(document.getElementById('viewMonthSlider').value, 10);
   return _viewMonthData[idx] || null;
 }
-const chartPeriods = { surcharge: 36, diesel: 36, hvo: 36 };
+const chartPeriods = { surcharge: 6, diesel: 6, hvo: 6 };
 
 function getPeriodMths(chart) {
   const m = chartPeriods[chart] || 36;
@@ -1177,10 +1334,8 @@ function populateBaseMonths() {
   }).join('');
 
   if (!reversed.length) return;
-  const src = getSource();
-  const isDailyView = src && src.hasBothViews && activeView === 'daily';
   if (!data.find(r => r.month === '2026-02')) {
-    sel.value = isDailyView ? data[0].month : reversed[0].month;
+    sel.value = reversed[0].month;
   } else if (prev && sel.querySelector(`option[value="${prev}"]`)) {
     sel.value = prev;
   }
@@ -1190,7 +1345,6 @@ function populateBaseMonths() {
 function renderKPIs(data, baseMonth) {
   const src    = getSource();
   const impact = getImpact();
-  const isDailyView = !!(src && src.hasBothViews && activeView === 'daily');
   const base   = data.find(r => r.month === baseMonth);
   const withDiesel = data.filter(r => r.diesel != null);
 
@@ -1203,15 +1357,16 @@ function renderKPIs(data, baseMonth) {
   const dieselChg  = selected.diesel / base.diesel - 1;
   const hvoChg     = selected.hvo && base.hvo ? selected.hvo / base.hvo - 1 : null;
   const surcharge  = dieselChg * impact;
+  const afterBase = selected.month > baseMonth;
   const momDiesel  = prev ? selected.diesel / prev.diesel - 1 : null;
+  const momHvo     = prev && selected.hvo && prev.hvo ? selected.hvo / prev.hvo - 1 : null;
+  const prevSurcharge = prev && afterBase ? (prev.diesel / base.diesel - 1) * impact : null;
+  const momSurchargePp = prevSurcharge != null && afterBase ? (surcharge - prevSurcharge) * 100 : null;
 
   const surPct   = (surcharge >= 0 ? '+' : '') + (surcharge * 100).toFixed(1) + '%';
   const isLatest = selected.month === withDiesel[withDiesel.length - 1].month;
-  const afterBase = selected.month > baseMonth;
-  const prevPeriodLabel = isDailyView ? 'fra forrige dag' : 'fra forrige mnd';
-  const afterBaseHint = isDailyView ? 'Velg dato etter basis' : 'Velg måned etter basis';
-
-  // Gjennomsnittlig dieseltillegg fra basismåned t.o.m. valgt måned
+  const prevPeriodLabel = 'fra forrige mnd';
+  const afterBaseHint = 'Velg måned etter basis';
   const periodRows = withDiesel.filter(r => r.month > baseMonth && r.month <= selected.month);
   const avgSurcharge = afterBase && periodRows.length > 0
     ? periodRows.reduce((sum, r) => sum + (r.diesel / base.diesel - 1) * impact, 0) / periodRows.length
@@ -1230,26 +1385,26 @@ function renderKPIs(data, baseMonth) {
           title="Last ned ${src.sourceFile}">${src.sourceFile}</a>`
       : '';
     sourceRef.innerHTML = [
-      syncText !== '—' ? `<span>${syncText}</span>` : '',
-      fileLink ? `<span>Kilde: ${fileLink}</span>` : '',
-    ].filter(Boolean).join(' · ');
+      `<span class="source-ref-line">${syncText !== '—' ? syncText : '&nbsp;'}</span>`,
+      `<span class="source-ref-line">${fileLink ? 'Kilde: ' + fileLink : '&nbsp;'}</span>`,
+    ].join('');
   }
 
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi-ng" style="background:var(--key-number-bg-1);color:var(--key-number-text-1)">
       <div class="kpi-ng-label">Dieseltillegg${isLatest ? ' nå' : ''}</div>
       <div class="kpi-ng-value">${afterBase ? surPct : '—'}</div>
-      <div class="kpi-ng-sub">${afterBase ? 'vs basis ' + monthLabel(baseMonth) : afterBaseHint}</div>
+      <div class="kpi-ng-sub">${afterBase ? (momSurchargePp != null ? kpiChangePpHtml(momSurchargePp, prevPeriodLabel) : 'vs basis ' + monthLabel(baseMonth)) : afterBaseHint}</div>
     </div>
     <div class="kpi-ng" style="background:var(--key-number-bg-2);color:var(--key-number-text-2)">
       <div class="kpi-ng-label">Diesel – ${monthLabel(selected.month)}</div>
       <div class="kpi-ng-value">${fmt(selected.diesel)} <span style="font-size:1rem;font-weight:500">${src.currency}/L</span></div>
-      <div class="kpi-ng-sub">${momDiesel != null ? fmtPct(momDiesel) + ' ' + prevPeriodLabel : ''}</div>
+      <div class="kpi-ng-sub">${kpiChangeHtml(momDiesel, prevPeriodLabel)}</div>
     </div>
     <div class="kpi-ng" style="background:var(--key-number-bg-3);color:var(--key-number-text-3)">
       <div class="kpi-ng-label">HVO100 – ${monthLabel(selected.month)}</div>
       <div class="kpi-ng-value">${selected.hvo ? fmt(selected.hvo) + ' <span style="font-size:1rem;font-weight:500">' + src.currency + '/L</span>' : '—'}</div>
-      <div class="kpi-ng-sub">${hvoChg != null ? fmtPct(hvoChg) + ' vs basis' : 'Data begrenset'}</div>
+      <div class="kpi-ng-sub">${momHvo != null ? kpiChangeHtml(momHvo, prevPeriodLabel) : (selected.hvo ? '—' : 'Data begrenset')}</div>
     </div>
     <div class="kpi-ng" style="background:var(--key-number-bg-4);color:var(--key-number-text-4)">
       <div class="kpi-ng-label">Basispris diesel</div>
@@ -1276,7 +1431,7 @@ function renderSurchargeChart(data, baseMonth) {
   }));
 
   document.getElementById('surcharge-chart-title').textContent =
-    `Dieseltillegg per ${(src.hasBothViews && activeView === 'daily') ? 'dag' : 'måned'} – ${src.flag} ${src.label}  ·  basis: ${monthLabel(baseMonth)}  ·  andel: ${Math.round(impact * 100)}%`;
+    `Dieseltillegg per måned – ${src.flag} ${src.label}  ·  basis: ${monthLabel(baseMonth)}  ·  andel: ${Math.round(impact * 100)}%`;
 
   if (surchargeChart) { surchargeChart.destroy(); surchargeChart = null; }
 
@@ -1494,8 +1649,13 @@ const C = {
   ng:      '#e85c0d',
   ngDark:  '#c94e0a',
   bright:  '#e85c0d',
-  red:     '#C0392B',
-  green:   '#2E7D50',
+  red:     '#D9584A',
+  green:   '#48A876',
+  redFill: 'rgba(217, 88, 74, 0.14)',
+  greenFill: 'rgba(72, 168, 118, 0.14)',
+  neutralFill: 'rgba(107, 107, 107, 0.06)',
+  redBar:  'rgba(217, 88, 74, 0.72)',
+  greenBar:'rgba(72, 168, 118, 0.72)',
   grid:    '#ede8e2',
   text:    '#6B6B6B',
   bg:      '#FFFFFF',
@@ -1517,9 +1677,9 @@ function getCanvas(id) {
   return { ctx, w, h };
 }
 
-function drawBarChart(id, labels, values, colors, opts = {}) {
+function drawBarChart(id, monthKeys, values, colors, opts = {}) {
   const { ctx, w, h } = getCanvas(id);
-  const pad = { top: 36, right: 16, bottom: 42, left: 52 };
+  const pad = { top: 36, right: 16, bottom: 54, left: 52 };
   const cw = w - pad.left - pad.right;
   const ch = h - pad.top  - pad.bottom;
 
@@ -1558,12 +1718,9 @@ function drawBarChart(id, labels, values, colors, opts = {}) {
   const gap = Math.max(1, cw * 0.008);
   const bw  = Math.max(1, (cw - gap * (n - 1)) / n);
 
-  // X tick label interval
-  const maxLabels = Math.floor(cw / 48);
-  const step = Math.max(1, Math.ceil(n / maxLabels));
-
   const fontSize = bw >= 14 ? 9 : bw >= 8 ? 8 : 7;
   const showLabels = bw >= 6;
+  const xAt = i => pad.left + i * (bw + gap) + bw / 2;
 
   values.forEach((v, i) => {
     const x  = pad.left + i * (bw + gap);
@@ -1581,30 +1738,32 @@ function drawBarChart(id, labels, values, colors, opts = {}) {
       ctx.save();
       ctx.textAlign = 'center';
       ctx.font = `bold ${fontSize}px -apple-system, sans-serif`;
-      ctx.fillStyle = colors[i].startsWith('rgba(192') ? '#A93226' : colors[i].startsWith('rgba(39') ? '#1E8449' : '#2D6A4F';
+      ctx.fillStyle = colors[i] === C.redBar ? C.red : colors[i] === C.greenBar ? C.green : '#2D6A4F';
       const lx = x + bw / 2;
       const ly = v >= 0 ? y - 4 : y + bh + fontSize + 2;
       ctx.fillText(label, lx, ly);
       ctx.restore();
     }
-
-    // X-axis tick label
-    if (i % step === 0 || i === n - 1) {
-      ctx.save();
-      ctx.translate(x + bw / 2, h - pad.bottom + 8);
-      ctx.rotate(-Math.PI / 4);
-      ctx.textAlign = 'right';
-      ctx.font = `9px -apple-system, sans-serif`;
-      ctx.fillStyle = C.text;
-      ctx.fillText(labels[i], 0, 0);
-      ctx.restore();
-    }
   });
+
+  drawChartXLabels(ctx, monthKeys, xAt, w, h, pad);
+}
+
+function lineColorForDelta(v0, v1) {
+  if (v1 > v0) return C.red;
+  if (v1 < v0) return C.green;
+  return C.text;
+}
+
+function lineFillForDelta(v0, v1) {
+  if (v1 > v0) return C.redFill;
+  if (v1 < v0) return C.greenFill;
+  return C.neutralFill;
 }
 
 function drawLineChart(id, datasets, opts = {}) {
   const { ctx, w, h } = getCanvas(id);
-  const pad = { top: 16, right: 16, bottom: 36, left: 50 };
+  const pad = { top: 16, right: 16, bottom: 54, left: 50 };
   const cw = w - pad.left - pad.right;
   const ch = h - pad.top  - pad.bottom;
 
@@ -1639,14 +1798,7 @@ function drawLineChart(id, datasets, opts = {}) {
   }
 
   // X labels
-  const maxLabels = Math.floor(cw / 60);
-  const step = Math.max(1, Math.ceil(n / maxLabels));
-  ctx.textAlign = 'center';
-  ctx.font = `10px -apple-system, sans-serif`;
-  ctx.fillStyle = C.text;
-  for (let i = 0; i < n; i += step) {
-    ctx.fillText(labels[i], xOf(i), h - pad.bottom + 14);
-  }
+  drawChartXLabels(ctx, labels, xOf, w, h, pad);
 
   // Draw datasets
   datasets.forEach(ds => {
@@ -1674,6 +1826,48 @@ function drawLineChart(id, datasets, opts = {}) {
     }
 
     // Line
+    if (ds.directional) {
+      const baseY = pad.top + ch;
+      for (let i = 1; i < pts.length; i++) {
+        if (!pts[i] || !pts[i - 1]) continue;
+        const v0 = ds.data[i - 1];
+        const v1 = ds.data[i];
+        if (v0 == null || v1 == null) continue;
+        ctx.beginPath();
+        ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
+        ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.lineTo(pts[i].x, baseY);
+        ctx.lineTo(pts[i - 1].x, baseY);
+        ctx.closePath();
+        ctx.fillStyle = lineFillForDelta(v0, v1);
+        ctx.fill();
+      }
+      for (let i = 1; i < pts.length; i++) {
+        if (!pts[i] || !pts[i - 1]) continue;
+        const v0 = ds.data[i - 1];
+        const v1 = ds.data[i];
+        if (v0 == null || v1 == null) continue;
+        ctx.beginPath();
+        ctx.strokeStyle = lineColorForDelta(v0, v1);
+        ctx.lineWidth = ds.lineWidth || 2.5;
+        ctx.setLineDash([]);
+        ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
+        ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.stroke();
+      }
+      if (n <= 48) {
+        for (let i = 1; i < pts.length; i++) {
+          if (!pts[i] || !pts[i - 1]) continue;
+          const v0 = ds.data[i - 1];
+          const v1 = ds.data[i];
+          if (v0 == null || v1 == null) continue;
+          ctx.beginPath();
+          ctx.arc(pts[i].x, pts[i].y, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = lineColorForDelta(v0, v1);
+          ctx.fill();
+        }
+      }
+    } else {
     ctx.beginPath();
     ctx.strokeStyle = ds.color;
     ctx.lineWidth = ds.lineWidth || 2;
@@ -1697,6 +1891,7 @@ function drawLineChart(id, datasets, opts = {}) {
         ctx.fill();
       });
     }
+    }
   });
 }
 
@@ -1714,13 +1909,13 @@ function renderSurchargeChart(data, baseMonth) {
   }));
 
   document.getElementById('surcharge-chart-title').textContent =
-    `Dieseltillegg per ${(src.hasBothViews && activeView === 'daily') ? 'dag' : 'måned'} – ${src.flag} ${src.label}  ·  basis: ${monthLabel(baseMonth)}  ·  andel: ${Math.round(impact * 100)}%`;
+    `Dieseltillegg per måned – ${src.flag} ${src.label}  ·  basis: ${monthLabel(baseMonth)}  ·  andel: ${Math.round(impact * 100)}%`;
 
   drawBarChart(
     'surchargeChart',
-    rows.map(r => monthLabel(r.month)),
+    rows.map(r => r.month),
     rows.map(r => r.val),
-    rows.map(r => r.month === baseMonth ? C.bright : r.val > 0 ? 'rgba(192,57,43,0.75)' : 'rgba(39,174,96,0.75)')
+    rows.map(r => r.month === baseMonth ? C.bright : r.val > 0 ? C.redBar : C.greenBar)
   );
 }
 
@@ -1739,10 +1934,10 @@ function renderCharts(data, baseMonth) {
   document.getElementById('hvo-chart-title').textContent =
     `HVO100 eks. mva (${src.currency}/L) – ${src.flag} ${src.label}`;
 
-  const dLabels = dieselRows.map(r => monthLabel(r.month));
+  const dLabels = dieselRows.map(r => r.month);
   drawLineChart('dieselChart', [
-    { labels: dLabels, data: dieselRows.map(r => r.diesel), color: C.ng, fill: true, fillColor: 'rgba(232,92,13,0.08)' },
-    ...(base ? [{ labels: dLabels, data: dLabels.map(() => base.diesel), color: 'rgba(192,57,43,0.55)', dash: [6,4], lineWidth: 1.5, fill: false }] : [])
+    { labels: dLabels, data: dieselRows.map(r => r.diesel), directional: true, lineWidth: 2.5, fill: false },
+    ...(base ? [{ labels: dLabels, data: dLabels.map(() => base.diesel), color: 'rgba(120,120,120,0.5)', dash: [6,4], lineWidth: 1.5, fill: false }] : [])
   ]);
 
   if (!hvoRows.length) {
@@ -1754,15 +1949,55 @@ function renderCharts(data, baseMonth) {
     return;
   }
 
-  const hLabels = hvoRows.map(r => monthLabel(r.month));
+  const hLabels = hvoRows.map(r => r.month);
   drawLineChart('hvoChart', [
-    { labels: hLabels, data: hvoRows.map(r => r.hvo), color: C.ngDark, fill: true, fillColor: 'rgba(201,78,10,0.07)' },
-    ...(base && base.hvo ? [{ labels: hLabels, data: hLabels.map(() => base.hvo), color: 'rgba(192,57,43,0.55)', dash: [6,4], lineWidth: 1.5, fill: false }] : [])
+    { labels: hLabels, data: hvoRows.map(r => r.hvo), directional: true, lineWidth: 2.5, fill: false },
+    ...(base && base.hvo ? [{ labels: hLabels, data: hLabels.map(() => base.hvo), color: 'rgba(120,120,120,0.5)', dash: [6,4], lineWidth: 1.5, fill: false }] : [])
   ]);
 }
 
 // ── Daily table ───────────────────────────────────────────────────────────────
-let activeDailyDays = 30;
+let activeDailyDays = 180;
+
+function buildDailyTableRows(rows) {
+  const deltaClass = v => v == null ? '' : Math.abs(v) < 0.0001 ? 'flat' : v > 0 ? 'up' : 'down';
+  const deltaLabel = v => {
+    if (v == null) return '—';
+    const sign = v > 0 ? '+' : '';
+    return `<span class="badge ${deltaClass(v)}">${sign}${v.toFixed(4)}</span>`;
+  };
+  return rows.map((r, i) => {
+    const d = r.diesel != null ? Number(r.diesel) : null;
+    const h = r.hvo != null ? Number(r.hvo) : null;
+    const prev = rows[i + 1];
+    const prevD = prev && prev.diesel != null ? Number(prev.diesel) : null;
+    const delta = (d != null && prevD != null) ? d - prevD : null;
+    return `<tr>
+      <td><strong>${monthLabel(r.date)}</strong></td>
+      <td>${d != null ? d.toFixed(4) : '—'}</td>
+      <td>${h != null ? h.toFixed(4) : '—'}</td>
+      <td>${deltaLabel(delta)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderDailyHistoryTable() {
+  const src = getSource();
+  if (!src || !src.hasBothViews || !src.hasDaily) return;
+
+  document.getElementById('daily-history-title').textContent =
+    `Daglige priser – ${src.label}`;
+  document.getElementById('th-daily-history-diesel').textContent = `Diesel (${src.currency}/L)`;
+  document.getElementById('th-daily-history-hvo').textContent = `HVO100 (${src.currency}/L)`;
+
+  const rows = [...getFilteredDailyData()].reverse();
+  if (!rows.length) {
+    document.getElementById('dailyHistoryTableBody').innerHTML =
+      `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Ingen daglige data for valgt periode</td></tr>`;
+    return;
+  }
+  document.getElementById('dailyHistoryTableBody').innerHTML = buildDailyTableRows(rows);
+}
 
 function setDailyPeriod(btn) {
   document.querySelectorAll('#periodDaily button').forEach(b => b.classList.remove('active'));
@@ -1773,7 +2008,7 @@ function setDailyPeriod(btn) {
 
 function renderDailyTable() {
   const src = getSource();
-  if (!src || !src.hasDaily) return;
+  if (!src || !src.hasDaily || src.hasBothViews) return;
 
   document.getElementById('daily-table-title').textContent =
     `Daglige priser – ${src.label}`;
@@ -1795,26 +2030,12 @@ function renderDailyTable() {
     rows = rows.filter(r => r.date >= cutoffStr);
   }
 
-  const deltaClass = v => v == null ? '' : Math.abs(v) < 0.0001 ? 'flat' : v > 0 ? 'up' : 'down';
-  const deltaLabel = v => {
-    if (v == null) return '—';
-    const sign = v > 0 ? '+' : '';
-    return `<span class="badge ${deltaClass(v)}">${sign}${v.toFixed(4)}</span>`;
-  };
-
-  document.getElementById('dailyTableBody').innerHTML = rows.map((r, i) => {
-    const d = r.diesel != null ? Number(r.diesel) : null;
-    const h = r.hvo    != null ? Number(r.hvo)    : null;
-    const prev = rows[i + 1];
-    const prevD = prev && prev.diesel != null ? Number(prev.diesel) : null;
-    const delta = (d != null && prevD != null) ? d - prevD : null;
-    return `<tr>
-      <td><strong>${r.date}</strong></td>
-      <td>${d != null ? d.toFixed(4) : '—'}</td>
-      <td>${h != null ? h.toFixed(4) : '—'}</td>
-      <td>${deltaLabel(delta)}</td>
-    </tr>`;
-  }).join('');
+  if (!rows.length) {
+    document.getElementById('dailyTableBody').innerHTML =
+      `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Ingen daglige data for valgt periode</td></tr>`;
+    return;
+  }
+  document.getElementById('dailyTableBody').innerHTML = buildDailyTableRows(rows);
 }
 
 function buildCompareRows() {
@@ -1830,6 +2051,21 @@ function buildCompareRows() {
     }
   }
   return [...byDate.values()].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function averageCompareField(rows, field) {
+  const values = rows.map(r => r[field]).filter(v => v != null);
+  if (!values.length) return null;
+  return values.reduce((sum, v) => sum + Number(v), 0) / values.length;
+}
+
+function buildCompareMonthAverage(monthKey, monthRows) {
+  const avg = { monthKey };
+  for (const col of COMPARE_DAILY_SOURCES) {
+    avg[`${col.key}_diesel`] = averageCompareField(monthRows, `${col.key}_diesel`);
+    avg[`${col.key}_hvo`] = averageCompareField(monthRows, `${col.key}_hvo`);
+  }
+  return avg;
 }
 
 function toggleCompareFuel(btn) {
@@ -1882,13 +2118,34 @@ function renderCompareTable() {
   }
 
   const fmtPrice = v => v != null ? Number(v).toFixed(4) : '—';
-  body.innerHTML = rows.map(r => {
-    const cells = COMPARE_DAILY_SOURCES.map(col => (
-      `<td class="price-cell col-diesel">${fmtPrice(r[`${col.key}_diesel`])}</td>` +
-      `<td class="price-cell col-hvo">${fmtPrice(r[`${col.key}_hvo`])}</td>`
-    )).join('');
-    return `<tr><td><strong>${monthLabel(r.date)}</strong></td>${cells}</tr>`;
-  }).join('');
+  const renderPriceCells = r => COMPARE_DAILY_SOURCES.map(col => (
+    `<td class="price-cell col-diesel">${fmtPrice(r[`${col.key}_diesel`])}</td>` +
+    `<td class="price-cell col-hvo">${fmtPrice(r[`${col.key}_hvo`])}</td>`
+  )).join('');
+
+  const rowsByMonth = new Map();
+  for (const r of rows) {
+    const monthKey = r.date.substring(0, 7);
+    if (!rowsByMonth.has(monthKey)) rowsByMonth.set(monthKey, []);
+    rowsByMonth.get(monthKey).push(r);
+  }
+  const months = [...rowsByMonth.keys()].sort((a, b) => b.localeCompare(a));
+
+  const htmlParts = [];
+  for (const monthKey of months) {
+    const monthRows = rowsByMonth.get(monthKey);
+    const avg = buildCompareMonthAverage(monthKey, monthRows);
+    const dayCount = monthRows.length;
+    htmlParts.push(
+      `<tr class="compare-month-avg">` +
+      `<td>Snitt ${monthLabel(monthKey)} <span style="font-weight:400;font-size:0.75rem;color:var(--text-muted)">(${dayCount} d.)</span></td>` +
+      `${renderPriceCells(avg)}</tr>`
+    );
+    for (const r of monthRows) {
+      htmlParts.push(`<tr><td><strong>${monthLabel(r.date)}</strong></td>${renderPriceCells(r)}</tr>`);
+    }
+  }
+  body.innerHTML = htmlParts.join('');
 }
 
 // ── Main render ───────────────────────────────────────────────────────────────
@@ -1899,8 +2156,7 @@ function render() {
   if (isCompareView) {
     document.getElementById('monthly-sections').style.display = 'none';
     document.getElementById('daily-section').style.display = 'none';
-    document.getElementById('view-toggle').style.display = 'none';
-    document.getElementById('dk-vat-toggle').style.display = 'none';
+    updateViewControls();
     renderCompareTable();
     return;
   }
@@ -1912,25 +2168,20 @@ function render() {
   const baseKey = getBaseMonth();
   const baseRow = data.find(r => r.month === baseKey);
   const hasRenderableData = !!(data.length && baseRow);
-
-  // hasBothViews: toggle shown, full dashboard for both views (no simple daily table)
   const hasBothViews = !!(src.hasBothViews && src.hasDaily);
-  document.getElementById('view-toggle').style.display = hasBothViews ? '' : 'none';
-  document.getElementById('dk-vat-toggle').style.display = activeCountry === 'DK_ck' ? '' : 'none';
 
-  const showMonthly = hasRenderableData;
-  const showDaily   = hasBothViews ? false : src.hasDaily;
+  updateViewControls();
 
-  document.getElementById('monthly-sections').style.display = showMonthly ? '' : 'none';
-  document.getElementById('daily-section').style.display    = showDaily   ? '' : 'none';
+  document.getElementById('monthly-sections').style.display = hasRenderableData ? '' : 'none';
+  document.getElementById('daily-history-section').style.display =
+    hasBothViews && src.hasDaily ? '' : 'none';
+  document.getElementById('daily-section').style.display =
+    (!hasBothViews && src.hasDaily) ? '' : 'none';
 
-  // Update labels based on view mode
-  const isDaily = hasBothViews && activeView === 'daily';
-  document.getElementById('th-month').textContent = isDaily ? 'Dato' : 'Måned';
-  document.getElementById('table-title').textContent = isDaily
-    ? `Daglige priser – ${src.label}`
-    : `Månedlige snitt – ${src.label}`;
+  document.getElementById('th-month').textContent = 'Måned';
+  document.getElementById('table-title').textContent = `Månedlige snitt – ${src.label}`;
 
+  try { renderDailyHistoryTable(); } catch(e) { console.error('Daily history table:', e); }
   try { renderDailyTable(); } catch(e) { console.error('Daily table:', e); }
 
   const headerSync = getSourceLastSyncText(src);

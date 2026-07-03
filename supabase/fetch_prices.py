@@ -30,6 +30,20 @@ MONTH_MAP_DK = {
     "maj": "05", "juni": "06", "juli": "07", "august": "08",
     "september": "09", "oktober": "10", "november": "11", "december": "12",
 }
+SNITT_MONTH_MAP = {
+    "januari": "01", "jan": "01",
+    "februari": "02", "feb": "02",
+    "mars": "03",
+    "april": "04", "apr": "04",
+    "maj": "05",
+    "juni": "06",
+    "juli": "07", "jul": "07",
+    "augusti": "08", "aug": "08",
+    "september": "09", "sep": "09",
+    "oktober": "10", "okt": "10",
+    "november": "11", "nov": "11",
+    "december": "12", "dec": "12",
+}
 MONTH_HEADER_DK = re.compile(
     r"^(\w+)\s+(20\d{2})\s+(?:ekskl|inkl)",
     re.IGNORECASE,
@@ -218,6 +232,37 @@ def supabase_delete_before(source, table, date_column, before_value):
     return resp.ok
 
 
+def supabase_delete_after(source, table, date_column, after_value):
+    if not SUPABASE_SERVICE_KEY:
+        print(f"  Skip delete (no service key): {table} {source} > {after_value}")
+        return True
+    url = (
+        f"{SUPABASE_URL}/rest/v1/{table}"
+        f"?source=eq.{source}&{date_column}=gt.{after_value}"
+    )
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    }
+    resp = requests.delete(url, headers=headers, timeout=30)
+    if resp.ok:
+        print(f"  Deleted {table} rows for {source} after {after_value}")
+    else:
+        print(f"  Delete failed ({table} {source}): {resp.status_code} {resp.text[:200]}")
+    return resp.ok
+
+
+def prune_csv_months_after(filepath, fieldnames, key_column, after_value):
+    if not os.path.exists(filepath):
+        return
+    with open(filepath, newline="", encoding="utf-8") as file_handle:
+        rows = list(csv.DictReader(file_handle))
+    kept = [row for row in rows if row[key_column] <= after_value]
+    if len(kept) == len(rows):
+        return
+    write_csv_full(filepath, kept, fieldnames, key_column)
+
+
 def gap_fill_daily_rows(latest_row, existing_dates):
     """Fill missing calendar days from last stored date through today with current price."""
     today = date.fromisoformat(latest_row["date"])
@@ -244,6 +289,7 @@ def gap_fill_daily_rows(latest_row, existing_dates):
 
 def excel_serial_to_date(serial):
     try:
+        import xlrd
         if not isinstance(serial, (int, float)) or serial < 30000:
             return None
         return xlrd.xldate.xldate_as_datetime(serial, 0).date()
@@ -264,6 +310,54 @@ def monthly_avg(values):
     if not clean:
         return None
     return round(sum(clean) / len(clean), 4)
+
+
+def month_from_snitt_label(label, sheet_year):
+    lower = label.lower()
+    if re.search(r"snitt[-\s]+\d{4}\s*$", lower):
+        return None
+    for name, month_num in SNITT_MONTH_MAP.items():
+        if re.search(rf"\b{re.escape(name)}\b", lower):
+            return f"{sheet_year}-{month_num}"
+    return None
+
+
+def is_future_month(month_key):
+    now = datetime.now()
+    current = f"{now.year}-{now.month:02d}"
+    return month_key > current
+
+
+def latest_month_from_daily(daily_rows):
+    if not daily_rows:
+        return None
+    latest = max(date.fromisoformat(row["date"]) for row in daily_rows)
+    return f"{latest.year}-{latest.month:02d}"
+
+
+def preem_month_from_snitt_row(ws, row_idx, sheet_year):
+    label = str(ws.row_values(row_idx)[0])
+    month = month_from_snitt_label(label, sheet_year)
+    if month:
+        return month
+    if re.search(r"snitt[-\s]+\d{4}\s*$", label.lower()):
+        return None
+    today = date.today()
+    for back_idx in range(row_idx - 1, max(0, row_idx - 35), -1):
+        back_row = ws.row_values(back_idx)
+        back_label = str(back_row[0]) if back_row else ""
+        if re.search(r"genomsnitt|snitt", back_label, re.IGNORECASE):
+            explicit = month_from_snitt_label(back_label, sheet_year)
+            if explicit:
+                return explicit
+        back_date = excel_serial_to_date(back_row[0])
+        if not back_date or back_date > today:
+            continue
+        back_diesel = safe_float(back_row[3] if len(back_row) > 3 else None)
+        if not back_diesel:
+            continue
+        return f"{back_date.year}-{back_date.month:02d}"
+    return None
 
 
 # ── Preem SE ──────────────────────────────────────────────────────────────────
@@ -311,6 +405,7 @@ def fetch_preem_se():
     daily_rows = []
 
     for sheet_name in target_sheets:
+        sheet_year = sheet_name.strip()
         ws = wb.sheet_by_name(sheet_name)
         for row_idx in range(2, ws.nrows):
             row = ws.row_values(row_idx)
@@ -321,16 +416,15 @@ def fetch_preem_se():
             if re.search(r"genomsnitt|snitt", label, re.IGNORECASE):
                 diesel = safe_float(row[3] if len(row) > 3 else None)
                 hvo = safe_float(row[5] if len(row) > 5 else None)
-                # find month from most recent daily row above
-                for back_idx in range(row_idx - 1, max(0, row_idx - 35), -1):
-                    date = excel_serial_to_date(ws.row_values(back_idx)[0])
-                    if date:
-                        month = f"{date.year}-{date.month:02d}"
-                        if diesel:
-                            monthly_data.setdefault(month, {})
-                            monthly_data[month]["genomsnitt_diesel"] = diesel
-                            monthly_data[month]["genomsnitt_hvo"] = hvo
-                        break
+                if not diesel:
+                    continue
+
+                month = preem_month_from_snitt_row(ws, row_idx, sheet_year)
+
+                if month and not is_future_month(month):
+                    monthly_data.setdefault(month, {})
+                    monthly_data[month]["genomsnitt_diesel"] = diesel
+                    monthly_data[month]["genomsnitt_hvo"] = hvo
                 continue
 
             date = excel_serial_to_date(row[0])
@@ -355,8 +449,13 @@ def fetch_preem_se():
                 "hvo": round(hvo, 4) if hvo else None,
             })
 
+    latest_daily_month = latest_month_from_daily(daily_rows)
     monthly_rows = []
     for month, data in sorted(monthly_data.items()):
+        if is_future_month(month):
+            continue
+        if latest_daily_month and month > latest_daily_month:
+            continue
         if "genomsnitt_diesel" in data:
             diesel_avg = data["genomsnitt_diesel"]
             hvo_avg = data.get("genomsnitt_hvo")
@@ -511,18 +610,6 @@ def _find_dk_pdf_url(soup, vat_type):
     return None
 
 
-def _extract_dk_month_from_page(text):
-    for line in text.split("\n"):
-        header_match = MONTH_HEADER_DK.match(line.strip())
-        if not header_match:
-            continue
-        month_key = header_match.group(1).lower()
-        year = header_match.group(2)
-        if month_key in MONTH_MAP_DK:
-            return f"{year}-{MONTH_MAP_DK[month_key]}"
-    return None
-
-
 def _parse_ck_dk_pdf(pdf_bytes, min_month=DK_MIN_MONTH):
     try:
         import pdfplumber
@@ -537,16 +624,24 @@ def _parse_ck_dk_pdf(pdf_bytes, min_month=DK_MIN_MONTH):
     with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
         for page in pdf.pages:
             text = page.extract_text() or ""
-            page_month = _extract_dk_month_from_page(text)
-            if page_month:
-                current_month = page_month
-
-            if not current_month or current_month < min_month:
-                continue
-
-            year, month = current_month.split("-")
             for line in text.split("\n"):
                 stripped = line.strip()
+                if not stripped:
+                    continue
+
+                header_match = MONTH_HEADER_DK.match(stripped)
+                if header_match:
+                    month_key = header_match.group(1).lower()
+                    year = header_match.group(2)
+                    if month_key in MONTH_MAP_DK:
+                        current_month = f"{year}-{MONTH_MAP_DK[month_key]}"
+                    continue
+
+                if not current_month or current_month < min_month:
+                    continue
+
+                year, month = current_month.split("-")
+
                 if re.search(r"\bsnit\b", stripped, re.IGNORECASE):
                     diesel, hvo = _parse_dk_station_prices(stripped)
                     if diesel:
@@ -807,11 +902,17 @@ def main():
         preem_monthly, preem_daily = fetch_preem_se()
         if preem_monthly:
             synced_sources.append("SE_preem")
-            n = append_csv(
-                os.path.join(DATA_DIR, "preem_SE_månedlig.csv"),
+            preem_csv = os.path.join(DATA_DIR, "preem_SE_månedlig.csv")
+            n = merge_csv_rows(
+                preem_csv,
                 preem_monthly, ["month", "diesel_avg", "hvo_avg"], "month",
             )
-            report.append(f"SE_preem: +{n} months (latest: {preem_monthly[-1]['month']})")
+            latest_preem = preem_monthly[-1]["month"]
+            prune_csv_months_after(
+                preem_csv, ["month", "diesel_avg", "hvo_avg"], "month", latest_preem,
+            )
+            supabase_delete_after("SE_preem", "price_data", "month", latest_preem)
+            report.append(f"SE_preem: +{n} months (latest: {latest_preem})")
             monthly_upsert += [
                 {"source": "SE_preem", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
                 for r in preem_monthly
