@@ -1,8 +1,8 @@
-name: Update fuel prices – NO + DK daily
+name: Update fuel prices – DK
 
 on:
   schedule:
-    - cron: "0 7 * * *"  # Every day at 07:00 UTC
+    - cron: "30 7 * * *"
   workflow_dispatch:
 
 jobs:
@@ -26,20 +26,18 @@ jobs:
       - name: Install dependencies
         run: pip install requests beautifulsoup4 pdfplumber lxml
 
-      - name: Fetch and upsert price data
+      - name: Fetch and upsert DK prices from PDF
         env:
           SUPABASE_URL: https://fnkdbuqsschkvpzeumbz.supabase.co
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           FETCH_MODE: daily
+          FETCH_COUNTRY: dk
         run: python supabase/fetch_prices.py
-
-      - name: Record sync timestamp
-        run: date -u +%Y-%m-%dT%H:%M:%SZ > data/.last-sync
 
       - name: Commit updated CSV files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/.last-sync data/circklek_SE_daglig.csv data/circklek_NO_daglig.csv data/circklek_DK_månedlig.csv data/circklek_DK_daglig.csv data/circklek_DK_månedlig_inkl.csv data/circklek_DK_daglig_inkl.csv
-          git diff --staged --quiet || git commit -m "chore: daily price update $(date -u +%Y-%m-%d)"
+          git add data/circklek_DK_månedlig.csv data/circklek_DK_daglig.csv data/circklek_DK_månedlig_inkl.csv data/circklek_DK_daglig_inkl.csv
+          git diff --staged --quiet || git commit -m "chore: daily DK price update $(date -u +%Y-%m-%d)"
           git push origin main

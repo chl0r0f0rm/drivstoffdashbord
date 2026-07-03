@@ -1,8 +1,8 @@
-name: Update fuel prices – SE weekly
+name: Update fuel prices – NO
 
 on:
   schedule:
-    - cron: "0 6 * * 1"  # Every Monday at 06:00 UTC
+    - cron: "15 7 * * *"
   workflow_dispatch:
 
 jobs:
@@ -24,19 +24,20 @@ jobs:
         run: git pull --rebase origin main
 
       - name: Install dependencies
-        run: pip install requests xlrd==1.2.0 beautifulsoup4 lxml
+        run: pip install requests beautifulsoup4 lxml
 
-      - name: Fetch and upsert price data
+      - name: Fetch and upsert NO daily prices
         env:
           SUPABASE_URL: https://fnkdbuqsschkvpzeumbz.supabase.co
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          FETCH_MODE: weekly
+          FETCH_MODE: daily
+          FETCH_COUNTRY: no
         run: python supabase/fetch_prices.py
 
       - name: Commit updated CSV files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/preem_SE_månedlig.csv data/circklek_SE_månedlig.csv data/circklek_SE_daglig.csv
-          git diff --staged --quiet || git commit -m "chore: weekly SE price update $(date -u +%Y-%m-%d)"
+          git add data/circklek_NO_daglig.csv
+          git diff --staged --quiet || git commit -m "chore: daily NO price update $(date -u +%Y-%m-%d)"
           git push origin main

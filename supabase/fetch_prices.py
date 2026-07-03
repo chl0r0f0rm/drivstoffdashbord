@@ -36,6 +36,8 @@ MONTH_HEADER_DK = re.compile(
 )
 DK_MIN_MONTH = "2022-01"
 DK_MIN_DATE = "2022-01-01"
+DK_PUMP_DIESEL_MIN = 8.0
+DK_PUMP_DIESEL_MAX = 25.0
 
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
@@ -471,7 +473,27 @@ def fetch_ck_se():
 
 CK_DK_HIST_URL = "https://www.circlek.dk/erhverv/braendstof/historiskepriser"
 
-STATION_PRICE_PATTERN = re.compile(r"\d+,\d+")
+STATION_PRICE_COMMA = re.compile(r"\b\d+,\d{2}\b")
+STATION_PRICE_PERIOD = re.compile(r"\b\d+\.\d{2}\b")
+
+
+def _parse_dk_station_prices(line):
+    """Parse miles diesel + HVO100 from station section (kr/L), not bulk kr/m³."""
+    comma_numbers = STATION_PRICE_COMMA.findall(line)
+    if len(comma_numbers) >= 6:
+        diesel = round(float(comma_numbers[2].replace(",", ".")), 4)
+        hvo = round(float(comma_numbers[5].replace(",", ".")), 4)
+        if DK_PUMP_DIESEL_MIN <= diesel <= DK_PUMP_DIESEL_MAX:
+            return diesel, hvo
+
+    period_numbers = STATION_PRICE_PERIOD.findall(line)
+    if len(period_numbers) >= 6:
+        diesel = round(float(period_numbers[2]), 4)
+        hvo = round(float(period_numbers[5]), 4)
+        if DK_PUMP_DIESEL_MIN <= diesel <= DK_PUMP_DIESEL_MAX:
+            return diesel, hvo
+
+    return None, None
 
 
 def _find_dk_pdf_url(soup, vat_type):
@@ -499,15 +521,6 @@ def _extract_dk_month_from_page(text):
         if month_key in MONTH_MAP_DK:
             return f"{year}-{MONTH_MAP_DK[month_key]}"
     return None
-
-
-def _parse_dk_station_prices(line):
-    numbers = STATION_PRICE_PATTERN.findall(line)
-    if len(numbers) < 6:
-        return None, None
-    diesel = round(float(numbers[2].replace(",", ".")), 4)
-    hvo = round(float(numbers[5].replace(",", ".")), 4)
-    return diesel, hvo
 
 
 def _parse_ck_dk_pdf(pdf_bytes, min_month=DK_MIN_MONTH):
@@ -767,13 +780,21 @@ def fetch_ck_no():
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    # FETCH_MODE=weekly  → Preem SE, Circle K SE (monthly XLS/Excel sources)
-    # FETCH_MODE=daily   → Circle K DK, Circle K NO (daily-updated sources)
-    # FETCH_MODE=all     → everything (default)
+    # FETCH_MODE=weekly  → monthly XLS/Excel sources (SE)
+    # FETCH_MODE=daily   → daily-updated sources
+    # FETCH_COUNTRY=se|no|dk|all  → limit which country runs (comma-separated ok)
     mode = os.environ.get("FETCH_MODE", "all").lower()
     run_weekly = mode in ("weekly", "all")
     run_daily  = mode in ("daily",  "all")
-    print(f"FETCH_MODE={mode}  (weekly={run_weekly}, daily={run_daily})")
+    raw_countries = os.environ.get("FETCH_COUNTRY", "all").lower().strip()
+    if raw_countries == "all":
+        countries = {"se", "no", "dk"}
+    else:
+        countries = {part.strip() for part in raw_countries.split(",") if part.strip()}
+    print(
+        f"FETCH_MODE={mode}  FETCH_COUNTRY={','.join(sorted(countries))}"
+        f"  (weekly={run_weekly}, daily={run_daily})"
+    )
 
     os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -782,7 +803,7 @@ def main():
     report = []
     synced_sources = []
 
-    if run_weekly:
+    if run_weekly and "se" in countries:
         preem_monthly, preem_daily = fetch_preem_se()
         if preem_monthly:
             synced_sources.append("SE_preem")
@@ -820,7 +841,7 @@ def main():
                 for r in ck_se_daily
             ]
 
-    if run_daily:
+    if run_daily and "dk" in countries:
         dk_results = fetch_ck_dk()
         for source_key, suffix in (("DK_ck", ""), ("DK_ck_inkl", "_inkl")):
             dk_data = dk_results.get(source_key, {})
@@ -855,7 +876,7 @@ def main():
                     for r in ck_dk_daily
                 ]
 
-    ck_se_live = fetch_ck_se_daily() if run_daily else []
+    ck_se_live = fetch_ck_se_daily() if run_daily and "se" in countries else []
     if ck_se_live:
         se_live_csv = os.path.join(DATA_DIR, "circklek_SE_daglig.csv")
         ck_se_live = gap_fill_daily_rows(
@@ -871,7 +892,7 @@ def main():
             for r in ck_se_live
         ]
 
-    ck_no_daily = fetch_ck_no() if run_daily else []
+    ck_no_daily = fetch_ck_no() if run_daily and "no" in countries else []
     if ck_no_daily:
         no_csv = os.path.join(DATA_DIR, "circklek_NO_daglig.csv")
         ck_no_daily = gap_fill_daily_rows(
