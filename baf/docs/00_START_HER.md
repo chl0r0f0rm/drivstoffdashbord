@@ -1,0 +1,60 @@
+# BAF-automatisering — start her
+
+Månedlig innhenting av frakttillegg fra **Color Line** (BAF) og **Fjord Line** (BAF + ETS summert) → Excel-tabell på SharePoint → Power BI.
+
+## Arkitektur
+
+```
+Azure Function (Python)                Power Automate (planlagt flyt)          SharePoint          Power BI
+─────────────────────────             ──────────────────────────────          ──────────          ────────
+Color Line  → BAF            ─HTTP─▶   1. Recurrence (dag 3, 07:00)
+Fjord Line  → BAF+ETS (sum)            2. HTTP → kall Function
+returnerer rows[] + errors[] ◀──────   3. Parse JSON
+                                       4. For hver rad: upsert  ──────────▶   4. data_BAF.xlsx ─▶ Dashboard
+                                          (id = company|route|valid_from)      tabell «BAF»
+                                       3f. Delfeil (errors) → e-post til deg
+                                       5a. Endring  → e-post distribusjonsliste
+                                       5b. Full feil → e-post til deg
+```
+
+Fragil HTML-parsing ligger i én Python-Azure Function (ditt valg). Color Line-parseren er 1:1 med validert `fetch_colorline_baf.py`; Fjord Line-parseren summerer BAF og ETS per strekning. Begge har tekst-fallback hvis nettsiden endres. Power Automate håndterer bare ren JSON.
+
+## Datamodell — merk om ETS
+
+Alt havner i én kolonne `price_nok` / `price_eur`:
+
+- **Color Line:** kun BAF (rederiet oppgir ikke ETS separat offentlig).
+- **Fjord Line:** BAF + ETS **summert** til ett tall (etter ønske).
+
+Tallene er derfor ikke fullt sammenlignbare på tvers av rederi — greit å vite ved sammenligning i Power BI. `period_label` viser hva som ligger bak (`BAF Adjustment Fee ...` vs `BAF+ETS ...`).
+
+## Varsling — hvem får e-post
+
+| Varsel | Når | Mottaker | Slik endrer du mottaker |
+|--------|-----|----------|-------------------------|
+| **Feilvarsel** | HTTP-feil, 0 rader totalt, eller én kilde feiler | **Deg** (andreas.celiussen@ngn.no) | Variabelen `varFailureEmail` øverst i flyten |
+| **Endringsvarsel** | Ny rad eller endret pris | **Distribusjonsliste** | Endre medlemmer i distribusjonslisten i Outlook — flyten røres ikke |
+
+Begge adressene settes i to variabler helt øverst i flyten (`varFailureEmail`, `varUpdateDistro`) — ett sted å endre.
+
+## Filer i denne mappen (`1. Tender Datasett\BAF`)
+
+- `00_START_HER.md` — dette dokumentet
+- `01_Azure_Function_deploy.md` — deploye Python-funksjonen
+- `02_Power_Automate_bygg.md` — bygge flyten steg for steg (alle uttrykk)
+- `03_Power_BI_og_testplan.md` — Power BI-kobling + testplan
+- `azure-function-baf/` — ferdig, deploy-klar funksjonskode (`function_app.py`, `baf_parser.py`, …)
+- `fetch_colorline_baf.py`, `test_colorline_baf.py`, `HANDOFF_POWER_AUTOMATE.md` — dine originale referansefiler
+- `..\4. data_BAF.xlsx` — Excel-mal med tabell `BAF` (ligger i rotmappen «1. Tender Datasett»)
+
+## Det du må oppgi / bekrefte før produksjon
+
+1. **SharePoint-sti** til `4. data_BAF.xlsx` (site + bibliotek) — gi meg lenken.
+2. **Distribusjonsliste-adresse** for endringsvarsel (f.eks. `logistikk-baf@ngn.no`).
+3. **Azure-tilgang**: abonnement + rett til å opprette Function App (eller hvem som deployer).
+4. Bekreft kjøreplan: **dag 3 kl. 07:00, W. Europe Standard Time**.
+5. Hvem eier Power BI-rapporten + refresh-plan.
+
+## Status
+
+- [x] Excel-mal med tabell `BAF` (10 kolonner, `id` som n�

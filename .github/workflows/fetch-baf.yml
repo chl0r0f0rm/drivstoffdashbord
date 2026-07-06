@@ -1,0 +1,39 @@
+name: Fetch BAF (Color Line + Fjord Line)
+
+# Kjører 3. hver måned kl. 04:00 UTC (~05:00-06:00 Europe/Oslo, før PA-flyten kl. 07:00).
+# GitHub cron er alltid UTC og tar ikke hensyn til sommertid — 04:00 UTC gir god margin uansett.
+on:
+  schedule:
+    - cron: "0 4 3 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r baf/requirements.txt
+
+      - name: Fetch BAF -> data/baf_latest.json
+        run: python baf/fetch_baf.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/baf_latest.json
+          if git diff --staged --quiet; then
+            echo "Ingen endring i BAF-data."
+          else
+            git commit -m "chore(baf): oppdater baf_latest.json [skip ci]"
+            git push
+          fi

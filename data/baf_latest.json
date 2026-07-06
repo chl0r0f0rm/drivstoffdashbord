@@ -1,0 +1,79 @@
+{
+  "count": 6,
+  "fetched_at": "2026-07-06T09:49:27+00:00",
+  "errors": [],
+  "rows": [
+    {
+      "id": "Color Line|Oslo – Kiel|2026-07-01",
+      "company": "Color Line",
+      "route": "Oslo – Kiel",
+      "valid_from": "2026-07-01",
+      "valid_to": "2026-07-31",
+      "period_label": "BAF Adjustment Fee 01.–31.07.2026 (NOK / LM)",
+      "price_nok": 123,
+      "price_eur": 11.1,
+      "source_url": "https://www.colorline-cargo.com/services/baf-adjustments",
+      "fetched_at": "2026-07-06T09:49:27+00:00"
+    },
+    {
+      "id": "Color Line|Larvik – Hirtshals|2026-07-01",
+      "company": "Color Line",
+      "route": "Larvik – Hirtshals",
+      "valid_from": "2026-07-01",
+      "valid_to": "2026-07-31",
+      "period_label": "BAF Adjustment Fee 01.–31.07.2026 (NOK / LM)",
+      "price_nok": 125,
+      "price_eur": 11.3,
+      "source_url": "https://www.colorline-cargo.com/services/baf-adjustments",
+      "fetched_at": "2026-07-06T09:49:27+00:00"
+    },
+    {
+      "id": "Color Line|Kristiansand – Hirtshals|2026-07-01",
+      "company": "Color Line",
+      "route": "Kristiansand – Hirtshals",
+      "valid_from": "2026-07-01",
+      "valid_to": "2026-07-31",
+      "period_label": "BAF Adjustment Fee 01.–31.07.2026 (NOK / LM)",
+      "price_nok": 125,
+      "price_eur": 11.3,
+      "source_url": "https://www.colorline-cargo.com/services/baf-adjustments",
+      "fetched_at": "2026-07-06T09:49:27+00:00"
+    },
+    {
+      "id": "Fjord Line|Bergen/Stavanger–Hirtshals|2026-07-01",
+      "company": "Fjord Line",
+      "route": "Bergen/Stavanger–Hirtshals",
+      "valid_from": "2026-07-01",
+      "valid_to": "2026-07-31",
+      "period_label": "BAF+ETS 01.07.-31.07.26 (per metre)",
+      "price_nok": 165,
+      "price_eur": 15.2,
+      "source_url": "https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2026-07-06T09:49:28+00:00"
+    },
+    {
+      "id": "Fjord Line|Kristiansand–Hirtshals|2026-07-01",
+      "company": "Fjord Line",
+      "route": "Kristiansand–Hirtshals",
+      "valid_from": "2026-07-01",
+      "valid_to": "2026-07-31",
+      "period_label": "BAF+ETS 01.07.-31.07.26 (per metre)",
+      "price_nok": 139,
+      "price_eur": 12.9,
+      "source_url": "https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2026-07-06T09:49:28+00:00"
+    },
+    {
+      "id": "Fjord Line|Domestic route: Bergen–Stavanger|2026-07-01",
+      "company": "Fjord Line",
+      "route": "Domestic route: Bergen–Stavanger",
+      "valid_from": "2026-07-01",
+      "valid_to": "2026-07-31",
+      "period_label": "BAF+ETS 01.07.-31.07.26 (per metre)",
+      "price_nok": 53,
+      "price_eur": 4.9,
+      "source_url": "https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2026-07-06T09:49:28+00:00"
+    }
+  ]
+}
