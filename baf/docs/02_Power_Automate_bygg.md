@@ -2,9 +2,9 @@
 
 Flyt-navn: **BAF – månedlig innhenting (Color Line + Fjord Line)**. Type: **Scheduled cloud flow**.
 
-Azure-funksjonen returnerer rader fra **begge** rederier i ett kall. Fjord Line-radene har allerede BAF + ETS summert i `price_nok`/`price_eur` — flyten trenger ingen egen logikk for det. Upsert-løkka er lik for begge kilder (nøkkel `id = company|route|valid_from`).
+Azure-funksjonen er **ikke i bruk**. GitHub Actions skriver `data/baf_latest.json`; Power Automate henter den via GitHub API med fine-grained PAT (privat repo). Fjord Line-radene har allerede BAF + ETS summert i `price_nok`/`price_eur` — flyten trenger ingen egen logikk for det. Upsert-løkka er lik for begge kilder (nøkkel `id = company|route|valid_from`).
 
-> Jeg kan bygge dette live i nettleseren din når Chrome-utvidelsen er tilkoblet og Azure-funksjonen + SharePoint-stien er klare. Denne guiden er også fasit hvis du vil gjøre det selv — hvert steg med eksakte uttrykk.
+> Bygg live i nettleseren når Chrome-utvidelsen er tilkoblet. PAT ligger i `baf/.pa-secrets.local`. SharePoint-sti er bekreftet under. Denne guiden er fasit — hvert steg med eksakte uttrykk.
 
 **Connectorer som brukes:** `HTTP` (premium — sjekk at lisensen din har den), `Excel Online (Business)`, `Office 365 Outlook`.
 
@@ -35,13 +35,24 @@ Dette er det eneste stedet du endrer mottakere. Når distribusjonslisten er klar
 ## Steg 3 — Scope: «Try»
 Legg alt under i en **Scope** som du kaller `Try`.
 
-### 3a. HTTP — kall Azure Function
+### 3a. HTTP — hent `baf_latest.json` fra GitHub (privat repo + PAT)
+
+GitHub Actions oppdaterer filen **dag 3 kl. 04:00 UTC** (~05:00–06:00 Oslo). PA-flyten kl. 07:00 leser ferdig JSON.
+
+**Opprett PAT først** (se `baf/README_github.md`):
+- Fine-grained, kun `drivstoffdashbord`, **Contents: Read-only**
+
+**HTTP-steg:**
 - **Method:** GET
-- **URI:** `https://<app>.azurewebsites.net/api/baf?code=<function-key>` (fra deploy-guiden)
+- **URI:** `https://api.github.com/repos/chl0r0f0rm/drivstoffdashbord/contents/data/baf_latest.json?ref=main`
+- **Headers:**
+  - `Authorization` → `Bearer <PAT>` *(ikke logg eller eksporter flyt med token synlig)*
+  - `Accept` → `application/vnd.github.raw`
+  - `X-GitHub-Api-Version` → `2022-11-28`
 
-Funksjonen svarer 200 ved suksess og 502 ved feil. 502 gjør at dette steget feiler → «Catch» fanger det.
+Responsen er rå JSON (samme skjema som Azure-funksjonen skulle returnert). HTTP 404/401 → «Catch» fanger feil.
 
-> **Azure ikke deployet ennå:** Vi bygger flyten nå med denne URL-en som **plassholder**. Alt annet (trigger, variabler, Excel-steg, varsler) kan settes opp, men flyten kan ikke test-kjøres før funksjonen er live og URL-en limt inn her.
+> **PAT utløper:** sett kalenderpåminnelse før utløp og oppdater header i flyten. Vurder 90-dagers rotation.
 
 ### 3b. Parse JSON
 - **Content:** `body('HTTP')`
@@ -122,7 +133,7 @@ Inne i løkka:
   `concat('NY: ', items('Apply_to_each')?['route'], ' = ', items('Apply_to_each')?['price_nok'], ' NOK (', items('Apply_to_each')?['valid_from'], ')', decodeUriComponent('%0A'))`
 
 ### 3f. Delfeil per kilde (Color Line OK, Fjord Line feilet — eller omvendt)
-Funksjonen svarer 200 så lenge **minst én** kilde ga rader, men lister feilende kilder i `errors`. HTTP-steget feiler da ikke, så «Catch» trigges ikke — vi må sjekke `errors` eksplisitt så du fortsatt varsles, mens de gode radene lagres.
+JSON-en kan ha `errors` selv om HTTP er 200 (minst én kilde OK). Sjekk `errors` eksplisitt:
 - **Condition:** `empty(body('Parse_JSON')?['errors'])` **is equal to** `false`
   - **If yes → Send an email (V2):**
     - **To:** `variables('varFailureEmail')`

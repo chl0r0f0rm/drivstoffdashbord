@@ -1,0 +1,9 @@
+# Lokale hemmeligheter (aldri commit)
+baf/.pa-secrets.local
+.env
+.env.local
+*.local
+
+# Python
+__pycache__/
+*.pyc

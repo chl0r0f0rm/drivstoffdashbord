@@ -36,23 +36,53 @@ git push
 Første kjøring: **Actions**-fanen i repoet → *Fetch BAF (Color Line + Fjord Line)* → **Run workflow**.
 Den lager `data/baf_latest.json` og committer den. Forvent 6 rader (3 + 3) for inneværende måned.
 
-## URL-en Power Automate skal lese
+## URL-en Power Automate skal lese (valgt: privat repo + fine-grained PAT)
 
-**Hvis repoet er PUBLIC:**
+GitHub Actions har kjørt med suksess. `data/baf_latest.json` ligger på `main` med 6 rader.
+
+### 1. Opprett fine-grained PAT (én gang)
+
+1. Gå til [github.com/settings/tokens?type=beta](https://github.com/settings/tokens?type=beta) → **Generate new token**
+2. **Token name:** `power-automate-baf-read`
+3. **Expiration:** 90 dager (eller «No expiration» etter org-policy)
+4. **Repository access:** **Only select repositories** → `chl0r0f0rm/drivstoffdashbord`
+5. **Permissions → Repository permissions:**
+   - **Contents:** Read-only
+6. Generer og **kopier token** (vises bare én gang). Lagre i passordmanager.
+
+> Ikke committ PAT til repo eller chat. **For agent som bygger PA-flyt:** legg PAT i `baf/.pa-secrets.local` (se `.pa-secrets.local.example`). Agenten leser derfra og setter HTTP-header `Authorization: Bearer <PAT>`.
+
+### 2. HTTP-steg i Power Automate
+
+| Felt | Verdi |
+|------|-------|
+| **Method** | GET |
+| **URI** | `https://api.github.com/repos/chl0r0f0rm/drivstoffdashbord/contents/data/baf_latest.json?ref=main` |
+
+**Headers:**
+
+| Header | Verdi |
+|--------|-------|
+| `Authorization` | `Bearer <din-PAT>` |
+| `Accept` | `application/vnd.github.raw` |
+| `X-GitHub-Api-Version` | `2022-11-28` |
+
+Med `Accept: application/vnd.github.raw` returnerer API-et JSON-innholdet direkte (ikke base64-wrapper). **Parse JSON** bruker `body('HTTP')` som vanlig.
+
+### 3. Test før du kobler Excel
+
+Kjør flyten manuelt etter HTTP-steget. Forvent i Parse JSON:
+- `count`: 6
+- `errors`: []
+- `rows`: 6 objekter med `id`, `company`, `route`, `price_nok`, osv.
+
+### Alternativ (ikke valgt): public raw-URL
+
+Hvis repoet blir public senere:
 ```
 https://raw.githubusercontent.com/chl0r0f0rm/drivstoffdashbord/main/data/baf_latest.json
 ```
-(bytt `main` med riktig gren om nødvendig). PA gjør en enkel HTTP GET — ingen autentisering.
-
-**Hvis repoet er PRIVATE:**
-Bruk GitHub-API-et med en **fine-grained PAT** (kun `Contents: Read` på dette ene repoet):
-- URI: `https://api.github.com/repos/chl0r0f0rm/drivstoffdashbord/contents/data/baf_latest.json?ref=main`
-- Header `Authorization`: `Bearer <PAT>`
-- Header `Accept`: `application/vnd.github.raw`
-
-> BAF/ETS-satsene er offentlig informasjon (hentet fra åpne nettsider). Er hele repoet privat av
-> andre grunner, er enkleste vei å publisere *kun* JSON-en offentlig — f.eks. en egen public repo
-> eller en public Gist — så slipper PA å håndtere token. Si fra, så setter jeg det opp.
+Ingen autentisering nødvendig.
 
 ## Tidsplan og samspill med Power Automate
 
