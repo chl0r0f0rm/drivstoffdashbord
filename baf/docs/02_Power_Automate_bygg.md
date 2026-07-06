@@ -10,6 +10,22 @@ Azure-funksjonen er **ikke i bruk**. GitHub Actions skriver `data/baf_latest.jso
 
 ---
 
+## ✅ Allerede bygget og lagret i flyten (per nå)
+
+Disse stegene er ferdige og validert i designeren:
+- **Recurrence** (månedlig, dag 3, 07:00, W. Europe) — steg 1
+- **4 × Initialize variable** (`varFailureEmail`, `varUpdateDistro` = deg; `varChanged`, `varChangeLog`) — steg 2
+- **HTTP GitHub JSON** mot GitHub-API-et med riktige headere — steg 3a. **NB:** `Authorization`-headeren har plassholder `Bearer PASTE_YOUR_PAT_HERE` — **bytt til din ekte PAT** før test.
+- **Parse JSON** koblet til `body` fra HTTP-steget, skjema generert — steg 3b
+
+**Gjenstår:** steg 3c → 5 (List rows, upsert-løkke, varsler). Fortsett nedenfor.
+
+> **To praktiske gotchas vi traff (les før steg 3d):**
+> 1. **Riktig dokumentbibliotek.** `/sites/Nedstrm/Arbeidsrom/` er bibliotekets **URL-navn**, mens PA-dropdownen viser *visningsnavn* — derfor står «Arbeidsrom» der under en annen etikett (mest sannsynlig **«Dokumenter»**). To måter: (a) åpne biblioteket i SharePoint → tannhjul → **Bibliotekinnstillinger** for å se visningsnavnet, og velg det; eller (b) i «Document Library» klikk **«Enter custom value»** og skriv `Arbeidsrom` (URL-navnet) — connectoren godtar det.
+> 2. **Fil-blaet kan fryse** på store bibliotek (folder-treet er tungt). Naviger mappe-for-mappe (Marked → 26. Forretningsutvikling → 1. Tender Datasett) og gi det tid, eller bruk søk i Fil-feltet på `4. data_BAF`. Fryser designeren helt: oppdater fanen (lagrede steg over består) og prøv igjen. Alternativt: legg fila i et lite/eget bibliotek for rask lasting.
+
+---
+
 ## Steg 0 — Opprett flyten
 Power Automate → **Create** → **Scheduled cloud flow**. Sett hvilken som helst startdato foreløpig; vi justerer triggeren i steg 1.
 

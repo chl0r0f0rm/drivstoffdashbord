@@ -1,6 +1,6 @@
 {
   "count": 6,
-  "fetched_at": "2026-07-06T09:49:27+00:00",
+  "fetched_at": "2026-07-06T13:48:28+00:00",
   "errors": [],
   "rows": [
     {
@@ -13,7 +13,7 @@
       "price_nok": 123,
       "price_eur": 11.1,
       "source_url": "https://www.colorline-cargo.com/services/baf-adjustments",
-      "fetched_at": "2026-07-06T09:49:27+00:00"
+      "fetched_at": "2026-07-06T13:48:28+00:00"
     },
     {
       "id": "Color Line|Larvik – Hirtshals|2026-07-01",
@@ -25,7 +25,7 @@
       "price_nok": 125,
       "price_eur": 11.3,
       "source_url": "https://www.colorline-cargo.com/services/baf-adjustments",
-      "fetched_at": "2026-07-06T09:49:27+00:00"
+      "fetched_at": "2026-07-06T13:48:28+00:00"
     },
     {
       "id": "Color Line|Kristiansand – Hirtshals|2026-07-01",
@@ -37,7 +37,7 @@
       "price_nok": 125,
       "price_eur": 11.3,
       "source_url": "https://www.colorline-cargo.com/services/baf-adjustments",
-      "fetched_at": "2026-07-06T09:49:27+00:00"
+      "fetched_at": "2026-07-06T13:48:28+00:00"
     },
     {
       "id": "Fjord Line|Bergen/Stavanger–Hirtshals|2026-07-01",
@@ -49,7 +49,7 @@
       "price_nok": 165,
       "price_eur": 15.2,
       "source_url": "https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
-      "fetched_at": "2026-07-06T09:49:28+00:00"
+      "fetched_at": "2026-07-06T13:48:29+00:00"
     },
     {
       "id": "Fjord Line|Kristiansand–Hirtshals|2026-07-01",
@@ -61,7 +61,7 @@
       "price_nok": 139,
       "price_eur": 12.9,
       "source_url": "https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
-      "fetched_at": "2026-07-06T09:49:28+00:00"
+      "fetched_at": "2026-07-06T13:48:29+00:00"
     },
     {
       "id": "Fjord Line|Domestic route: Bergen–Stavanger|2026-07-01",
@@ -73,7 +73,7 @@
       "price_nok": 53,
       "price_eur": 4.9,
       "source_url": "https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
-      "fetched_at": "2026-07-06T09:49:28+00:00"
+      "fetched_at": "2026-07-06T13:48:29+00:00"
     }
   ]
 }

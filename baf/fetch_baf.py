@@ -1,9 +1,9 @@
 """
 GitHub Actions runner: henter BAF fra Color Line + Fjord Line og skriver
-en samlet JSON-fil som Power Automate leser via HTTP.
+en samlet JSON-fil. Synker til Supabase når env er satt.
 
-Output: data/baf_latest.json (repo-rot), samme skjema som Azure-funksjonen:
-    { "count": N, "fetched_at": "...", "errors": [...], "rows": [ {...} ] }
+Output: data/baf_latest.json (repo-rot)
+Supabase: baf_data, baf_price_history, baf_fetch_log
 
 Exit-kode 1 hvis 0 rader totalt (gjør at Actions-kjøringen blir rød → varsling).
 """
@@ -11,12 +11,12 @@ Exit-kode 1 hvis 0 rader totalt (gjør at Actions-kjøringen blir rød → varsl
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
 from baf_parser import fetch_all
 
-# data/baf_latest.json relativt til repo-rot (scriptet kjøres fra rot i workflowen)
 OUTPUT = Path("data/baf_latest.json")
 
 
@@ -31,8 +31,15 @@ def main() -> int:
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Wrote {len(rows)} rows, {len(errors)} error(s) to {OUTPUT}")
-    for e in errors:
-        print(f"  ERROR [{e['company']}]: {e['error']}", file=sys.stderr)
+    for error in errors:
+        print(f"  ERROR [{error['company']}]: {error['error']}", file=sys.stderr)
+
+    if os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY"):
+        from sync_baf_to_supabase import sync_payload
+
+        if not sync_payload(payload):
+            return 1
+
     return 0 if rows else 1
 
 

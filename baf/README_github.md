@@ -84,11 +84,12 @@ https://raw.githubusercontent.com/chl0r0f0rm/drivstoffdashbord/main/data/baf_lat
 ```
 Ingen autentisering nødvendig.
 
-## Tidsplan og samspill med Power Automate
+## Tidsplan og samspill
 
-- Actions kjører **dag 3 kl. 04:00 UTC** (~05:00–06:00 Oslo) — før PA-flyten kl. 07:00, så JSON-en er fersk når PA leser.
-- GitHub cron er UTC og hopper ikke for sommertid; 04:00 UTC gir uansett god margin.
-- Vil du ha ekstra sikkerhet kan du legge til flere kjøredager (f.eks. `0 4 1-5 * *`).
+- Actions kjører **dag 3 kl. 04:00 UTC** (~05:00–06:00 Oslo).
+- Synker automatisk til **Supabase** (`baf_data`, `baf_price_history`, `baf_fetch_log`) når `SUPABASE_SERVICE_KEY` er satt.
+- Power BI leser fra Supabase (PostgreSQL) — se `baf/docs/04_Supabase_og_PowerBI.md`.
+- `data/baf_latest.json` committes fortsatt som git-snapshot/audit.
 
 ## Feilhåndtering
 

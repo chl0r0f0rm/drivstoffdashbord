@@ -26,7 +26,7 @@ CALCULATE ( MAX ( BAF[price_nok] ),
 
 | # | Test | Forventet |
 |---|------|-----------|
-| 1 | Kjør Azure Function i nettleser (`?code=...`) | HTTP 200, `count: 6`, `errors: []` |
+| 1 | Åpne GitHub-JSON-URL i nettleser (API + PAT), eller kjør bare HTTP-steget i PA | HTTP 200, `count: 6`, `errors: []` |
 | 2 | Testkjør flyten manuelt (Test → Manually) | Grønn kjøring; de 6 radene oppdateres (samme verdier) |
 | 3 | Sjekk `4. data_BAF.xlsx` på SharePoint | Fortsatt 6 rader — **ingen duplikater** |
 | 4 | Endre en pris i Excel manuelt, kjør flyten på nytt | Prisen settes tilbake; endringsvarsel-mail til distribusjonslisten |
@@ -47,6 +47,8 @@ CALCULATE ( MAX ( BAF[price_nok] ),
 
 | Symptom | Sjekk |
 |---------|-------|
-| Function gir 502 | Log stream i Azure — Color Line nede eller struktur endret |
-| Flyt: «table not found» | Tabellnavnet må være `BAF`, og fila må ligge på oppgitt SharePoint-sti |
+| HTTP-steg gir 401/404 | 401 = feil/utløpt PAT i `Authorization`-header. 404 = feil URL/branch, eller `data/baf_latest.json` finnes ikke ennå (kjør GitHub Actions-workflowen) |
+| `count: 0` / manglende rader | Sjekk GitHub Actions-kjøringen (rød = parsing feilet, Color Line/Fjord Line endret struktur) |
+| Flyt: «table not found» | Tabellnavnet må være `BAF`, og fila må ligge i riktig dokumentbibliotek/sti |
+| Fil-velger fryser | Stort bibliotek — naviger mappe-for-mappe eller flytt fila til et mindre bibliotek |
 | Dupliserte rader | `id`-kolonnen må være Key Column i «Update a row

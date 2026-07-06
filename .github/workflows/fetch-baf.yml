@@ -1,10 +1,12 @@
 name: Fetch BAF (Color Line + Fjord Line)
 
-# Kjører 3. hver måned kl. 04:00 UTC (~05:00-06:00 Europe/Oslo, før PA-flyten kl. 07:00).
-# GitHub cron er alltid UTC og tar ikke hensyn til sommertid — 04:00 UTC gir god margin uansett.
+# Kjører 2 ganger per måned kl. 04:00 UTC:
+# - 15. (midten av måneden)
+# - siste dag i måneden (detekteres i jobb via "tomorrow is day 01")
 on:
   schedule:
-    - cron: "0 4 3 * *"
+    - cron: "0 4 15 * *"
+    - cron: "0 4 28-31 * *"
   workflow_dispatch: {}
 
 permissions:
@@ -20,13 +22,35 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Decide if run should proceed
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          day="$(date -u +%d)"
+          if [ "$day" = "15" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$(date -u -d tomorrow +%d)" = "01" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "should_run=false" >> "$GITHUB_OUTPUT"
+
       - name: Install dependencies
+        if: steps.gate.outputs.should_run == 'true'
         run: pip install -r baf/requirements.txt
 
-      - name: Fetch BAF -> data/baf_latest.json
+      - name: Fetch BAF -> data/baf_latest.json + Supabase
+        if: steps.gate.outputs.should_run == 'true'
+        env:
+          SUPABASE_URL: https://fnkdbuqsschkvpzeumbz.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: python baf/fetch_baf.py
 
       - name: Commit if changed
+        if: steps.gate.outputs.should_run == 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
