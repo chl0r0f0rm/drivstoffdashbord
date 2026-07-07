@@ -1,0 +1,28 @@
+name: Seed BAF historical data
+
+on:
+  workflow_dispatch:
+    inputs:
+      seed_file:
+        description: Path to seed JSON (relative to repo root)
+        required: false
+        default: baf/seeds/colorline_2026-04.json
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r baf/requirements.txt
+
+      - name: Seed BAF rows to Supabase
+        env:
+          SUPABASE_URL: https://fnkdbuqsschkvpzeumbz.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python baf/seed_rows.py "${{ github.event.inputs.seed_file }}"

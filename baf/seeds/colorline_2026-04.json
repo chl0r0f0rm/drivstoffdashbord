@@ -1,0 +1,44 @@
+{
+  "count": 3,
+  "fetched_at": "2026-04-13T05:17:29+00:00",
+  "errors": [],
+  "source_note": "Wayback Machine snapshot 2026-04-13 — Color Line april 2026",
+  "rows": [
+    {
+      "id": "Color Line|Oslo – Kiel|2026-04-01",
+      "company": "Color Line",
+      "route": "Oslo – Kiel",
+      "valid_from": "2026-04-01",
+      "valid_to": "2026-04-30",
+      "period_label": "BAF Adjustment Fee 01.–30.04.2026 (NOK / LM)",
+      "price_nok": 169,
+      "price_eur": 15.2,
+      "source_url": "https://web.archive.org/web/20260413051729/https://www.colorline-cargo.com/services/baf-adjustments",
+      "fetched_at": "2026-04-13T05:17:29+00:00"
+    },
+    {
+      "id": "Color Line|Larvik – Hirtshals|2026-04-01",
+      "company": "Color Line",
+      "route": "Larvik – Hirtshals",
+      "valid_from": "2026-04-01",
+      "valid_to": "2026-04-30",
+      "period_label": "BAF Adjustment Fee 01.–30.04.2026 (NOK / LM)",
+      "price_nok": 171,
+      "price_eur": 15.4,
+      "source_url": "https://web.archive.org/web/20260413051729/https://www.colorline-cargo.com/services/baf-adjustments",
+      "fetched_at": "2026-04-13T05:17:29+00:00"
+    },
+    {
+      "id": "Color Line|Kristiansand – Hirtshals|2026-04-01",
+      "company": "Color Line",
+      "route": "Kristiansand – Hirtshals",
+      "valid_from": "2026-04-01",
+      "valid_to": "2026-04-30",
+      "period_label": "BAF Adjustment Fee 01.–30.04.2026 (NOK / LM)",
+      "price_nok": 171,
+      "price_eur": 15.4,
+      "source_url": "https://web.archive.org/web/20260413051729/https://www.colorline-cargo.com/services/baf-adjustments",
+      "fetched_at": "2026-04-13T05:17:29+00:00"
+    }
+  ]
+}
