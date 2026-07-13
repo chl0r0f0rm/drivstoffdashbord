@@ -8,6 +8,9 @@ on:
         required: false
         default: baf/seeds/colorline_2026-04.json
 
+permissions:
+  contents: write
+
 jobs:
   seed:
     runs-on: ubuntu-latest
@@ -21,8 +24,17 @@ jobs:
       - name: Install dependencies
         run: pip install -r baf/requirements.txt
 
-      - name: Seed BAF rows to Supabase
-        env:
-          SUPABASE_URL: https://fnkdbuqsschkvpzeumbz.supabase.co
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      - name: Merge seed rows into baf_data.csv
         run: python baf/seed_rows.py "${{ github.event.inputs.seed_file }}"
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add baf_data.csv
+          if git diff --staged --quiet; then
+            echo "Ingen endring i baf_data.csv."
+          else
+            git commit -m "chore(baf): seed baf_data.csv [skip ci]"
+            git push
+          fi

@@ -1,4 +1,0 @@
-company,route,valid_from,valid_to,period_label,price_nok,price_eur,source_url,fetched_at
-Color Line,Oslo – Kiel,2026-07-01,2026-07-31,BAF Adjustment Fee 01.–31.07.2026 (NOK / LM),123,11.1,https://www.colorline-cargo.com/services/baf-adjustments,2026-07-06T07:17:31+00:00
-Color Line,Larvik – Hirtshals,2026-07-01,2026-07-31,BAF Adjustment Fee 01.–31.07.2026 (NOK / LM),125,11.3,https://www.colorline-cargo.com/services/baf-adjustments,2026-07-06T07:17:31+00:00
-Color Line,Kristiansand – Hirtshals,2026-07-01,2026-07-31,BAF Adjustment Fee 01.–31.07.2026 (NOK / LM),125,11.3,https://www.colorline-cargo.com/services/baf-adjustments,2026-07-06T07:17:31+00:00

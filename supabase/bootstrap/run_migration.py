@@ -4,9 +4,14 @@ import json
 import sys
 import os
 
-TOKEN   = 'sbp_v0_5cc4496c96c13e8b048e203054ee87d6a5b184b7'
 PROJECT = 'fnkdbuqsschkvpzeumbz'
 URL     = f'https://api.supabase.com/v1/projects/{PROJECT}/database/query'
+
+def _token():
+    token = os.environ.get('SUPABASE_ACCESS_TOKEN')
+    if not token:
+        raise RuntimeError('Mangler SUPABASE_ACCESS_TOKEN')
+    return token
 
 SCHEMA_SQL = """
 create table if not exists price_data (
@@ -57,7 +62,7 @@ def run_sql(sql, label):
         URL,
         data=payload,
         headers={
-            'Authorization': f'Bearer {TOKEN}',
+            'Authorization': f'Bearer {_token()}',
             'Content-Type': 'application/json',
             'User-Agent': 'migration-script/1.0',
         },
@@ -124,7 +129,7 @@ def build_insert_batches(sql_file, batch_size=50):
 
 
 if __name__ == '__main__':
-    sql_file = os.path.join(os.path.dirname(__file__), 'migration.sql')
+    sql_file = os.path.join(os.path.dirname(__file__), '..', 'migrations', 'migration.sql')
 
     print('=== Step 1: Schema + RLS ===')
     ok = run_sql(SCHEMA_SQL, 'schema')

@@ -1,5 +1,5 @@
 -- BAF (Bunker Adjustment Factor) — historikk og gjeldende satser
--- Kjør i Supabase SQL Editor, eller via supabase/create_baf_tables.py
+-- Kjør i Supabase SQL Editor, eller via supabase/bootstrap/create_baf_tables.py
 
 -- Gjeldende sats per strekning og periode (én rad per id)
 create table if not exists baf_data (

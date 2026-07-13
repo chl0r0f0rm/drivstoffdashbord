@@ -55,7 +55,7 @@ Legg alt under i en **Scope** som du kaller `Try`.
 
 GitHub Actions oppdaterer filen **dag 3 kl. 04:00 UTC** (~05:00–06:00 Oslo). PA-flyten kl. 07:00 leser ferdig JSON.
 
-**Opprett PAT først** (se `baf/README_github.md`):
+**Opprett PAT først** (se `baf/README.md`):
 - Fine-grained, kun `drivstoffdashbord`, **Contents: Read-only**
 
 **HTTP-steg:**

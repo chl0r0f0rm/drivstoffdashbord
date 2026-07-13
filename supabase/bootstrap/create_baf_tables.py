@@ -2,9 +2,9 @@
 Opprett BAF-tabeller i Supabase (baf_data, baf_price_history, baf_fetch_log).
 
 Kjør én gang:
-  python supabase/create_baf_tables.py
+  python supabase/bootstrap/create_baf_tables.py
 
-Alternativt: lim inn supabase/baf_migration.sql i Supabase SQL Editor.
+Alternativt: lim inn supabase/migrations/baf_migration.sql i Supabase SQL Editor.
 """
 
 import json
@@ -18,7 +18,7 @@ API_URL = f"https://api.supabase.com/v1/projects/{PROJECT}/database/query"
 
 
 def load_sql() -> str:
-    path = os.path.join(os.path.dirname(__file__), "baf_migration.sql")
+    path = os.path.join(os.path.dirname(__file__), "..", "migrations", "baf_migration.sql")
     with open(path, encoding="utf-8") as handle:
         return handle.read()
 

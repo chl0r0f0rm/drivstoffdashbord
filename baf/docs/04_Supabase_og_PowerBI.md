@@ -43,12 +43,12 @@ Ny rad når en sats oppdages første gang, eller når `price_nok`/`price_eur` en
 ### 1. Opprett tabeller i Supabase
 
 **Alternativ A — SQL Editor** (enklest):
-Lim inn innholdet fra `supabase/baf_migration.sql` i Supabase → SQL Editor → Run.
+Lim inn innholdet fra `supabase/migrations/baf_migration.sql` i Supabase → SQL Editor → Run.
 
 **Alternativ B — script:**
 ```bash
 set SUPABASE_ACCESS_TOKEN=din_personal_access_token
-python supabase/create_baf_tables.py
+python supabase/bootstrap/create_baf_tables.py
 ```
 
 ### 2. GitHub secret (allerede i bruk for drivstoff)

@@ -1,0 +1,44 @@
+{
+  "count": 3,
+  "fetched_at": "2025-12-04T20:43:58+00:00",
+  "errors": [],
+  "source_note": "Wayback Machine snapshot 2025-12-04 — Color Line desember 2025",
+  "rows": [
+    {
+      "id": "Color Line|Oslo – Kiel|2025-12-01",
+      "company": "Color Line",
+      "route": "Oslo – Kiel",
+      "valid_from": "2025-12-01",
+      "valid_to": "2025-12-31",
+      "period_label": "BAF Adjustment Fee 01.–31.12.2025 (NOK / LM)",
+      "price_nok": 97,
+      "price_eur": 8.3,
+      "source_url": "https://web.archive.org/web/20251204204358/https://www.colorline-cargo.com/services/baf-adjustments",
+      "fetched_at": "2025-12-04T20:43:58+00:00"
+    },
+    {
+      "id": "Color Line|Larvik – Hirtshals|2025-12-01",
+      "company": "Color Line",
+      "route": "Larvik – Hirtshals",
+      "valid_from": "2025-12-01",
+      "valid_to": "2025-12-31",
+      "period_label": "BAF Adjustment Fee 01.–31.12.2025 (NOK / LM)",
+      "price_nok": 95,
+      "price_eur": 8.1,
+      "source_url": "https://web.archive.org/web/20251204204358/https://www.colorline-cargo.com/services/baf-adjustments",
+      "fetched_at": "2025-12-04T20:43:58+00:00"
+    },
+    {
+      "id": "Color Line|Kristiansand – Hirtshals|2025-12-01",
+      "company": "Color Line",
+      "route": "Kristiansand – Hirtshals",
+      "valid_from": "2025-12-01",
+      "valid_to": "2025-12-31",
+      "period_label": "BAF Adjustment Fee 01.–31.12.2025 (NOK / LM)",
+      "price_nok": 95,
+      "price_eur": 8.1,
+      "source_url": "https://web.archive.org/web/20251204204358/https://www.colorline-cargo.com/services/baf-adjustments",
+      "fetched_at": "2025-12-04T20:43:58+00:00"
+    }
+  ]
+}

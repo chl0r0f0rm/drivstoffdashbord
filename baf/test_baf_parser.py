@@ -5,12 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from fetch_colorline_baf import (
-    parse_colorline_baf,
-    parse_eur_amount,
-    parse_period_label,
-    parse_price_text,
-)
+from baf_parser import parse_colorline
 
 SAMPLE_HTML = """
 <section class="mod modStructuredinfo default contentarea-narrow">
@@ -35,32 +30,16 @@ SAMPLE_HTML = """
 """
 
 
-class ColorLineBafParserTest(unittest.TestCase):
-    def test_parse_period_label(self):
-        valid_from, valid_to, label = parse_period_label(
-            "BAF Adjustment Fee 01.–31.07.2026 (NOK / LM)"
-        )
-        self.assertEqual(valid_from, "2026-07-01")
-        self.assertEqual(valid_to, "2026-07-31")
-        self.assertIn("07.2026", label)
-
-    def test_parse_price_text(self):
-        nok, eur = parse_price_text("123 NOK (€ 11,1)")
-        self.assertEqual(nok, 123)
-        self.assertAlmostEqual(eur, 11.1)
-
-    def test_parse_eur_amount(self):
-        self.assertAlmostEqual(parse_eur_amount("11,1"), 11.1)
-
-    def test_parse_sample_html(self):
-        rows = parse_colorline_baf(
-            SAMPLE_HTML,
-            fetched_at=datetime(2026, 7, 6, tzinfo=timezone.utc),
-        )
+class BafParserTest(unittest.TestCase):
+    def test_parse_colorline_sample_html(self):
+        fetched_at = datetime(2026, 7, 6, tzinfo=timezone.utc)
+        rows = parse_colorline(SAMPLE_HTML, fetched_at=fetched_at)
         self.assertEqual(len(rows), 3)
         self.assertEqual(rows[0]["route"], "Oslo – Kiel")
         self.assertEqual(rows[0]["price_nok"], 123)
+        self.assertAlmostEqual(rows[0]["price_eur"], 11.1)
         self.assertEqual(rows[0]["valid_from"], "2026-07-01")
+        self.assertEqual(rows[0]["valid_to"], "2026-07-31")
         self.assertEqual(rows[0]["company"], "Color Line")
 
 

@@ -1,0 +1,151 @@
+{
+  "count": 12,
+  "fetched_at": "2026-07-07T10:04:51+00:00",
+  "errors": [],
+  "rows": [
+    {
+      "id": "Fjord Line|Bergen/Stavanger–Hirtshals|2025-06-01",
+      "company": "Fjord Line",
+      "route": "Bergen/Stavanger–Hirtshals",
+      "valid_from": "2025-06-01",
+      "valid_to": "2025-06-30",
+      "period_label": "BAF+ETS 01.06.-30.06.25 (per metre)",
+      "price_nok": 112,
+      "price_eur": 9.5,
+      "source_url": "https://web.archive.org/web/20250809085831/https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2025-08-09T08:58:31+00:00"
+    },
+    {
+      "id": "Fjord Line|Kristiansand–Hirtshals|2025-06-01",
+      "company": "Fjord Line",
+      "route": "Kristiansand–Hirtshals",
+      "valid_from": "2025-06-01",
+      "valid_to": "2025-06-30",
+      "period_label": "BAF+ETS 01.06.-30.06.25 (per metre)",
+      "price_nok": 89,
+      "price_eur": 7.5,
+      "source_url": "https://web.archive.org/web/20250809085831/https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2025-08-09T08:58:31+00:00"
+    },
+    {
+      "id": "Fjord Line|Domestic route: Bergen–Stavanger|2025-06-01",
+      "company": "Fjord Line",
+      "route": "Domestic route: Bergen–Stavanger",
+      "valid_from": "2025-06-01",
+      "valid_to": "2025-06-30",
+      "period_label": "BAF+ETS 01.06.-30.06.25 (per metre)",
+      "price_nok": 33,
+      "price_eur": 2.7,
+      "source_url": "https://web.archive.org/web/20250809085831/https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2025-08-09T08:58:31+00:00"
+    },
+    {
+      "id": "Fjord Line|Bergen/Stavanger–Hirtshals|2025-10-01",
+      "company": "Fjord Line",
+      "route": "Bergen/Stavanger–Hirtshals",
+      "valid_from": "2025-10-01",
+      "valid_to": "2025-10-31",
+      "period_label": "BAF+ETS 01.10.-31.10.25 (per metre)",
+      "price_nok": 111,
+      "price_eur": 9.4,
+      "source_url": "https://web.archive.org/web/20250815120000/https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2025-08-15T12:00:00+00:00"
+    },
+    {
+      "id": "Fjord Line|Kristiansand–Hirtshals|2025-10-01",
+      "company": "Fjord Line",
+      "route": "Kristiansand–Hirtshals",
+      "valid_from": "2025-10-01",
+      "valid_to": "2025-10-31",
+      "period_label": "BAF+ETS 01.10.-31.10.25 (per metre)",
+      "price_nok": 88,
+      "price_eur": 7.4,
+      "source_url": "https://web.archive.org/web/20250815120000/https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2025-08-15T12:00:00+00:00"
+    },
+    {
+      "id": "Fjord Line|Domestic route: Bergen–Stavanger|2025-10-01",
+      "company": "Fjord Line",
+      "route": "Domestic route: Bergen–Stavanger",
+      "valid_from": "2025-10-01",
+      "valid_to": "2025-10-31",
+      "period_label": "BAF+ETS 01.10.-31.10.25 (per metre)",
+      "price_nok": 33,
+      "price_eur": 2.8,
+      "source_url": "https://web.archive.org/web/20250815120000/https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2025-08-15T12:00:00+00:00"
+    },
+    {
+      "id": "Fjord Line|Bergen/Stavanger–Hirtshals|2026-01-01",
+      "company": "Fjord Line",
+      "route": "Bergen/Stavanger–Hirtshals",
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-01-31",
+      "period_label": "BAF+ETS 01.01.-31.01.26 (per metre)",
+      "price_nok": 127,
+      "price_eur": 10.8,
+      "source_url": "https://web.archive.org/web/20251204204358/https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2025-12-04T20:43:58+00:00"
+    },
+    {
+      "id": "Fjord Line|Kristiansand–Hirtshals|2026-01-01",
+      "company": "Fjord Line",
+      "route": "Kristiansand–Hirtshals",
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-01-31",
+      "period_label": "BAF+ETS 01.01.-31.01.26 (per metre)",
+      "price_nok": 100,
+      "price_eur": 8.5,
+      "source_url": "https://web.archive.org/web/20251204204358/https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2025-12-04T20:43:58+00:00"
+    },
+    {
+      "id": "Fjord Line|Domestic route: Bergen–Stavanger|2026-01-01",
+      "company": "Fjord Line",
+      "route": "Domestic route: Bergen–Stavanger",
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-01-31",
+      "period_label": "BAF+ETS 01.01.-31.01.26 (per metre)",
+      "price_nok": 38,
+      "price_eur": 3.2,
+      "source_url": "https://web.archive.org/web/20251204204358/https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2025-12-04T20:43:58+00:00"
+    },
+    {
+      "id": "Fjord Line|Bergen/Stavanger–Hirtshals|2026-07-01",
+      "company": "Fjord Line",
+      "route": "Bergen/Stavanger–Hirtshals",
+      "valid_from": "2026-07-01",
+      "valid_to": "2026-07-31",
+      "period_label": "BAF+ETS 01.07.-31.07.26 (per metre)",
+      "price_nok": 165,
+      "price_eur": 15.2,
+      "source_url": "https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2026-07-07T10:04:51+00:00"
+    },
+    {
+      "id": "Fjord Line|Kristiansand–Hirtshals|2026-07-01",
+      "company": "Fjord Line",
+      "route": "Kristiansand–Hirtshals",
+      "valid_from": "2026-07-01",
+      "valid_to": "2026-07-31",
+      "period_label": "BAF+ETS 01.07.-31.07.26 (per metre)",
+      "price_nok": 139,
+      "price_eur": 12.9,
+      "source_url": "https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2026-07-07T10:04:51+00:00"
+    },
+    {
+      "id": "Fjord Line|Domestic route: Bergen–Stavanger|2026-07-01",
+      "company": "Fjord Line",
+      "route": "Domestic route: Bergen–Stavanger",
+      "valid_from": "2026-07-01",
+      "valid_to": "2026-07-31",
+      "period_label": "BAF+ETS 01.07.-31.07.26 (per metre)",
+      "price_nok": 53,
+      "price_eur": 4.9,
+      "source_url": "https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon",
+      "fetched_at": "2026-07-07T10:04:51+00:00"
+    }
+  ]
+}

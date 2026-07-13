@@ -7,3 +7,29 @@ baf/.pa-secrets.local
 # Python
 __pycache__/
 *.pyc
+
+# Agent-/logger-temp (aldri commit)
+*_CAPTURE.txt
+*_REPORT.txt
+*_HASH*.txt
+EXTRACTED_*.txt
+FINAL_*.txt
+FINAL_*.json
+PAYLOAD_*.txt
+RETURN_*.txt
+STATUS_*.txt
+SUMMARY_*.txt
+SUBAGENT_*.txt
+MODEL_*.txt
+ONE_LINE_*.txt
+PARSED_*.txt
+GIT_LOG_*.txt
+COMMIT_SUMMARY.md
+commit_metadata.json
+PUSH_RESULT.txt
+wf_*.txt
+_headers
+.git_rebase_msg_ok
+
+# Debug/test-artefakter
+supabase/preem_debug.txt

@@ -1,4 +1,7 @@
 """
+DEPRECATED — BAF leser nå fra baf_data.csv (se BAF-pipeline-handoff.md).
+Beholdes midlertidig for referanse; ikke brukt av GitHub Actions.
+
 Synkroniser BAF-rader til Supabase med historikk.
 
 Leser payload fra fetch_baf.py (eller JSON-fil) og:
@@ -20,7 +23,7 @@ from datetime import datetime, timezone
 from typing import Any
 import requests
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "") = os.environ.get("SUPABASE_URL", "")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 
 

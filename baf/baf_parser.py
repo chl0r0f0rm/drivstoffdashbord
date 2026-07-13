@@ -1,8 +1,7 @@
 """
 BAF-parser for ferjefrakt — Color Line og Fjord Line.
 
-Color Line: kun BAF (kilde til sannhet = fetch_colorline_baf.py fra repoet).
-Fjord Line: BAF + ETS summeres til ett tall (price_nok / price_eur), etter ønske.
+Color Line: kun BAF. Fjord Line: BAF + ETS summeres til ett tall (price_nok / price_eur).
 
 Alle parsere har en tekst-basert fallback slik at små strukturendringer på
 nettsidene ikke stopper innhentingen.
@@ -29,8 +28,11 @@ CL_PRICE_RE = re.compile(r"(\d+)\s*NOK\s*\(\s*€\s*([\d,\.]+)\s*\)", re.IGNOREC
 FJORD_URL = "https://fjordline.com/nb/p/fjord-line-freight/fraktinformasjon"
 FJORD_COMPANY = "Fjord Line"
 
-# "01.07.-31.07.26"  ->  day.month.-day.month.yy
-FJ_PERIOD_RE = re.compile(r"(\d{1,2})\.(\d{1,2})\.\s*[–\-]\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})")
+FJ_PERIOD_DASH_RE = re.compile(r"(\d{1,2})\.(\d{1,2})\.\s*[–\-]\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})")
+FJ_PERIOD_TIL_RE = re.compile(
+    r"(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+til\s+(\d{1,2})\.(\d{1,2})\.(\d{2,4})",
+    re.IGNORECASE,
+)
 # "116 NOK (10,7 €/80 DKK)"  -> NOK, deretter euro FØR €-tegnet
 FJ_PRICE_RE = re.compile(r"(\d+)\s*NOK\s*\(\s*([\d,\.]+)\s*€", re.IGNORECASE)
 
@@ -43,6 +45,46 @@ def _eur(raw: str) -> float:
 def _year(yy: str) -> int:
     y = int(yy)
     return y + 2000 if y < 100 else y
+
+
+FJORD_ROUTE_ORDER = (
+    "Bergen/Stavanger–Hirtshals",
+    "Kristiansand–Hirtshals",
+    "Domestic route: Bergen–Stavanger",
+)
+
+
+def _match_fj_period(line: str) -> re.Match[str] | None:
+    match = FJ_PERIOD_DASH_RE.search(line)
+    if match:
+        return match
+    return FJ_PERIOD_TIL_RE.search(line)
+
+
+def _fj_period_bounds(match: re.Match[str]) -> tuple[str, str, str]:
+    groups = match.groups()
+    if len(groups) == 5:
+        day_from, month_from, day_to, month_to, year_part = groups
+    else:
+        day_from, month_from, year_part, day_to, month_to, _year_end = groups
+    year = _year(year_part)
+    valid_from = f"{year}-{int(month_from):02d}-{int(day_from):02d}"
+    valid_to = f"{year}-{int(month_to):02d}-{int(day_to):02d}"
+    period_label = (
+        f"BAF+ETS {int(day_from):02d}.{int(month_from):02d}.-"
+        f"{int(day_to):02d}.{int(month_to):02d}.{str(year)[2:]} (per metre)"
+    )
+    return valid_from, valid_to, period_label
+
+
+def _fj_route_name(raw_route: str, section: str, index: int) -> str:
+    cleaned = raw_route.rstrip(":").strip()
+    low = cleaned.lower()
+    if cleaned and "nok" not in low and "adjustment" not in low and "surcharge" not in low:
+        return cleaned
+    if index < len(FJORD_ROUTE_ORDER):
+        return FJORD_ROUTE_ORDER[index]
+    return cleaned
 
 
 def fetch_html(url: str, session: requests.Session | None = None) -> str:
@@ -152,40 +194,45 @@ def parse_fjordline(html: str, fetched_at: datetime | None = None) -> list[dict]
     prev = ""
     baf: dict[str, tuple[int, float]] = {}
     ets: dict[str, tuple[int, float]] = {}
+    baf_index = 0
+    ets_index = 0
 
     for ln in lines:
         low = ln.lower()
         if "baf adjustment" in low:
             section = "BAF"
-            m = FJ_PERIOD_RE.search(ln)
-            if m:
-                period = m
+            baf_index = 0
+            match = _match_fj_period(ln)
+            if match:
+                period = match
             prev = ln
             continue
         if "ets surcharge" in low:
             section = "ETS"
-            m = FJ_PERIOD_RE.search(ln)
-            if m and not period:
-                period = m
+            ets_index = 0
+            match = _match_fj_period(ln)
+            if match and not period:
+                period = match
             prev = ln
             continue
         pm = FJ_PRICE_RE.search(ln)
         if pm and section:
-            route = prev.rstrip(":").strip()
-            if route and "NOK" not in route:
+            index = baf_index if section == "BAF" else ets_index
+            route = _fj_route_name(prev, section, index)
+            if route:
                 data = (int(pm.group(1)), _eur(pm.group(2)))
-                (baf if section == "BAF" else ets)[route] = data
+                if section == "BAF":
+                    baf[route] = data
+                    baf_index += 1
+                else:
+                    ets[route] = data
+                    ets_index += 1
         prev = ln
 
     if not period or not baf:
         raise ValueError("Fjord Line: fant ikke BAF-periode eller -rader (struktur kan ha endret seg)")
 
-    d_from, m_from, d_to, m_to, yy = period.groups()
-    year = _year(yy)
-    valid_from = f"{year}-{int(m_from):02d}-{int(d_from):02d}"
-    valid_to = f"{year}-{int(m_to):02d}-{int(d_to):02d}"
-    period_label = (f"BAF+ETS {int(d_from):02d}.{int(m_from):02d}.-"
-                    f"{int(d_to):02d}.{int(m_to):02d}.{str(year)[2:]} (per metre)")
+    valid_from, valid_to, period_label = _fj_period_bounds(period)
 
     rows: list[dict] = []
     for route, (b_nok, b_eur) in baf.items():
