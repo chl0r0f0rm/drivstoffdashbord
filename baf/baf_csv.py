@@ -23,7 +23,7 @@ CSV_COLUMNS = (
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_CSV_PATH = REPO_ROOT / "baf_data.csv"
+DEFAULT_CSV_PATH = REPO_ROOT / "data" / "baf_data.csv"
 SEEDS_DIR = Path(__file__).resolve().parent / "seeds"
 
 

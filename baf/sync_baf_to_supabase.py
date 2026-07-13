@@ -1,5 +1,5 @@
 """
-DEPRECATED — BAF leser nå fra baf_data.csv (se BAF-pipeline-handoff.md).
+DEPRECATED — BAF leser nå fra data/baf_data.csv (se BAF-pipeline-handoff.md).
 Beholdes midlertidig for referanse; ikke brukt av GitHub Actions.
 
 Synkroniser BAF-rader til Supabase med historikk.

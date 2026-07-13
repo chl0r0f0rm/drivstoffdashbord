@@ -1,6 +1,6 @@
 """
 GitHub Actions runner: henter BAF fra Color Line + Fjord Line og oppdaterer
-baf_data.csv i repo-roten.
+data/baf_data.csv.
 
 Exit-kode 1 hvis 0 rader totalt (gjør at Actions-kjøringen blir rød → varsling).
 """

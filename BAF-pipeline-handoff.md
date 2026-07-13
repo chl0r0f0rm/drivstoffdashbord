@@ -2,7 +2,7 @@
 
 **Owner:** Andy (djsmarterchild@gmail.com)
 **Last updated:** 2026-07-13
-**Status:** GitHub Action writes `baf_data.csv` (repo root). Power Automate + Power BI PQ still to build.
+**Status:** GitHub Action writes `data/baf_data.csv`. Power Automate + Power BI PQ still to build.
 
 ## Purpose
 
@@ -14,9 +14,9 @@ Get BAF price data (scraped by a GitHub Action) into the Power BI dataset **Tend
 
 ```
 GitHub Action (existing scraper)
-  └─ commits baf_data.csv to the repo
+  └─ commits data/baf_data.csv to the repo
        └─ Power Automate flow (daily)
-            ├─ HTTP GET raw.githubusercontent.com/<org>/<repo>/main/baf_data.csv
+            ├─ HTTP GET raw.githubusercontent.com/<org>/<repo>/main/data/baf_data.csv
             └─ writes file to SharePoint site
                  └─ Power BI dataset "Tender Downstream" (daily scheduled refresh)
                       └─ BI dashboard
@@ -24,7 +24,7 @@ GitHub Action (existing scraper)
 
 ## Component 1 — GitHub Action
 
-- **Done in repo:** `.github/workflows/fetch-baf.yml` runs `baf/fetch_baf.py`, merges scrape + `baf/seeds/*.json` into `baf_data.csv` at repo root, and commits. Supabase sync removed.
+- **Done in repo:** `.github/workflows/fetch-baf.yml` runs `baf/fetch_baf.py`, merges scrape + `baf/seeds/*.json` into `data/baf_data.csv`, and commits. Supabase sync removed.
 - Columns (must stay stable — Power Query depends on them):
   `id, company, route, valid_from, valid_to, period_label, price_nok, price_eur, source_url, first_seen_at, updated_at`
 - Dates ISO 8601 (`YYYY-MM-DD`), timestamps with timezone, decimal point (not comma).
@@ -38,7 +38,7 @@ GitHub Action (existing scraper)
 | # | Action | Config |
 |---|--------|--------|
 | 1 | Recurrence | Daily, ~1 hour before the dataset's scheduled refresh |
-| 2 | HTTP | GET `https://raw.githubusercontent.com/<org>/<repo>/main/baf_data.csv`. Private repo: header `Authorization: token <PAT>` |
+| 2 | HTTP | GET `https://raw.githubusercontent.com/<org>/<repo>/main/data/baf_data.csv`. Private repo: header `Authorization: token <PAT>` |
 | 3 | SharePoint – Create file | Site: <this SharePoint site>. Folder: e.g. `/Delte dokumenter/BAF`. File name: `baf_data.csv`. Content: `body('HTTP')` |
 
 If **Create file** fails because the file already exists: add **Get file metadata using path** and use **Update file** (with the file identifier) instead of Create file. Alternatively delete-then-create.

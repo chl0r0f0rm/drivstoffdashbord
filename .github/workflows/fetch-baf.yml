@@ -42,7 +42,7 @@ jobs:
         if: steps.gate.outputs.should_run == 'true'
         run: pip install -r baf/requirements.txt
 
-      - name: Fetch BAF -> baf_data.csv
+      - name: Fetch BAF -> data/baf_data.csv
         if: steps.gate.outputs.should_run == 'true'
         run: python baf/fetch_baf.py
 
@@ -51,10 +51,10 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add baf_data.csv
+          git add data/baf_data.csv
           if git diff --staged --quiet; then
             echo "Ingen endring i BAF-data."
           else
-            git commit -m "chore(baf): oppdater baf_data.csv [skip ci]"
+            git commit -m "chore(baf): oppdater data/baf_data.csv [skip ci]"
             git push
           fi
