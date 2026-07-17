@@ -79,10 +79,28 @@
   .header-title h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text-contrast); }
   .header-title p  { font-size: 0.72rem; color: var(--gray); margin-top: 2px; }
   .header-right {
-    display: flex; align-items: center;
-    font-size: 0.75rem; color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
     padding: 18px 0;
   }
+  .header-meeting-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    background: var(--ng-mid);
+    color: var(--text-inverted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .12s;
+  }
+  .header-meeting-btn:hover { background: var(--card-button-hover); color: var(--text-inverted); }
 
   .outer-layout {
     display: flex;
@@ -103,7 +121,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
-    align-items: flex-end;
+    align-items: flex-start;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
   }
@@ -261,15 +279,53 @@
   }
 
   /* ── View month slider ── */
-  .slider-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 220px; }
-  .slider-row { display: flex; align-items: center; gap: 10px; }
+  .slider-group {
+    display: grid;
+    grid-template-rows: 16px 24px 20px 16px 22px;
+    gap: 4px;
+    flex: 1;
+    min-width: 220px;
+    align-content: start;
+  }
+  .slider-heading {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 16px;
+    min-height: 16px;
+    align-self: end;
+  }
+  .slider-track-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 24px;
+    align-self: center;
+  }
+  .slider-track-row input[type=range] {
+    flex: 1;
+    min-width: 0;
+  }
+  .slider-value-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 20px;
+    gap: 10px;
+    align-self: center;
+  }
   .slider-label-val {
-    font-size: 0.84rem; font-weight: 700;
-    color: var(--ng-mid); white-space: nowrap; min-width: 80px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--ng-mid);
+    white-space: nowrap;
+    min-width: 36px;
   }
   input[type=range] {
     -webkit-appearance: none; appearance: none;
-    flex: 1; height: 4px;
+    height: 4px;
     background: var(--border); border-radius: 2px; outline: none;
     border: none; padding: 0;
     cursor: pointer;
@@ -283,7 +339,41 @@
     transition: transform .1s;
   }
   input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
-  .slider-endpoints { display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--text-muted); }
+  .slider-endpoints {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    height: 16px;
+    line-height: 16px;
+    align-self: center;
+  }
+  .slider-group-footer {
+    height: 22px;
+    display: flex;
+    align-items: center;
+    align-self: start;
+  }
+  .year-history-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  .year-history-toggle input { margin: 0; cursor: pointer; }
+
+  .slider-controls {
+    display: flex;
+    flex: 1;
+    gap: 20px;
+    min-width: min(100%, 460px);
+  }
+  @media (max-width: 700px) {
+    .slider-controls { flex-direction: column; min-width: 100%; }
+  }
 
   /* ── Period buttons (inside chart cards) ── */
   .chart-footer { display: flex; justify-content: flex-end; padding-top: 10px; }
@@ -424,6 +514,75 @@
     flex-wrap: wrap;
     gap: 8px;
   }
+  .collapse-btn {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--ng-bg);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color .12s, color .12s, background .12s;
+  }
+  .collapse-btn:hover {
+    border-color: var(--ng-mid);
+    color: var(--ng-mid);
+  }
+  .collapsible.collapsed > .card-header { margin-bottom: 0; }
+  .collapsible.collapsed > .collapsible-body { display: none; }
+  .collapsible.collapsed > .collapse-btn,
+  .collapsible.collapsed .collapse-btn { transform: rotate(-90deg); }
+  .collapsible.collapsible-preview.collapsed > .card-header { margin-bottom: 10px; }
+  .collapsible.collapsible-preview.collapsed > .collapsible-body {
+    display: block;
+    max-height: 12.5rem;
+    overflow: hidden;
+    position: relative;
+  }
+  .collapsible.collapsible-preview.collapsed > .collapsible-body::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3.6rem;
+    background: linear-gradient(to bottom, transparent, var(--white));
+    pointer-events: none;
+  }
+  .collapse-expand-hint {
+    display: none;
+  }
+  .collapsible.collapsible-preview.collapsed .collapse-expand-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 6px;
+    z-index: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 12px;
+  }
+  .collapsible.collapsible-preview.collapsed .collapse-expand-hint:hover {
+    color: var(--ng-mid);
+  }
+  .collapse-expand-hint-arrow {
+    font-size: 0.9rem;
+    line-height: 1;
+  }
   .card-title {
     font-size: 0.72rem; font-weight: 700;
     color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;
@@ -432,8 +591,7 @@
   .surcharge-wrap { position: relative; height: 260px; }
 
   /* ── Price charts ── */
-  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-  @media (max-width: 800px) { .charts { grid-template-columns: 1fr; } }
+  .charts { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 20px; }
   .chart-card {
     background: var(--white);
     border-radius: 8px;
@@ -655,10 +813,13 @@
     <img src="assets/logo.svg" class="header-logo" alt="NG Nordic">
     <div class="header-title">
       <h1>Drivstoff-indeks</h1>
-      <p>Dieseltillegg · 🇸🇪 Preem SE · 🇸🇪 Circle K SE · 🇩🇰 Circle K DK · 🇳🇴 Circle K NO</p>
+      <p>Dieseltillegg · 🇸🇪 Circle K SE · 🇸🇪 Preem SE · 🇳🇴 Circle K NO · 🇩🇰 Circle K DK</p>
     </div>
   </div>
-  <div class="header-right" id="last-updated">—</div>
+  <div class="header-right">
+    <a href="markedsmote.html" class="header-meeting-btn">Markedsmøte-dashbord</a>
+    <span id="last-updated">—</span>
+  </div>
 </header>
 
 <div class="outer-layout">
@@ -677,53 +838,67 @@
       <input type="number" id="impactFactor" value="30" min="1" max="100" step="1" style="width:88px">
     </div>
 
+    <div class="slider-controls">
     <!-- Periode (år) — til venstre for månedslider, samme stil -->
     <div class="slider-group">
-      <label style="font-size:0.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">Periode (år)</label>
-      <div class="slider-row">
-        <span class="slider-label-val" id="yearFromLabel" style="min-width:36px;text-align:center">—</span>
-        <input type="range" id="yearFrom" min="2000" max="2026" value="2021" step="1">
-        <input type="range" id="yearTo"   min="2000" max="2026" value="2026" step="1">
-        <span class="slider-label-val" id="yearToLabel" style="min-width:36px;text-align:center">—</span>
+      <label class="slider-heading">Periode (år)</label>
+      <div class="slider-track-row">
+        <input type="range" id="yearFrom" min="2024" max="2026" value="2024" step="1">
+        <input type="range" id="yearTo"   min="2024" max="2026" value="2026" step="1">
+      </div>
+      <div class="slider-value-row">
+        <span class="slider-label-val" id="yearFromLabel">—</span>
+        <span class="slider-label-val" id="yearToLabel">—</span>
       </div>
       <div class="slider-endpoints">
         <span id="yearAbsMin">—</span>
         <span id="yearAbsMax">—</span>
       </div>
+      <div class="slider-group-footer">
+        <label class="year-history-toggle" for="yearFullHistory">
+          <input type="checkbox" id="yearFullHistory">
+          Vis all historikk
+        </label>
+      </div>
     </div>
 
     <!-- Vis måned -->
     <div class="slider-group" id="view-month-slider-group">
-      <label style="font-size:0.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">Vis måned</label>
-      <div class="slider-row">
+      <label class="slider-heading">Vis måned</label>
+      <div class="slider-track-row">
         <input type="range" id="viewMonthSlider" min="0" max="0" value="0" step="1">
+      </div>
+      <div class="slider-value-row">
+        <span aria-hidden="true"></span>
         <span class="slider-label-val" id="viewMonthLabel">—</span>
       </div>
       <div class="slider-endpoints">
         <span id="sliderStart">—</span>
         <span id="sliderEnd">—</span>
       </div>
+      <div class="slider-group-footer"></div>
+    </div>
     </div>
   </div>
 
   <!-- Country tabs + meta -->
   <div class="country-bar">
     <div class="country-tabs">
-      <div class="tab active" data-country="SE_preem" onclick="setCountry(this)">
-        <span class="flag-icon"><svg viewBox="0 0 22 15" width="22" height="15" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="15" fill="#006AA7"/><rect y="6" width="22" height="3" fill="#FECC02"/><rect x="8" width="3" height="15" fill="#FECC02"/></svg></span>
-        <span class="tab-title">Sverige – Preem</span>
-      </div>
-      <div class="tab" data-country="SE_ck" onclick="setCountry(this)">
+      <div class="tab active" data-country="SE_ck" onclick="setCountry(this)">
         <span class="flag-icon"><svg viewBox="0 0 22 15" width="22" height="15" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="15" fill="#006AA7"/><rect y="6" width="22" height="3" fill="#FECC02"/><rect x="8" width="3" height="15" fill="#FECC02"/></svg></span>
         <span class="tab-title">Sverige – Circle K</span>
       </div>
-      <div class="tab" data-country="DK_ck" onclick="setCountry(this)">
-        <span class="flag-icon"><svg viewBox="0 0 22 15" width="22" height="15" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="15" fill="#C60C30"/><rect y="6" width="22" height="3" fill="#fff"/><rect x="8" width="3" height="15" fill="#fff"/></svg></span>
-        <span class="tab-title">Danmark – Circle K</span>
+      <div class="tab" data-country="SE_preem" onclick="setCountry(this)">
+        <span class="flag-icon"><svg viewBox="0 0 22 15" width="22" height="15" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="15" fill="#006AA7"/><rect y="6" width="22" height="3" fill="#FECC02"/><rect x="8" width="3" height="15" fill="#FECC02"/></svg></span>
+        <span class="tab-title">Sverige – Preem</span>
       </div>
       <div class="tab" data-country="NO_ck" onclick="setCountry(this)">
         <span class="flag-icon"><svg viewBox="0 0 22 15" width="22" height="15" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="15" fill="#EF2B2D"/><rect y="5" width="22" height="5" fill="#fff"/><rect x="7" width="5" height="15" fill="#fff"/><rect y="6" width="22" height="3" fill="#002868"/><rect x="8" width="3" height="15" fill="#002868"/></svg></span>
         <span class="tab-title">Norge – Circle K</span>
+      </div>
+      <div class="tab" data-country="DK_ck" onclick="setCountry(this)">
+        <span class="flag-icon"><svg viewBox="0 0 22 15" width="22" height="15" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="15" fill="#C60C30"/><rect y="6" width="22" height="3" fill="#fff"/><rect x="8" width="3" height="15" fill="#fff"/></svg></span>
+        <span class="tab-title">Danmark – Circle K</span>
       </div>
       <div class="tab" data-country="ALL" onclick="setCountry(this)">
         <span class="tab-title">Alle land</span>
@@ -749,25 +924,30 @@
   <div class="kpi-grid" id="kpi-grid"></div>
 
   <!-- Surcharge history chart -->
-  <div class="surcharge-card">
+  <div class="surcharge-card collapsible">
     <div class="card-header">
       <span class="card-title" id="surcharge-chart-title">Dieseltillegg per måned</span>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Tillegg over basis</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Under basis</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--ng-bright)"></div> Basismåned</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Tillegg over basis</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Under basis</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--ng-bright)"></div> Basismåned</div>
+        </div>
+        <button type="button" class="collapse-btn" onclick="toggleCollapse(this)" aria-expanded="true" title="Vis/skjul">▾</button>
       </div>
     </div>
-    <div class="surcharge-wrap"><canvas id="surchargeChart"></canvas></div>
-    <div class="chart-footer">
-      <div class="period-btns" id="periodSurcharge">
-        <button data-months="3"   onclick="setChartPeriod('surcharge',this)">Kvartal</button>
-        <button data-months="6"   onclick="setChartPeriod('surcharge',this)" class="active">Halvår</button>
-        <button data-months="12"  onclick="setChartPeriod('surcharge',this)">1 år</button>
-        <button data-months="36"  onclick="setChartPeriod('surcharge',this)">3 år</button>
-        <button data-months="60"  onclick="setChartPeriod('surcharge',this)">5 år</button>
-        <button data-months="120" onclick="setChartPeriod('surcharge',this)">10 år</button>
-        <button data-months="0"   onclick="setChartPeriod('surcharge',this)">Alt</button>
+    <div class="collapsible-body">
+      <div class="surcharge-wrap"><canvas id="surchargeChart"></canvas></div>
+      <div class="chart-footer">
+        <div class="period-btns" id="periodSurcharge">
+          <button data-months="3"   onclick="setChartPeriod('surcharge',this)">Kvartal</button>
+          <button data-months="6"   onclick="setChartPeriod('surcharge',this)" class="active">Halvår</button>
+          <button data-months="12"  onclick="setChartPeriod('surcharge',this)">1 år</button>
+          <button data-months="36"  onclick="setChartPeriod('surcharge',this)">3 år</button>
+          <button data-months="60"  onclick="setChartPeriod('surcharge',this)">5 år</button>
+          <button data-months="120" onclick="setChartPeriod('surcharge',this)">10 år</button>
+          <button data-months="0"   onclick="setChartPeriod('surcharge',this)">Alt</button>
+        </div>
       </div>
     </div>
   </div>
@@ -775,37 +955,30 @@
   <!-- Price charts -->
   <p class="section-label">Prisutvikling</p>
   <div class="charts">
-    <div class="chart-card">
+    <div class="chart-card collapsible">
       <div class="card-header">
-        <span class="card-title" id="diesel-chart-title">Diesel eks. mva</span>
-      </div>
-      <div class="chart-wrap"><canvas id="dieselChart"></canvas></div>
-      <div class="chart-footer">
-        <div class="period-btns" id="periodDiesel">
-          <button data-months="3"   onclick="setChartPeriod('diesel',this)">Kvartal</button>
-          <button data-months="6"   onclick="setChartPeriod('diesel',this)" class="active">Halvår</button>
-          <button data-months="12"  onclick="setChartPeriod('diesel',this)">1 år</button>
-          <button data-months="36"  onclick="setChartPeriod('diesel',this)">3 år</button>
-          <button data-months="60"  onclick="setChartPeriod('diesel',this)">5 år</button>
-          <button data-months="120" onclick="setChartPeriod('diesel',this)">10 år</button>
-          <button data-months="0"   onclick="setChartPeriod('diesel',this)">Alt</button>
+        <span class="card-title" id="price-chart-title">Prisutvikling eks. mva</span>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+          <div class="legend" id="price-chart-legend"></div>
+          <div class="fuel-toggles" id="price-fuel-toggles">
+            <button class="fuel-toggle active" data-fuel="diesel" onclick="toggleChartFuel(this)">Diesel</button>
+            <button class="fuel-toggle" data-fuel="hvo" onclick="toggleChartFuel(this)">HVO100</button>
+          </div>
+          <button type="button" class="collapse-btn" onclick="toggleCollapse(this)" aria-expanded="true" title="Vis/skjul">▾</button>
         </div>
       </div>
-    </div>
-    <div class="chart-card">
-      <div class="card-header">
-        <span class="card-title" id="hvo-chart-title">HVO100 eks. mva</span>
-      </div>
-      <div class="chart-wrap"><canvas id="hvoChart"></canvas></div>
-      <div class="chart-footer">
-        <div class="period-btns" id="periodHvo">
-          <button data-months="3"   onclick="setChartPeriod('hvo',this)">Kvartal</button>
-          <button data-months="6"   onclick="setChartPeriod('hvo',this)" class="active">Halvår</button>
-          <button data-months="12"  onclick="setChartPeriod('hvo',this)">1 år</button>
-          <button data-months="36"  onclick="setChartPeriod('hvo',this)">3 år</button>
-          <button data-months="60"  onclick="setChartPeriod('hvo',this)">5 år</button>
-          <button data-months="120" onclick="setChartPeriod('hvo',this)">10 år</button>
-          <button data-months="0"   onclick="setChartPeriod('hvo',this)">Alt</button>
+      <div class="collapsible-body">
+        <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+        <div class="chart-footer">
+          <div class="period-btns" id="periodPrice">
+            <button data-months="3"   onclick="setChartPeriod('price',this)">Kvartal</button>
+            <button data-months="6"   onclick="setChartPeriod('price',this)">Halvår</button>
+            <button data-months="12"  onclick="setChartPeriod('price',this)" class="active">1 år</button>
+            <button data-months="36"  onclick="setChartPeriod('price',this)">3 år</button>
+            <button data-months="60"  onclick="setChartPeriod('price',this)">5 år</button>
+            <button data-months="120" onclick="setChartPeriod('price',this)">10 år</button>
+            <button data-months="0"   onclick="setChartPeriod('price',this)">Alt</button>
+          </div>
         </div>
       </div>
     </div>
@@ -813,47 +986,59 @@
 
   <!-- Table -->
   <p class="section-label">Historikk</p>
-  <div class="table-card">
+  <div class="table-card collapsible">
     <div class="card-header">
       <div>
         <span class="card-title" id="table-title">Månedlige snitt</span>
         <div class="data-note" id="data-freshness-note" style="display:none"></div>
       </div>
-      <div class="fuel-toggles">
-        <button class="fuel-toggle active" data-fuel="diesel" onclick="toggleFuel(this)">Diesel</button>
-        <button class="fuel-toggle active" data-fuel="hvo"    onclick="toggleFuel(this)">HVO100</button>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div class="fuel-toggles">
+          <button class="fuel-toggle active" data-fuel="diesel" onclick="toggleFuel(this)">Diesel</button>
+          <button class="fuel-toggle active" data-fuel="hvo"    onclick="toggleFuel(this)">HVO100</button>
+        </div>
+        <button type="button" class="collapse-btn" onclick="toggleCollapse(this)" aria-expanded="true" title="Vis/skjul">▾</button>
       </div>
     </div>
-    <table id="priceTable">
-      <thead>
-        <tr>
-          <th id="th-month">Måned</th>
-          <th id="th-diesel" class="col-diesel">Diesel</th>
-          <th id="th-hvo" class="col-hvo">HVO100</th>
-          <th class="col-diesel-vs">Diesel vs basis</th>
-          <th class="col-hvo-vs">HVO vs basis</th>
-          <th>Dieseltillegg</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+    <div class="collapsible-body">
+      <table id="priceTable">
+        <thead>
+          <tr>
+            <th id="th-month">Måned</th>
+            <th id="th-diesel" class="col-diesel">Diesel</th>
+            <th id="th-hvo" class="col-hvo">HVO100</th>
+            <th class="col-diesel-vs">Diesel vs basis</th>
+            <th class="col-hvo-vs">HVO vs basis</th>
+            <th>Dieseltillegg</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
   </div>
 
-  <div id="daily-history-section" class="table-card" style="display:none;margin-top:20px">
+  <div id="daily-history-section" class="table-card collapsible collapsible-preview collapsed" style="display:none;margin-top:20px">
     <div class="card-header">
       <span class="card-title" id="daily-history-title">Daglige priser</span>
+      <button type="button" class="collapse-btn" onclick="toggleCollapse(this)" aria-expanded="false" title="Vis/skjul">▾</button>
     </div>
-    <table id="dailyHistoryTable">
-      <thead>
-        <tr>
-          <th>Dato</th>
-          <th id="th-daily-history-diesel">Diesel</th>
-          <th id="th-daily-history-hvo">HVO100</th>
-          <th>Δ diesel</th>
-        </tr>
-      </thead>
-      <tbody id="dailyHistoryTableBody"></tbody>
-    </table>
+    <div class="collapsible-body">
+      <table id="dailyHistoryTable">
+        <thead>
+          <tr>
+            <th>Dato</th>
+            <th id="th-daily-history-diesel">Diesel</th>
+            <th id="th-daily-history-hvo">HVO100</th>
+            <th>Δ diesel</th>
+          </tr>
+        </thead>
+        <tbody id="dailyHistoryTableBody"></tbody>
+      </table>
+      <button type="button" class="collapse-expand-hint" onclick="toggleCollapse(this)">
+        <span class="collapse-expand-hint-arrow" aria-hidden="true">▾</span>
+        trykk for å utvide
+      </button>
+    </div>
   </div>
 
   </div><!-- /#monthly-sections -->
@@ -861,35 +1046,71 @@
   <!-- Daily prices table (shown only for sources with daily data) -->
   <div id="daily-section" style="display:none">
     <p class="section-label">Daglige priser</p>
-    <div class="table-card">
+    <div class="table-card collapsible collapsible-preview collapsed">
       <div class="card-header">
         <span class="card-title" id="daily-table-title">Daglige priser</span>
-        <div class="period-btns" id="periodDaily" style="margin:0">
-          <button data-days="30"  onclick="setDailyPeriod(this)">30 dager</button>
-          <button data-days="90"  onclick="setDailyPeriod(this)">90 dager</button>
-          <button data-days="180" onclick="setDailyPeriod(this)" class="active">6 mnd</button>
-          <button data-days="365" onclick="setDailyPeriod(this)">1 år</button>
-          <button data-days="0"   onclick="setDailyPeriod(this)">Alt</button>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div class="period-btns" id="periodDaily" style="margin:0">
+            <button data-days="30"  onclick="setDailyPeriod(this)">30 dager</button>
+            <button data-days="90"  onclick="setDailyPeriod(this)">90 dager</button>
+            <button data-days="180" onclick="setDailyPeriod(this)" class="active">6 mnd</button>
+            <button data-days="365" onclick="setDailyPeriod(this)">1 år</button>
+            <button data-days="0"   onclick="setDailyPeriod(this)">Alt</button>
+          </div>
+          <button type="button" class="collapse-btn" onclick="toggleCollapse(this)" aria-expanded="false" title="Vis/skjul">▾</button>
         </div>
       </div>
-      <table id="dailyTable">
-        <thead>
-          <tr>
-            <th>Dato</th>
-            <th id="th-daily-diesel">Diesel</th>
-            <th id="th-daily-hvo">HVO100</th>
-            <th>Δ diesel</th>
-          </tr>
-        </thead>
-        <tbody id="dailyTableBody"></tbody>
-      </table>
+      <div class="collapsible-body">
+        <table id="dailyTable">
+          <thead>
+            <tr>
+              <th>Dato</th>
+              <th id="th-daily-diesel">Diesel</th>
+              <th id="th-daily-hvo">HVO100</th>
+              <th>Δ diesel</th>
+            </tr>
+          </thead>
+          <tbody id="dailyTableBody"></tbody>
+        </table>
+        <button type="button" class="collapse-expand-hint" onclick="toggleCollapse(this)">
+          <span class="collapse-expand-hint-arrow" aria-hidden="true">▾</span>
+          trykk for å utvide
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tax changes relevant to selected country and year range -->
+  <div id="tax-changes-section" style="display:none">
+    <p class="section-label">Avgiftsendringer</p>
+    <div class="table-card collapsible">
+      <div class="card-header">
+        <div>
+          <span class="card-title" id="tax-changes-title">Relevante avgiftsendringer</span>
+          <div class="data-note" id="tax-changes-note">Filtrert etter valgt periode (år)</div>
+        </div>
+        <button type="button" class="collapse-btn" onclick="toggleCollapse(this)" aria-expanded="true" title="Vis/skjul">▾</button>
+      </div>
+      <div class="collapsible-body">
+        <table id="taxChangesTable">
+          <thead>
+            <tr>
+              <th>Periode</th>
+              <th>Tiltak</th>
+              <th>Anslått pumpeeffekt</th>
+              <th>Type</th>
+            </tr>
+          </thead>
+          <tbody id="taxChangesTableBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <!-- Cross-country daily comparison -->
   <div id="compare-section" style="display:none">
     <p class="section-label">Daglig sammenligning</p>
-    <div class="table-card">
+    <div class="table-card collapsible">
       <div class="card-header">
         <div>
           <span class="card-title">Diesel og HVO per dato – alle land</span>
@@ -907,12 +1128,15 @@
             <button data-days="365" onclick="setComparePeriod(this)">1 år</button>
             <button data-days="0"   onclick="setComparePeriod(this)">Alt</button>
           </div>
+          <button type="button" class="collapse-btn" onclick="toggleCollapse(this)" aria-expanded="true" title="Vis/skjul">▾</button>
         </div>
       </div>
-      <table id="compareTable">
-        <thead id="compareTableHead"></thead>
-        <tbody id="compareTableBody"></tbody>
-      </table>
+      <div class="collapsible-body">
+        <table id="compareTable">
+          <thead id="compareTableHead"></thead>
+          <tbody id="compareTableBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -934,13 +1158,13 @@
 
 </div><!-- /.outer-layout -->
 
-<footer>Data: 🇸🇪 Preem SE / Circle K SE (SEK/L eks. mva) · 🇩🇰 Circle K DK (DKK/L eks. moms) · 🇳🇴 Circle K NO (NOK/L eks. mva) · Månedlig/daglig gjennomsnitt</footer>
+<footer>Data: 🇸🇪 Circle K SE / Preem SE (SEK/L eks. mva) · 🇩🇰 Circle K DK (DKK/L eks. moms) · 🇳🇴 Circle K NO (NOK/L eks. mva) · Månedlig/daglig gjennomsnitt</footer>
 
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────────────
 const SOURCE_META = {
-  SE_preem: { label: 'Preem Sverige',    currency: 'SEK', flag: '🇸🇪', hasDaily: false, hasBothViews: false, sourceUrl: 'https://www.preem.se/foretag/listpriser/',                 sourceFile: 'prishistorik-listpriser-2008-2026.xls' },
   SE_ck:    { label: 'Circle K Sverige', currency: 'SEK', flag: '🇸🇪', hasDaily: true,  hasBothViews: true,  sourceUrl: 'https://www.circlek.se/foretag/drivmedel/priser',         sourceFile: 'Prishistorik_B2B.xls' },
+  SE_preem: { label: 'Preem Sverige',    currency: 'SEK', flag: '🇸🇪', hasDaily: true,  hasBothViews: true,  sourceUrl: 'https://www.preem.se/foretag/listpriser/',                 sourceFile: 'prishistorik-listpriser-2008-2026.xls' },
   DK_ck:      { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true, hasBothViews: true, sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser', sourceFile: 'miles diesel (ekskl. moms)' },
   DK_ck_inkl: { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true, hasBothViews: true, sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser', sourceFile: 'miles diesel (inkl. moms)' },
   NO_ck:    { label: 'Circle K Norge',   currency: 'NOK', flag: '🇳🇴', hasDaily: true,  sourceUrl: 'https://www.circlek.no/bedrift/produkter/drivstoff/priser',             sourceFile: 'Bulk-listepris (eks. mva)' },
@@ -1005,7 +1229,7 @@ async function fetchAllSupabaseRows(endpoint) {
   return rows;
 }
 
-const DAILY_SOURCE_KEYS = ['NO_ck', 'DK_ck', 'DK_ck_inkl', 'SE_ck'];
+const DAILY_SOURCE_KEYS = ['NO_ck', 'DK_ck', 'DK_ck_inkl', 'SE_ck', 'SE_preem'];
 
 async function fetchPriceData() {
   const [rows, syncRes, ...dailyChunks] = await Promise.all([
@@ -1050,10 +1274,10 @@ async function fetchPriceData() {
 
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let activeCountry = 'SE_preem';
+let activeCountry = 'SE_ck';
 let activeDkVat = 'ekskl';  // 'ekskl' | 'inkl'
 let activeCompareDays = 180;
-let dieselChart = null, hvoChart = null, surchargeChart = null;
+let surchargeChart = null;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmt    = (v, d=2) => v != null ? v.toFixed(d) : '—';
@@ -1124,6 +1348,34 @@ function toggleFuel(btn) {
   table.classList.toggle('hide-hvo',    !document.querySelector('[data-fuel="hvo"]').classList.contains('active'));
 }
 
+function toggleCollapse(btn) {
+  const panel = btn.closest('.collapsible');
+  if (!panel) return;
+  const willExpand = panel.classList.contains('collapsed');
+  panel.classList.toggle('collapsed');
+  const headerBtn = panel.querySelector('.card-header .collapse-btn');
+  if (headerBtn) headerBtn.setAttribute('aria-expanded', willExpand ? 'true' : 'false');
+  btn.setAttribute('aria-expanded', willExpand ? 'true' : 'false');
+  if (willExpand) {
+    requestAnimationFrame(() => {
+      try { render(); } catch (e) { console.error('Collapse expand redraw:', e); }
+    });
+  }
+}
+
+function collapseDailyPricePanels() {
+  const panels = [
+    document.getElementById('daily-history-section'),
+    document.querySelector('#daily-section .collapsible-preview')
+  ];
+  for (const panel of panels) {
+    if (!panel) continue;
+    panel.classList.add('collapsed');
+    const headerBtn = panel.querySelector('.card-header .collapse-btn');
+    if (headerBtn) headerBtn.setAttribute('aria-expanded', 'false');
+  }
+}
+
 function setCountry(el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
@@ -1131,6 +1383,8 @@ function setCountry(el) {
   if (activeCountry !== 'DK_ck') activeDkVat = 'ekskl';
 
   const isCompareView = activeCountry === 'ALL';
+  if (!isCompareView) collapseDailyPricePanels();
+
   document.getElementById('base-month-control').style.display = isCompareView ? 'none' : '';
   document.getElementById('impact-control').style.display = isCompareView ? 'none' : '';
   document.getElementById('view-month-slider-group').style.display = isCompareView ? 'none' : '';
@@ -1189,6 +1443,16 @@ const getBaseMonth  = () => document.getElementById('baseMonth').value;
 const getImpact     = () => parseFloat(document.getElementById('impactFactor').value) / 100;
 
 // ── Year range filter ─────────────────────────────────────────────────────────
+const YEAR_SLIDER_DEFAULT_MIN = 2024;
+
+function isYearFullHistory() {
+  return document.getElementById('yearFullHistory')?.checked ?? false;
+}
+
+function getYearSliderMin(datasetMinYear) {
+  return isYearFullHistory() ? datasetMinYear : Math.max(datasetMinYear, YEAR_SLIDER_DEFAULT_MIN);
+}
+
 function getYearRange() {
   return {
     from: parseInt(document.getElementById('yearFrom').value, 10),
@@ -1272,15 +1536,28 @@ function populateYearSliders() {
   const years = data.map(r => parseInt(r.month.substring(0, 4), 10));
   const minY  = Math.min(...years);
   const maxY  = Math.max(...years);
-  const defFrom = Math.max(minY, maxY - 4); // default: siste 5 år
+  const sliderMin = getYearSliderMin(minY);
+  const defFrom = Math.max(sliderMin, maxY - 4);
 
   const slFrom = document.getElementById('yearFrom');
   const slTo   = document.getElementById('yearTo');
-  slFrom.min = minY; slFrom.max = maxY; slFrom.value = defFrom;
-  slTo.min   = minY; slTo.max   = maxY; slTo.value   = maxY;
-  document.getElementById('yearFromLabel').textContent = defFrom;
-  document.getElementById('yearToLabel').textContent   = maxY;
-  document.getElementById('yearAbsMin').textContent    = minY;
+  const prevFrom = parseInt(slFrom.value, 10);
+  const prevTo = parseInt(slTo.value, 10);
+
+  slFrom.min = sliderMin;
+  slFrom.max = maxY;
+  slTo.min = sliderMin;
+  slTo.max = maxY;
+
+  let fromVal = Number.isFinite(prevFrom) ? Math.max(sliderMin, Math.min(prevFrom, maxY)) : defFrom;
+  let toVal = Number.isFinite(prevTo) ? Math.max(sliderMin, Math.min(prevTo, maxY)) : maxY;
+  if (fromVal > toVal) fromVal = toVal;
+
+  slFrom.value = fromVal;
+  slTo.value = toVal;
+  document.getElementById('yearFromLabel').textContent = fromVal;
+  document.getElementById('yearToLabel').textContent   = toVal;
+  document.getElementById('yearAbsMin').textContent    = sliderMin;
   document.getElementById('yearAbsMax').textContent    = maxY;
 }
 
@@ -1302,7 +1579,7 @@ function getViewMonth() {
   const idx = parseInt(document.getElementById('viewMonthSlider').value, 10);
   return _viewMonthData[idx] || null;
 }
-const chartPeriods = { surcharge: 6, diesel: 6, hvo: 6 };
+const chartPeriods = { surcharge: 6, price: 12 };
 
 function getPeriodMths(chart) {
   const m = chartPeriods[chart] || 36;
@@ -1311,14 +1588,25 @@ function getPeriodMths(chart) {
 
 function setChartPeriod(chart, btn) {
   chartPeriods[chart] = +btn.dataset.months;
-  const groupId = { surcharge: 'periodSurcharge', diesel: 'periodDiesel', hvo: 'periodHvo' }[chart];
+  const groupId = { surcharge: 'periodSurcharge', price: 'periodPrice' }[chart];
   document.querySelectorAll('#' + groupId + ' button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   const data = getSource().data;
   const base = getBaseMonth();
   if (!base) return;
   if (chart === 'surcharge') { try { renderSurchargeChart(data, base); } catch(e) {} }
-  if (chart === 'diesel' || chart === 'hvo') { try { renderCharts(data, base); } catch(e) {} }
+  if (chart === 'price') { try { renderCharts(data, base); } catch(e) {} }
+}
+
+function chartFuelActive(fuel) {
+  return document.querySelector(`#price-fuel-toggles [data-fuel="${fuel}"]`)?.classList.contains('active');
+}
+
+function toggleChartFuel(btn) {
+  btn.classList.toggle('active');
+  const data = getSource().data;
+  const base = getBaseMonth();
+  if (base) try { renderCharts(data, base); } catch(e) {}
 }
 
 // ── Base month dropdown ───────────────────────────────────────────────────────
@@ -1355,11 +1643,9 @@ function renderKPIs(data, baseMonth) {
   if (!base || !selected) { document.getElementById('kpi-grid').innerHTML = ''; return; }
 
   const dieselChg  = selected.diesel / base.diesel - 1;
-  const hvoChg     = selected.hvo && base.hvo ? selected.hvo / base.hvo - 1 : null;
   const surcharge  = dieselChg * impact;
   const afterBase = selected.month > baseMonth;
   const momDiesel  = prev ? selected.diesel / prev.diesel - 1 : null;
-  const momHvo     = prev && selected.hvo && prev.hvo ? selected.hvo / prev.hvo - 1 : null;
   const prevSurcharge = prev && afterBase ? (prev.diesel / base.diesel - 1) * impact : null;
   const momSurchargePp = prevSurcharge != null && afterBase ? (surcharge - prevSurcharge) * 100 : null;
 
@@ -1367,13 +1653,27 @@ function renderKPIs(data, baseMonth) {
   const isLatest = selected.month === withDiesel[withDiesel.length - 1].month;
   const prevPeriodLabel = 'fra forrige mnd';
   const afterBaseHint = 'Velg måned etter basis';
-  const periodRows = withDiesel.filter(r => r.month > baseMonth && r.month <= selected.month);
-  const avgSurcharge = afterBase && periodRows.length > 0
-    ? periodRows.reduce((sum, r) => sum + (r.diesel / base.diesel - 1) * impact, 0) / periodRows.length
+
+  const avgEndMonth = selected.month > baseMonth ? selected.month : null;
+  const avgPeriodRows = avgEndMonth
+    ? withDiesel.filter(r => r.month > baseMonth && r.month <= avgEndMonth)
+    : [];
+  const avgSurcharge = avgPeriodRows.length > 0
+    ? avgPeriodRows.reduce((sum, r) => sum + (r.diesel / base.diesel - 1) * impact, 0) / avgPeriodRows.length
     : null;
   const avgSurPct = avgSurcharge != null
     ? (avgSurcharge >= 0 ? '+' : '') + (avgSurcharge * 100).toFixed(1) + '%'
     : '—';
+  const avgPeriodLabel = avgEndMonth && avgPeriodRows.length > 0
+    ? `${monthLabel(baseMonth)} – ${monthLabel(avgEndMonth)}`
+    : (avgEndMonth ? 'Ingen hele måneder etter basis' : afterBaseHint);
+
+  const dailyWithDiesel = (src.dailyData || []).filter(r => r.diesel != null);
+  const latestPump = dailyWithDiesel.length ? dailyWithDiesel[dailyWithDiesel.length - 1] : null;
+  const prevPump = dailyWithDiesel.length > 1 ? dailyWithDiesel[dailyWithDiesel.length - 2] : null;
+  const pumpDayChange = latestPump && prevPump
+    ? Number(latestPump.diesel) / Number(prevPump.diesel) - 1
+    : null;
 
   // Oppdater kildevisning
   const sourceRef = document.getElementById('source-ref');
@@ -1392,29 +1692,29 @@ function renderKPIs(data, baseMonth) {
 
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi-ng" style="background:var(--key-number-bg-1);color:var(--key-number-text-1)">
-      <div class="kpi-ng-label">Dieseltillegg${isLatest ? ' nå' : ''}</div>
-      <div class="kpi-ng-value">${afterBase ? surPct : '—'}</div>
-      <div class="kpi-ng-sub">${afterBase ? (momSurchargePp != null ? kpiChangePpHtml(momSurchargePp, prevPeriodLabel) : 'vs basis ' + monthLabel(baseMonth)) : afterBaseHint}</div>
+      <div class="kpi-ng-label">Dagens pumpepris</div>
+      <div class="kpi-ng-value">${latestPump ? fmt(latestPump.diesel) + ' <span style="font-size:1rem;font-weight:500">' + src.currency + '/L</span>' : '—'}</div>
+      <div class="kpi-ng-sub">${latestPump ? (pumpDayChange != null ? kpiChangeHtml(pumpDayChange, 'fra forrige dag') : '') : 'Kun månedlige data'}</div>
     </div>
     <div class="kpi-ng" style="background:var(--key-number-bg-2);color:var(--key-number-text-2)">
-      <div class="kpi-ng-label">Diesel – ${monthLabel(selected.month)}</div>
+      <div class="kpi-ng-label">Snitt diesel – ${monthLabel(selected.month)}</div>
       <div class="kpi-ng-value">${fmt(selected.diesel)} <span style="font-size:1rem;font-weight:500">${src.currency}/L</span></div>
       <div class="kpi-ng-sub">${kpiChangeHtml(momDiesel, prevPeriodLabel)}</div>
     </div>
     <div class="kpi-ng" style="background:var(--key-number-bg-3);color:var(--key-number-text-3)">
-      <div class="kpi-ng-label">HVO100 – ${monthLabel(selected.month)}</div>
-      <div class="kpi-ng-value">${selected.hvo ? fmt(selected.hvo) + ' <span style="font-size:1rem;font-weight:500">' + src.currency + '/L</span>' : '—'}</div>
-      <div class="kpi-ng-sub">${momHvo != null ? kpiChangeHtml(momHvo, prevPeriodLabel) : (selected.hvo ? '—' : 'Data begrenset')}</div>
-    </div>
-    <div class="kpi-ng" style="background:var(--key-number-bg-4);color:var(--key-number-text-4)">
       <div class="kpi-ng-label">Basispris diesel</div>
       <div class="kpi-ng-value">${fmt(base.diesel)} <span style="font-size:1rem;font-weight:500">${src.currency}/L</span></div>
       <div class="kpi-ng-sub">${monthLabel(base.month)}</div>
     </div>
+    <div class="kpi-ng" style="background:var(--key-number-bg-4);color:var(--key-number-text-4)">
+      <div class="kpi-ng-label">Dieseltillegg${isLatest ? ' nå' : ''}</div>
+      <div class="kpi-ng-value">${afterBase ? surPct : '—'}</div>
+      <div class="kpi-ng-sub">${afterBase ? (momSurchargePp != null ? kpiChangePpHtml(momSurchargePp, prevPeriodLabel) : 'vs basis ' + monthLabel(baseMonth)) : afterBaseHint}</div>
+    </div>
     <div class="kpi-ng" style="background:var(--key-number-bg-1);color:var(--key-number-text-1);opacity:0.85">
       <div class="kpi-ng-label">Snitt dieseltillegg</div>
       <div class="kpi-ng-value">${avgSurPct}</div>
-      <div class="kpi-ng-sub">${monthLabel(baseMonth)} – ${monthLabel(selected.month)}</div>
+      <div class="kpi-ng-sub">${avgPeriodLabel}</div>
     </div>`;
 }
 
@@ -1485,103 +1785,109 @@ function renderSurchargeChart(data, baseMonth) {
 // ── Price line charts ─────────────────────────────────────────────────────────
 function renderCharts(data, baseMonth) {
   const src  = getSource();
-  const n    = getPeriodMths();
+  const n    = getPeriodMths('price');
   const base = data.find(r => r.month === baseMonth);
 
-  const dieselRows = data.filter(r => r.diesel != null).slice(-nd);
-  const hvoRows    = data.filter(r => r.hvo    != null).slice(-nh);
+  const showDiesel = chartFuelActive('diesel');
+  const showHvo    = chartFuelActive('hvo');
+  const rows       = data.filter(r => r.diesel != null || r.hvo != null).slice(-n);
 
-  document.getElementById('diesel-chart-title').textContent =
-    `Diesel eks. mva (${src.currency}/L) – ${src.flag} ${src.label}`;
-  document.getElementById('hvo-chart-title').textContent =
-    `HVO100 eks. mva (${src.currency}/L) – ${src.flag} ${src.label}`;
+  document.getElementById('price-chart-title').textContent =
+    `Prisutvikling eks. mva (${src.currency}/L) – ${src.flag} ${src.label}`;
 
-  if (dieselChart) { dieselChart.destroy(); dieselChart = null; }
-  dieselChart = new Chart(document.getElementById('dieselChart').getContext('2d'), {
-    type: 'line',
-    data: {
-      labels: dieselRows.map(r => monthLabel(r.month)),
-      datasets: [
-        {
-          label: 'Diesel',
-          data:  dieselRows.map(r => r.diesel),
-          borderColor: '#2D6A4F',
-          backgroundColor: 'rgba(45,106,79,0.08)',
-          borderWidth: 2,
-          pointRadius: dieselRows.length > 36 ? 0 : 3,
-          pointHoverRadius: 5,
-          tension: 0.3,
-          fill: true
-        },
-        ...(base ? [{
-          label: 'Basis',
-          data:  dieselRows.map(() => base.diesel),
-          borderColor: 'rgba(192,57,43,0.6)',
-          borderWidth: 1.5,
-          borderDash: [5, 4],
-          pointRadius: 0,
-          fill: false
-        }] : [])
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { maxTicksLimit: 8, font: { size: 11 }, color: '#5D7A6A' }, grid: { display: false } },
-        y: { ticks: { font: { size: 11 }, color: '#5D7A6A' }, grid: { color: '#E8F0EB' } }
-      }
+  const legend = document.getElementById('price-chart-legend');
+  if (legend) {
+    const items = [];
+    if (showDiesel) items.push('<div class="legend-item"><div class="legend-dot" style="background:#2D6A4F"></div> Diesel</div>');
+    if (showHvo)    items.push('<div class="legend-item"><div class="legend-dot" style="background:#C45C1A"></div> HVO100</div>');
+    if ((showDiesel && base) || (showHvo && base?.hvo)) {
+      items.push('<div class="legend-item"><div class="legend-dot" style="background:transparent;border:1.5px dashed rgba(120,120,120,0.7)"></div> Basis</div>');
     }
-  });
+    legend.innerHTML = items.join('');
+  }
 
-  if (hvoChart) { hvoChart.destroy(); hvoChart = null; }
+  const emptyMsg = (msg) => {
+    const { ctx, w, h } = getCanvas('priceChart');
+    ctx.fillStyle = C.text;
+    ctx.font = '13px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(msg, w / 2, h / 2);
+  };
 
-  if (!hvoRows.length) {
-    const ctx = document.getElementById('hvoChart').getContext('2d');
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.fillStyle   = '#5D7A6A';
-    ctx.font        = '13px -apple-system, sans-serif';
-    ctx.textAlign   = 'center';
-    ctx.fillText('Ingen HVO-data for valgt periode', ctx.canvas.width / 2, 105);
+  if (!showDiesel && !showHvo) {
+    emptyMsg('Velg minst én drivstofftype');
     return;
   }
 
-  hvoChart = new Chart(document.getElementById('hvoChart').getContext('2d'), {
-    type: 'line',
-    data: {
-      labels: hvoRows.map(r => monthLabel(r.month)),
-      datasets: [
-        {
-          label: 'HVO100',
-          data:  hvoRows.map(r => r.hvo),
-          borderColor: '#1B3D2F',
-          backgroundColor: 'rgba(27,61,47,0.07)',
-          borderWidth: 2,
-          pointRadius: hvoRows.length > 36 ? 0 : 3,
-          pointHoverRadius: 5,
-          tension: 0.3,
-          fill: true
-        },
-        ...(base && base.hvo ? [{
-          label: 'Basis',
-          data:  hvoRows.map(() => base.hvo),
-          borderColor: 'rgba(192,57,43,0.6)',
-          borderWidth: 1.5,
-          borderDash: [5, 4],
-          pointRadius: 0,
-          fill: false
-        }] : [])
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { maxTicksLimit: 8, font: { size: 11 }, color: '#5D7A6A' }, grid: { display: false } },
-        y: { ticks: { font: { size: 11 }, color: '#5D7A6A' }, grid: { color: '#E8F0EB' } }
-      }
+  if (!rows.length) {
+    emptyMsg('Ingen prisdata for valgt periode');
+    return;
+  }
+
+  const labels = rows.map(r => r.month);
+  const useDirectional = showDiesel !== showHvo;
+  const datasets = [];
+  const impact = getImpact();
+
+  function momPpLabels(values, basePrice) {
+    if (!basePrice) return null;
+    return values.map((v, i) => {
+      if (i === 0 || v == null || values[i - 1] == null) return null;
+      return ((v - values[i - 1]) / basePrice) * impact * 100;
+    });
+  }
+
+  if (showDiesel && rows.some(r => r.diesel != null)) {
+    const dieselVals = rows.map(r => r.diesel);
+    datasets.push({
+      labels,
+      data: dieselVals,
+      pointLabels: momPpLabels(dieselVals, base?.diesel),
+      ...(useDirectional
+        ? { directional: true, lineWidth: 2.5, fill: false }
+        : { color: '#2D6A4F', lineWidth: 2.5, fill: false })
+    });
+    if (base) {
+      datasets.push({
+        labels,
+        data: labels.map(() => base.diesel),
+        color: 'rgba(120,120,120,0.5)',
+        dash: [6, 4],
+        lineWidth: 1.5,
+        fill: false
+      });
     }
-  });
+  } else if (showDiesel) {
+    emptyMsg('Ingen diesel-data for valgt periode');
+    return;
+  }
+
+  if (showHvo && rows.some(r => r.hvo != null)) {
+    const hvoVals = rows.map(r => r.hvo);
+    datasets.push({
+      labels,
+      data: hvoVals,
+      pointLabels: momPpLabels(hvoVals, base?.hvo),
+      ...(useDirectional
+        ? { directional: true, lineWidth: 2.5, fill: false }
+        : { color: '#C45C1A', lineWidth: 2.5, fill: false })
+    });
+    if (base && base.hvo) {
+      datasets.push({
+        labels,
+        data: labels.map(() => base.hvo),
+        color: 'rgba(120,120,120,0.5)',
+        dash: [6, 4],
+        lineWidth: 1.5,
+        fill: false
+      });
+    }
+  } else if (showHvo) {
+    emptyMsg('Ingen HVO-data for valgt periode');
+    return;
+  }
+
+  drawLineChart('priceChart', datasets);
 }
 
 // ── Table ─────────────────────────────────────────────────────────────────────
@@ -1763,7 +2069,8 @@ function lineFillForDelta(v0, v1) {
 
 function drawLineChart(id, datasets, opts = {}) {
   const { ctx, w, h } = getCanvas(id);
-  const pad = { top: 16, right: 16, bottom: 54, left: 50 };
+  const hasPointLabels = datasets.some(d => d.pointLabels);
+  const pad = { top: hasPointLabels ? 28 : 16, right: 16, bottom: 54, left: 50 };
   const cw = w - pad.left - pad.right;
   const ch = h - pad.top  - pad.bottom;
 
@@ -1779,7 +2086,7 @@ function drawLineChart(id, datasets, opts = {}) {
   const labels = datasets[0].labels;
   const n = labels.length;
 
-  const xOf = i => pad.left + (i / (n - 1)) * cw;
+  const xOf = i => pad.left + (i / Math.max(n - 1, 1)) * cw;
   const yOf = v => pad.top + ch * (1 - (v - vMin) / vSpan);
 
   // Grid
@@ -1892,6 +2199,19 @@ function drawLineChart(id, datasets, opts = {}) {
       });
     }
     }
+
+    if (ds.pointLabels && n <= 24) {
+      ctx.font = 'bold 10px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ds.pointLabels.forEach((pp, i) => {
+        if (pp == null || !pts[i]) return;
+        const sign = pp > 0 ? '+' : '';
+        const text = Math.abs(pp) < 0.05 ? '0,0 pp' : `${sign}${pp.toFixed(1)} pp`;
+        const color = Math.abs(pp) < 0.05 ? C.text : pp > 0 ? C.red : C.green;
+        ctx.fillStyle = color;
+        ctx.fillText(text, pts[i].x, pts[i].y - 10);
+      });
+    }
   });
 }
 
@@ -1920,44 +2240,16 @@ function renderSurchargeChart(data, baseMonth) {
 }
 
 // ── Price line charts ─────────────────────────────────────────────────────────
-function renderCharts(data, baseMonth) {
-  const src  = getSource();
-  const nd   = getPeriodMths('diesel');
-  const nh   = getPeriodMths('hvo');
-  const base = data.find(r => r.month === baseMonth);
-
-  const dieselRows = data.filter(r => r.diesel != null).slice(-nd);
-  const hvoRows    = data.filter(r => r.hvo    != null).slice(-nh);
-
-  document.getElementById('diesel-chart-title').textContent =
-    `Diesel eks. mva (${src.currency}/L) – ${src.flag} ${src.label}`;
-  document.getElementById('hvo-chart-title').textContent =
-    `HVO100 eks. mva (${src.currency}/L) – ${src.flag} ${src.label}`;
-
-  const dLabels = dieselRows.map(r => r.month);
-  drawLineChart('dieselChart', [
-    { labels: dLabels, data: dieselRows.map(r => r.diesel), directional: true, lineWidth: 2.5, fill: false },
-    ...(base ? [{ labels: dLabels, data: dLabels.map(() => base.diesel), color: 'rgba(120,120,120,0.5)', dash: [6,4], lineWidth: 1.5, fill: false }] : [])
-  ]);
-
-  if (!hvoRows.length) {
-    const { ctx, w, h } = getCanvas('hvoChart');
-    ctx.fillStyle = C.text;
-    ctx.font = '13px -apple-system, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Ingen HVO-data for valgt periode', w / 2, h / 2);
-    return;
-  }
-
-  const hLabels = hvoRows.map(r => r.month);
-  drawLineChart('hvoChart', [
-    { labels: hLabels, data: hvoRows.map(r => r.hvo), directional: true, lineWidth: 2.5, fill: false },
-    ...(base && base.hvo ? [{ labels: hLabels, data: hLabels.map(() => base.hvo), color: 'rgba(120,120,120,0.5)', dash: [6,4], lineWidth: 1.5, fill: false }] : [])
-  ]);
-}
+// (renderCharts defined above)
 
 // ── Daily table ───────────────────────────────────────────────────────────────
 let activeDailyDays = 180;
+
+function averageDailyField(rows, field) {
+  const values = rows.map(r => r[field]).filter(v => v != null);
+  if (!values.length) return null;
+  return values.reduce((sum, v) => sum + Number(v), 0) / values.length;
+}
 
 function buildDailyTableRows(rows) {
   const deltaClass = v => v == null ? '' : Math.abs(v) < 0.0001 ? 'flat' : v > 0 ? 'up' : 'down';
@@ -1966,19 +2258,51 @@ function buildDailyTableRows(rows) {
     const sign = v > 0 ? '+' : '';
     return `<span class="badge ${deltaClass(v)}">${sign}${v.toFixed(4)}</span>`;
   };
-  return rows.map((r, i) => {
-    const d = r.diesel != null ? Number(r.diesel) : null;
-    const h = r.hvo != null ? Number(r.hvo) : null;
-    const prev = rows[i + 1];
-    const prevD = prev && prev.diesel != null ? Number(prev.diesel) : null;
-    const delta = (d != null && prevD != null) ? d - prevD : null;
-    return `<tr>
-      <td><strong>${monthLabel(r.date)}</strong></td>
-      <td>${d != null ? d.toFixed(4) : '—'}</td>
-      <td>${h != null ? h.toFixed(4) : '—'}</td>
-      <td>${deltaLabel(delta)}</td>
-    </tr>`;
-  }).join('');
+  const formatPrice = v => v != null ? Number(v).toFixed(4) : '—';
+
+  const rowsByMonth = new Map();
+  for (const row of rows) {
+    const monthKey = row.date.substring(0, 7);
+    if (!rowsByMonth.has(monthKey)) rowsByMonth.set(monthKey, []);
+    rowsByMonth.get(monthKey).push(row);
+  }
+
+  const htmlParts = [];
+  let prevMonthAvgDiesel = null;
+  for (const monthKey of [...rowsByMonth.keys()].sort((a, b) => b.localeCompare(a))) {
+    const monthRows = rowsByMonth.get(monthKey);
+    const avgDiesel = averageDailyField(monthRows, 'diesel');
+    const avgHvo = averageDailyField(monthRows, 'hvo');
+    const avgDelta = avgDiesel != null && prevMonthAvgDiesel != null ? avgDiesel - prevMonthAvgDiesel : null;
+    htmlParts.push(
+      `<tr class="compare-month-avg">` +
+      `<td>Snitt ${monthLabel(monthKey)} <span style="font-weight:400;font-size:0.75rem;color:var(--text-muted)">(${monthRows.length} d.)</span></td>` +
+      `<td>${formatPrice(avgDiesel)}</td>` +
+      `<td>${formatPrice(avgHvo)}</td>` +
+      `<td>${deltaLabel(avgDelta)}</td>` +
+      `</tr>`
+    );
+    prevMonthAvgDiesel = avgDiesel;
+
+    for (let index = 0; index < monthRows.length; index++) {
+      const row = monthRows[index];
+      const diesel = row.diesel != null ? Number(row.diesel) : null;
+      const hvo = row.hvo != null ? Number(row.hvo) : null;
+      const previous = monthRows[index + 1];
+      const previousDiesel = previous && previous.diesel != null ? Number(previous.diesel) : null;
+      const delta = diesel != null && previousDiesel != null ? diesel - previousDiesel : null;
+      htmlParts.push(
+        `<tr>` +
+        `<td><strong>${monthLabel(row.date)}</strong></td>` +
+        `<td>${formatPrice(diesel)}</td>` +
+        `<td>${formatPrice(hvo)}</td>` +
+        `<td>${deltaLabel(delta)}</td>` +
+        `</tr>`
+      );
+    }
+  }
+
+  return htmlParts.join('');
 }
 
 function renderDailyHistoryTable() {
@@ -1997,6 +2321,168 @@ function renderDailyHistoryTable() {
     return;
   }
   document.getElementById('dailyHistoryTableBody').innerHTML = buildDailyTableRows(rows);
+}
+
+const TAX_CHANGES = [
+  {
+    country: 'SE',
+    start: '2022-05-01',
+    end: null,
+    periodLabel: '1. mai 2022 →',
+    measure: 'Energiskatt −40 øre/L (varig nivåjustering)',
+    effect: '≈ −0,50 SEK/L inkl. moms',
+    kind: 'Varig'
+  },
+  {
+    country: 'SE',
+    start: '2022-05-01',
+    end: '2022-09-30',
+    periodLabel: '1. mai – 30. sep 2022',
+    measure: 'Ekstra midlertidig energiskatt −1,05 SEK/L',
+    effect: '≈ −1,31 SEK/L inkl. moms',
+    kind: 'Midlertidig'
+  },
+  {
+    country: 'SE',
+    start: '2023-01-01',
+    end: '2025-12-31',
+    periodLabel: '1. jan 2023 – 31. des 2025',
+    measure: 'Midl. energiskatt −80 øre/L vs. indeksert nivå',
+    effect: '≈ −1,00 SEK/L inkl. moms vs. indeks',
+    kind: 'Midlertidig'
+  },
+  {
+    country: 'SE',
+    start: '2024-01-01',
+    end: null,
+    periodLabel: '1. jan 2024 →',
+    measure: 'Diesel nær EU-minimum (−341 SEK/m³ vs. indeks)',
+    effect: '≈ −0,34 SEK/L vs. indeks',
+    kind: 'Nivå'
+  },
+  {
+    country: 'SE',
+    start: '2025-01-01',
+    end: null,
+    periodLabel: '1. jan 2025',
+    measure: 'Energi-/CO₂-skatt diesel −170 SEK/m³ vs. vedtatt nivå',
+    effect: '≈ −0,17 SEK/L',
+    kind: 'Nivå'
+  },
+  {
+    country: 'SE',
+    start: '2025-07-01',
+    end: null,
+    periodLabel: '1. jul 2025 → (også 2026)',
+    measure: 'Ytterligere energiskatt diesel −320 SEK/m³',
+    effect: '≈ −0,32 SEK/L',
+    kind: 'Nivå'
+  },
+  {
+    country: 'SE',
+    start: '2026-05-01',
+    end: '2026-09-30',
+    periodLabel: '1. mai – 30. sep 2026',
+    measure: 'Til EU-minimum: energiskatt −319 SEK/m³',
+    effect: '≈ −0,40 SEK/L inkl. moms',
+    kind: 'Midlertidig'
+  },
+  {
+    country: 'NO',
+    start: '2023-01-01',
+    end: null,
+    periodLabel: '1. jan 2023 →',
+    measure: 'Lavere veibruksavgift (delvis motvirket av høyere CO₂)',
+    effect: 'Netto lettelse; begrenset pumpeeffekt',
+    kind: 'Budsjett'
+  },
+  {
+    country: 'NO',
+    start: '2026-04-01',
+    end: '2026-08-31',
+    periodLabel: '1. apr – 1. sep 2026',
+    measure: 'Veibruksavgift = 0 på diesel',
+    effect: '≈ −2,85 NOK/L inkl. mva',
+    kind: 'Midlertidig'
+  },
+  {
+    country: 'NO',
+    start: '2026-05-01',
+    end: '2026-08-31',
+    periodLabel: '1. mai – 1. sep 2026',
+    measure: 'Redusert CO₂-avgift autodiesel (−1,33 NOK/L)',
+    effect: 'Samlet med veibruk ≈ −4,26 NOK/L inkl. mva',
+    kind: 'Midlertidig'
+  },
+  {
+    country: 'DK',
+    start: '2025-01-01',
+    end: null,
+    periodLabel: '1. jan 2025 →',
+    measure: 'Dieselafgift +50 øre/L eks. moms',
+    effect: '≈ +0,63 DKK/L inkl. moms',
+    kind: 'Økning'
+  }
+];
+
+function taxCountryCode(sourceKey) {
+  if (sourceKey === 'NO_ck') return 'NO';
+  if (sourceKey === 'DK_ck' || sourceKey === 'DK_ck_inkl') return 'DK';
+  if (sourceKey === 'SE_ck' || sourceKey === 'SE_preem') return 'SE';
+  return null;
+}
+
+function taxChangeOverlapsYearRange(change, fromYear, toYear) {
+  const viewStart = `${fromYear}-01-01`;
+  const viewEnd = `${toYear}-12-31`;
+  if (change.start > viewEnd) return false;
+  if (change.end != null && change.end < viewStart) return false;
+  return true;
+}
+
+function renderTaxChanges() {
+  const section = document.getElementById('tax-changes-section');
+  const body = document.getElementById('taxChangesTableBody');
+  if (!section || !body) return;
+
+  if (activeCountry === 'ALL') {
+    section.style.display = 'none';
+    return;
+  }
+
+  const country = taxCountryCode(getDataSourceKey());
+  if (!country) {
+    section.style.display = 'none';
+    return;
+  }
+
+  const { from, to } = getYearRange();
+  const rows = TAX_CHANGES.filter(c =>
+    c.country === country && taxChangeOverlapsYearRange(c, from, to)
+  );
+
+  const src = getSource();
+  document.getElementById('tax-changes-title').textContent =
+    `Relevante avgiftsendringer – ${src.flag} ${src.label}`;
+  document.getElementById('tax-changes-note').textContent =
+    `Viser tiltak som overlapper perioden ${from}–${to}`;
+
+  section.style.display = '';
+
+  if (!rows.length) {
+    body.innerHTML =
+      `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Ingen relevante avgiftsendringer i valgt periode</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = rows.map(r =>
+    `<tr>` +
+    `<td><strong>${r.periodLabel}</strong></td>` +
+    `<td>${r.measure}</td>` +
+    `<td>${r.effect}</td>` +
+    `<td>${r.kind}</td>` +
+    `</tr>`
+  ).join('');
 }
 
 function setDailyPeriod(btn) {
@@ -2156,6 +2642,7 @@ function render() {
   if (isCompareView) {
     document.getElementById('monthly-sections').style.display = 'none';
     document.getElementById('daily-section').style.display = 'none';
+    document.getElementById('tax-changes-section').style.display = 'none';
     updateViewControls();
     renderCompareTable();
     return;
@@ -2183,6 +2670,7 @@ function render() {
 
   try { renderDailyHistoryTable(); } catch(e) { console.error('Daily history table:', e); }
   try { renderDailyTable(); } catch(e) { console.error('Daily table:', e); }
+  try { renderTaxChanges(); } catch(e) { console.error('Tax changes table:', e); }
 
   const headerSync = getSourceLastSyncText(src);
   document.getElementById('last-updated').textContent =
@@ -2224,6 +2712,13 @@ document.getElementById('yearTo').addEventListener('input', function() {
   if (parseInt(this.value) < parseInt(from.value)) from.value = this.value;
   document.getElementById('yearToLabel').textContent   = this.value;
   document.getElementById('yearFromLabel').textContent = from.value;
+  populateBaseMonths();
+  populateViewMonthSlider();
+  render();
+});
+
+document.getElementById('yearFullHistory').addEventListener('change', function() {
+  populateYearSliders();
   populateBaseMonths();
   populateViewMonthSlider();
   render();

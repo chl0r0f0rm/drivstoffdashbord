@@ -917,7 +917,19 @@ def main():
                 {"source": "SE_preem", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
                 for r in preem_monthly
             ]
-        # SE_preem daily rows from XLS are synthetic — not stored in daily_price_data
+        if preem_daily:
+            if "SE_preem" not in synced_sources:
+                synced_sources.append("SE_preem")
+            preem_daily = sorted(preem_daily, key=lambda row: row["date"])
+            preem_daily_csv = os.path.join(DATA_DIR, "preem_SE_daglig.csv")
+            write_csv_full(preem_daily_csv, preem_daily, ["date", "diesel", "hvo"], "date")
+            report.append(
+                f"SE_preem daily: {len(preem_daily)} rows (through {preem_daily[-1]['date']})"
+            )
+            daily_upsert += [
+                {"source": "SE_preem", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
+                for r in preem_daily
+            ]
 
         ck_se_monthly, ck_se_daily = fetch_ck_se()
         if ck_se_monthly:

@@ -1,0 +1,33 @@
+name: Update Brent crude
+
+on:
+  schedule:
+    - cron: "30 6 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  brent:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch Brent daily prices
+        run: python supabase/fetch_brent.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/brent_daily.csv
+          if git diff --staged --quiet; then
+            echo "No Brent CSV changes"
+            exit 0
+          fi
+          git commit -m "chore: update Brent crude daily prices"
+          git push

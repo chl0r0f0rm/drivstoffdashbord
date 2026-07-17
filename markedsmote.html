@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markedsmøte – Circle K SE · NG Group</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  .ng-orange {
+    --card-button:        #e85c0d;
+    --card-button-hover:  #c94e0a;
+    --text-contrast:      #1a1a1a;
+    --text-contrast-header: #e85c0d;
+    --text-default:       #333333;
+    --text-inverted:      #ffffff;
+    --navbar-bg:          #fff8f0;
+    --footer:             #1a1a1a;
+    --border:             #e0d9d2;
+    --bg-page:            #fff8f0;
+    --bg-card:            #ffffff;
+    --key-number-bg-1: #e85c0d; --key-number-text-1: #ffffff;
+    --key-number-bg-2: #fff0e0; --key-number-text-2: #1a1a1a;
+    --key-number-bg-3: #1a1a1a; --key-number-text-3: #ffffff;
+    --key-number-bg-4: #fff8f0; --key-number-text-4: #e85c0d;
+    --red:        #D9584A;
+    --red-light:  #FDECEA;
+    --green:      #48A876;
+    --green-light:#E5F4EC;
+    --blue:       #2471A3;
+    --blue-light: #EAF4FB;
+    --gray:       #6B6B6B;
+    --shadow:     0 1px 3px rgba(0,0,0,0.07);
+    --shadow-md:  0 3px 12px rgba(0,0,0,0.10);
+    --ng-dark:   #1a1a1a;
+    --ng-mid:    #e85c0d;
+    --ng-bright: #e85c0d;
+    --ng-light:  #fff0e0;
+    --ng-bg:     #fff8f0;
+    --text:      #1a1a1a;
+    --text-muted:#6B6B6B;
+    --white:     #ffffff;
+    --diesel:    #2D6A4F;
+    --hvo:       #C45C1A;
+    --brent:     #2471A3;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg-page);
+    color: var(--text-default);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--white);
+    color: var(--text);
+    padding: 0 40px;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 0;
+  }
+  .header-logo {
+    height: 40px;
+    width: auto;
+    flex-shrink: 0;
+  }
+  .header-title h1 {
+    font-size: 1.1rem; font-weight: 700;
+    letter-spacing: -0.01em; color: var(--text-contrast);
+  }
+  .header-title p { font-size: 0.72rem; color: var(--gray); margin-top: 2px; }
+  .header-title a { color: var(--ng-mid); text-decoration: none; font-weight: 600; }
+  .header-title a:hover { text-decoration: underline; }
+  .header-right {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 18px 0;
+  }
+  .header-meeting-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    background: var(--ng-mid);
+    color: var(--text-inverted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .12s;
+  }
+  .header-meeting-btn:hover { background: var(--card-button-hover); color: var(--text-inverted); }
+
+  .container {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 24px 28px 40px;
+    display: grid;
+    gap: 16px;
+  }
+
+  .chart-card, .table-card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 20px 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .table-card { border-radius: 12px; }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .card-title {
+    font-size: 0.72rem; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .card-subtitle { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.74rem; color: var(--text-muted); }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+
+  .chart-wrap { position: relative; height: 260px; }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 900px) {
+    header { padding: 0 16px; flex-wrap: wrap; }
+    .container { padding: 16px 16px 32px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .chart-wrap { height: 220px; }
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  th, td {
+    text-align: left;
+    padding: 10px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+  td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .up { color: var(--red); }
+  .down { color: var(--green); }
+  .flat { color: var(--text-muted); }
+
+  .context-stack { display: grid; gap: 14px; }
+
+  .brent-kpi {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: end;
+    padding: 16px 18px;
+    border-radius: 8px;
+    background: var(--key-number-bg-2);
+    color: var(--key-number-text-2);
+    border: 1px solid var(--border);
+  }
+  .brent-kpi .label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.75;
+  }
+  .brent-kpi .value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--text);
+  }
+  .brent-kpi .sub {
+    grid-column: 1 / -1;
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.7;
+  }
+
+  .tax-list { list-style: none; display: grid; gap: 8px; }
+  .tax-list li {
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: var(--ng-bg);
+    border: 1px solid var(--border);
+  }
+  .tax-list .period {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--ng-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 3px;
+  }
+  .tax-list .measure {
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--text);
+  }
+  .tax-list .effect {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  .empty { color: var(--text-muted); font-size: 0.875rem; padding: 8px 0; }
+  .status-bar {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 4px 0 0;
+  }
+  .status-bar.error { color: var(--red); }
+
+  footer {
+    text-align: center;
+    padding: 18px 24px 28px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body class="ng-orange">
+
+<header>
+  <div class="header-left">
+    <img src="assets/logo.svg" class="header-logo" alt="NG Nordic">
+    <div class="header-title">
+      <h1>Markedsmøte</h1>
+      <p>Circle K Sverige · Diesel &amp; HVO · siste 12 måneder</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <a href="index.html" class="header-meeting-btn">← Tilbake til drivstoff-indeks</a>
+    <span id="last-updated">—</span>
+  </div>
+</header>
+
+<div class="container">
+  <section class="chart-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Prisutvikling · Circle K SE</div>
+        <div class="card-subtitle" id="fuel-chart-note">Siste 12 hele måneder · SEK/L eks. mva</div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--diesel)"></div> Diesel</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--hvo)"></div> HVO100</div>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="fuelChart"></canvas></div>
+  </section>
+
+  <div class="grid-2">
+    <section class="table-card" style="margin-bottom:0">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Måned-til-måned · siste 3 overganger</div>
+          <div class="card-subtitle">Endring i %</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Periode</th>
+            <th>Diesel</th>
+            <th>HVO100</th>
+          </tr>
+        </thead>
+        <tbody id="momBody">
+          <tr><td colspan="3" class="empty">Laster…</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="table-card" style="margin-bottom:0">
+      <div class="card-header">
+        <div class="card-title">Kontekst</div>
+      </div>
+      <div class="context-stack">
+        <div class="brent-kpi">
+          <div>
+            <div class="label">Brent crude</div>
+            <div class="value" id="brentValue">—</div>
+          </div>
+          <div id="brentChange" class="num"></div>
+          <div class="sub" id="brentSub">USD/fat · daglig spot (EIA/FRED)</div>
+        </div>
+        <div>
+          <div class="card-title" style="margin-bottom:8px">Relevante avgiftsendringer · SE</div>
+          <ul class="tax-list" id="taxList">
+            <li class="empty">Laster…</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="chart-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Brent crude · siste 12 måneder</div>
+        <div class="card-subtitle">USD/fat · daglig spot · kilde: EIA via FRED (DCOILBRENTEU)</div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--brent)"></div> Brent</div>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="brentChart"></canvas></div>
+  </section>
+
+  <div class="status-bar" id="statusBar"></div>
+</div>
+
+<footer>Data: Circle K SE (SEK/L eks. mva) · Brent: EIA via FRED DCOILBRENTEU</footer>
+
+<script>
+const SUPABASE_URL  = 'https://fnkdbuqsschkvpzeumbz.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZua2RidXFzc2Noa3ZwemV1bWJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NTM5MjQsImV4cCI6MjA5MTEyOTkyNH0.bI5r0wyEME9BIBqBAINKkzvYCmHlY1QtZwVYHYRiLpI';
+
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Des'];
+const monthLabel = m => {
+  const [y, mo] = m.split('-');
+  return MONTH_NAMES[+mo - 1] + ' ' + y;
+};
+
+const TAX_CHANGES_SE = [
+  {
+    start: '2025-01-01', end: null,
+    periodLabel: '1. jan 2025',
+    measure: 'Energi-/CO₂-skatt diesel −170 SEK/m³ vs. vedtatt nivå',
+    effect: '≈ −0,17 SEK/L'
+  },
+  {
+    start: '2025-07-01', end: null,
+    periodLabel: '1. jul 2025 → (også 2026)',
+    measure: 'Ytterligere energiskatt diesel −320 SEK/m³',
+    effect: '≈ −0,32 SEK/L'
+  },
+  {
+    start: '2026-05-01', end: '2026-09-30',
+    periodLabel: '1. mai – 30. sep 2026',
+    measure: 'Til EU-minimum: energiskatt −319 SEK/m³',
+    effect: '≈ −0,40 SEK/L inkl. moms'
+  },
+  {
+    start: '2024-01-01', end: null,
+    periodLabel: '1. jan 2024 →',
+    measure: 'Diesel nær EU-minimum (−341 SEK/m³ vs. indeks)',
+    effect: '≈ −0,34 SEK/L vs. indeks'
+  }
+];
+
+const C = {
+  diesel: '#2D6A4F',
+  hvo: '#C45C1A',
+  brent: '#2471A3',
+  grid: '#E8F0EB',
+  text: '#5D7A6A',
+  event: 'rgba(232,92,13,0.55)'
+};
+
+const BRENT_EVENTS = [
+  { date: '2022-02-24', label: 'Ukraina-krigen' },
+  { date: '2023-10-07', label: 'Israel–Gaza' },
+  { date: '2023-12-15', label: 'Rødehavet' },
+  { date: '2026-02-28', label: 'Iran-krigen starter' },
+  { date: '2026-03-08', label: 'Hormuz stenges / $100+' },
+  { date: '2026-06-17', label: 'Iran-avtale' },
+  { date: '2026-07-12', label: 'Økt ustabilitet rundt Hormuz' }
+];
+
+function eventIndexForDate(labels, eventDate) {
+  if (!labels.length) return -1;
+  if (eventDate < labels[0] || eventDate > labels[labels.length - 1]) return -1;
+  let best = 0;
+  for (let i = 0; i < labels.length; i++) {
+    if (labels[i] <= eventDate) best = i;
+    else break;
+  }
+  return best;
+}
+
+function supabaseHeaders() {
+  return {
+    apikey: SUPABASE_ANON,
+    Authorization: 'Bearer ' + SUPABASE_ANON
+  };
+}
+
+async function fetchAllRows(endpoint) {
+  const pageSize = 1000;
+  let from = 0;
+  const all = [];
+  while (true) {
+    const url = endpoint + (endpoint.includes('?') ? '&' : '?') + `limit=${pageSize}&offset=${from}`;
+    const res = await fetch(url, { headers: supabaseHeaders() });
+    if (!res.ok) throw new Error('Supabase ' + res.status);
+    const chunk = await res.json();
+    all.push(...chunk);
+    if (chunk.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
+
+function getCanvas(id) {
+  const canvas = document.getElementById(id);
+  const parent = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  const w = parent.clientWidth;
+  const h = parent.clientHeight;
+  canvas.width = Math.max(1, Math.floor(w * dpr));
+  canvas.height = Math.max(1, Math.floor(h * dpr));
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+function drawMultiLine(id, seriesList, opts = {}) {
+  const { ctx, w, h } = getCanvas(id);
+  const hasPointLabels = seriesList.some(s => s.pointLabels);
+  const events = opts.events || [];
+  const labels = seriesList[0]?.labels || [];
+  const n = labels.length;
+  const EVENT_ROW_HEIGHT = 15;
+  const EVENT_LABEL_GAP = 6;
+
+  const provisionalPadTop = hasPointLabels || events.length ? 34 : 18;
+  const xOfProvisional = i => {
+    const left = 46;
+    const cw = w - left - 16;
+    return left + (n <= 1 ? cw / 2 : (i / (n - 1)) * cw);
+  };
+
+  ctx.font = '600 10px Inter, -apple-system, sans-serif';
+  const visibleEvents = events
+    .map(ev => {
+      const index = eventIndexForDate(labels, ev.date);
+      if (index < 0) return null;
+      const textWidth = ctx.measureText(ev.label).width;
+      return { ...ev, index, textWidth, x: xOfProvisional(index) };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  visibleEvents.forEach((ev, i) => {
+    let level = 0;
+    for (let j = 0; j < i; j++) {
+      const prev = visibleEvents[j];
+      const minGap = Math.max(ev.textWidth, prev.textWidth) + 14;
+      if (Math.abs(ev.x - prev.x) < minGap) {
+        level = Math.max(level, prev.level + 1);
+      }
+    }
+    ev.level = level;
+  });
+
+  const maxEventLevel = visibleEvents.reduce((max, ev) => Math.max(max, ev.level), 0);
+  const eventBand = visibleEvents.length
+    ? (maxEventLevel + 1) * EVENT_ROW_HEIGHT + 10
+    : 0;
+
+  const pad = {
+    top: Math.max(provisionalPadTop, eventBand || provisionalPadTop),
+    right: 16,
+    bottom: 42,
+    left: 46
+  };
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top - pad.bottom;
+  const allVals = seriesList.flatMap(s => s.data.filter(v => v != null));
+  if (!allVals.length) {
+    ctx.fillStyle = C.text;
+    ctx.font = '13px Inter, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Ingen data', w / 2, h / 2);
+    return;
+  }
+
+  const minV = Math.min(...allVals);
+  const maxV = Math.max(...allVals);
+  const span = maxV - minV || 1;
+  const vMin = minV - span * 0.08;
+  const vMax = maxV + span * 0.08;
+  const vSpan = vMax - vMin;
+  const xOf = i => pad.left + (n === 1 ? cw / 2 : (i / (n - 1)) * cw);
+  const yOf = v => pad.top + ch * (1 - (v - vMin) / vSpan);
+
+  visibleEvents.forEach(ev => { ev.x = xOf(ev.index); });
+
+  ctx.font = '10px Inter, -apple-system, sans-serif';
+  ctx.fillStyle = C.text;
+  for (let i = 0; i <= 4; i++) {
+    const v = vMin + (vSpan * i / 4);
+    const y = yOf(v);
+    ctx.strokeStyle = C.grid;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(pad.left + cw, y);
+    ctx.stroke();
+    ctx.textAlign = 'right';
+    ctx.fillText(v.toFixed(1), pad.left - 6, y + 3);
+  }
+
+  visibleEvents.forEach(ev => {
+    const underlineY = pad.top - 6 - ev.level * EVENT_ROW_HEIGHT;
+    const textX = ev.x - EVENT_LABEL_GAP;
+    const lineStartX = Math.max(pad.left, textX - ev.textWidth);
+
+    ctx.font = '600 10px Inter, -apple-system, sans-serif';
+    ctx.fillStyle = '#e85c0d';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(ev.label, textX, underlineY - 2);
+
+    ctx.beginPath();
+    ctx.strokeStyle = C.event;
+    ctx.lineWidth = 1.25;
+    ctx.setLineDash([]);
+    ctx.moveTo(lineStartX, underlineY);
+    ctx.lineTo(ev.x, underlineY);
+    ctx.lineTo(ev.x, pad.top + ch);
+    ctx.stroke();
+  });
+
+  const step = Math.max(1, Math.ceil(n / 8));
+  for (let i = 0; i < n; i += step) {
+    const parts = String(labels[i]).split('-');
+    const label = parts.length >= 2
+      ? MONTH_NAMES[+parts[1] - 1] + ' ' + String(parts[0]).slice(2)
+      : labels[i];
+    ctx.textAlign = 'center';
+    ctx.fillStyle = C.text;
+    ctx.font = '10px Inter, -apple-system, sans-serif';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(label, xOf(i), h - 14);
+  }
+
+  seriesList.forEach(series => {
+    ctx.beginPath();
+    ctx.strokeStyle = series.color;
+    ctx.lineWidth = series.lineWidth || 2.4;
+    ctx.lineJoin = 'round';
+    let started = false;
+    series.data.forEach((v, i) => {
+      if (v == null) { started = false; return; }
+      const x = xOf(i);
+      const y = yOf(v);
+      if (!started) { ctx.moveTo(x, y); started = true; }
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    if (n <= 40) {
+      series.data.forEach((v, i) => {
+        if (v == null) return;
+        ctx.beginPath();
+        ctx.arc(xOf(i), yOf(v), 2.6, 0, Math.PI * 2);
+        ctx.fillStyle = series.color;
+        ctx.fill();
+      });
+    }
+
+    if (series.pointLabels && n <= 24) {
+      const labelOffset = series.labelOffsetY != null ? series.labelOffsetY : -10;
+      ctx.font = 'bold 10px Inter, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      series.pointLabels.forEach((pct, i) => {
+        if (pct == null || series.data[i] == null) return;
+        const sign = pct > 0 ? '+' : '';
+        const text = Math.abs(pct) < 0.05 ? '0,0%' : `${sign}${pct.toFixed(1)}%`;
+        const color = Math.abs(pct) < 0.05 ? C.text : pct > 0 ? '#D9584A' : '#48A876';
+        ctx.fillStyle = color;
+        ctx.fillText(text, xOf(i), yOf(series.data[i]) + labelOffset);
+      });
+    }
+  });
+}
+
+function momPctLabels(values) {
+  return values.map((v, i) => {
+    if (i === 0 || v == null || values[i - 1] == null || values[i - 1] === 0) return null;
+    return (v / values[i - 1] - 1) * 100;
+  });
+}
+
+function pctChange(curr, prev) {
+  if (curr == null || prev == null || prev === 0) return null;
+  return curr / prev - 1;
+}
+
+function formatPct(v) {
+  if (v == null) return '—';
+  const sign = v > 0 ? '+' : '';
+  return sign + (v * 100).toFixed(1) + '%';
+}
+
+function deltaClass(v) {
+  if (v == null || Math.abs(v) < 0.0005) return 'flat';
+  return v > 0 ? 'up' : 'down';
+}
+
+function lastTwelveMonths(rows) {
+  const withDiesel = rows.filter(r => r.diesel != null);
+  return withDiesel.slice(-12);
+}
+
+function renderMomTable(rows) {
+  const body = document.getElementById('momBody');
+  const withData = rows.filter(r => r.diesel != null);
+  if (withData.length < 2) {
+    body.innerHTML = '<tr><td colspan="3" class="empty">Ikke nok månedsdata</td></tr>';
+    return;
+  }
+
+  const transitions = [];
+  for (let i = Math.max(1, withData.length - 3); i < withData.length; i++) {
+    const prev = withData[i - 1];
+    const curr = withData[i];
+    transitions.push({
+      label: MONTH_NAMES[+prev.month.split('-')[1] - 1] + '–' + MONTH_NAMES[+curr.month.split('-')[1] - 1],
+      diesel: pctChange(curr.diesel, prev.diesel),
+      hvo: pctChange(curr.hvo, prev.hvo)
+    });
+  }
+
+  body.innerHTML = transitions.map(t =>
+    `<tr>` +
+    `<td><strong>${t.label}</strong></td>` +
+    `<td class="num ${deltaClass(t.diesel)}">${formatPct(t.diesel)}</td>` +
+    `<td class="num ${deltaClass(t.hvo)}">${formatPct(t.hvo)}</td>` +
+    `</tr>`
+  ).join('');
+}
+
+function renderTaxContext(fromMonth, toMonth) {
+  const viewStart = fromMonth + '-01';
+  const viewEnd = toMonth + '-31';
+  const relevant = TAX_CHANGES_SE.filter(c => {
+    if (c.start > viewEnd) return false;
+    if (c.end != null && c.end < viewStart) return false;
+    return true;
+  }).slice(0, 4);
+
+  const list = document.getElementById('taxList');
+  if (!relevant.length) {
+    list.innerHTML = '<li class="empty">Ingen relevante SE-avgiftsendringer i perioden</li>';
+    return;
+  }
+  list.innerHTML = relevant.map(c =>
+    `<li>` +
+    `<div class="period">${c.periodLabel}</div>` +
+    `<div class="measure">${c.measure}</div>` +
+    `<div class="effect">${c.effect}</div>` +
+    `</li>`
+  ).join('');
+}
+
+async function loadBrent() {
+  const res = await fetch('data/brent_daily.csv', { cache: 'no-store' });
+  if (!res.ok) throw new Error('Brent CSV ' + res.status);
+  const text = await res.text();
+  const rows = [];
+  for (const line of text.trim().split(/\r?\n/).slice(1)) {
+    const [date, price] = line.split(',');
+    if (!date || !price) continue;
+    const value = Number(price);
+    if (!Number.isFinite(value)) continue;
+    rows.push({ date, price: value });
+  }
+  return rows;
+}
+
+function lastTwelveMonthsDaily(rows) {
+  if (!rows.length) return [];
+  const end = rows[rows.length - 1].date;
+  const endDate = new Date(end + 'T00:00:00');
+  const start = new Date(endDate);
+  start.setFullYear(start.getFullYear() - 1);
+  const startKey = start.toISOString().slice(0, 10);
+  return rows.filter(r => r.date >= startKey);
+}
+
+function renderBrentKpi(rows) {
+  if (rows.length < 1) {
+    document.getElementById('brentValue').textContent = '—';
+    return;
+  }
+  const latest = rows[rows.length - 1];
+  const prev = rows.length > 1 ? rows[rows.length - 2] : null;
+  document.getElementById('brentValue').textContent = latest.price.toFixed(2);
+  const changeEl = document.getElementById('brentChange');
+  if (prev) {
+    const ch = latest.price / prev.price - 1;
+    changeEl.className = 'num ' + deltaClass(ch);
+    changeEl.textContent = formatPct(ch);
+  } else {
+    changeEl.textContent = '';
+  }
+  const d = latest.date.split('-');
+  document.getElementById('brentSub').textContent =
+    `USD/fat · ${parseInt(d[2], 10)}. ${MONTH_NAMES[+d[1] - 1]} ${d[0]} · EIA/FRED`;
+}
+
+function formatSyncTime(iso) {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleString('no-NO', {
+    day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+async function loadLastUpdated() {
+  const el = document.getElementById('last-updated');
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/price_source_sync?select=source,updated_at&source=eq.SE_ck`,
+      { headers: supabaseHeaders() }
+    );
+    if (res.ok) {
+      const rows = await res.json();
+      const formatted = formatSyncTime(rows[0]?.updated_at);
+      if (formatted) {
+        el.textContent = 'Sist oppdatert: ' + formatted;
+        return;
+      }
+    }
+  } catch (e) {}
+  el.textContent = '—';
+}
+
+async function boot() {
+  await loadLastUpdated();
+
+  try {
+    const monthly = await fetchAllRows(
+      `${SUPABASE_URL}/rest/v1/price_data?select=month,diesel,hvo&source=eq.SE_ck&order=month.asc`
+    );
+    const last12 = lastTwelveMonths(monthly);
+    const dieselVals = last12.map(r => r.diesel);
+    const hvoVals = last12.map(r => r.hvo);
+
+    document.getElementById('fuel-chart-note').textContent =
+      last12.length
+        ? `${monthLabel(last12[0].month)} – ${monthLabel(last12[last12.length - 1].month)} · SEK/L eks. mva · MoM %`
+        : 'Siste 12 måneder · SEK/L eks. mva';
+
+    drawMultiLine('fuelChart', [
+      {
+        labels: last12.map(r => r.month),
+        data: dieselVals,
+        color: C.diesel,
+        lineWidth: 2.6,
+        pointLabels: momPctLabels(dieselVals),
+        labelOffsetY: -11
+      },
+      {
+        labels: last12.map(r => r.month),
+        data: hvoVals,
+        color: C.hvo,
+        lineWidth: 2.6,
+        pointLabels: momPctLabels(hvoVals),
+        labelOffsetY: -11
+      }
+    ]);
+
+    renderMomTable(last12);
+    if (last12.length) {
+      renderTaxContext(last12[0].month, last12[last12.length - 1].month);
+    }
+  } catch (err) {
+    document.getElementById('statusBar').className = 'status-bar error';
+    document.getElementById('statusBar').textContent = 'Kunne ikke hente Circle K SE-priser: ' + err.message;
+    console.error(err);
+  }
+
+  try {
+    const brent = await loadBrent();
+    const windowRows = lastTwelveMonthsDaily(brent);
+    renderBrentKpi(brent);
+    drawMultiLine('brentChart', [{
+      labels: windowRows.map(r => r.date),
+      data: windowRows.map(r => r.price),
+      color: C.brent,
+      lineWidth: 2
+    }], { events: BRENT_EVENTS });
+    document.getElementById('statusBar').textContent =
+      'Brent: ' + brent.length + ' dagsobservasjoner · oppdatert via data/brent_daily.csv (FRED DCOILBRENTEU)';
+  } catch (err) {
+    document.getElementById('brentSub').textContent =
+      'Fant ikke data/brent_daily.csv – kjør supabase/fetch_brent.py eller vent på GitHub Action';
+    console.error(err);
+  }
+}
+
+window.addEventListener('resize', () => { try { boot(); } catch (e) {} });
+boot();
+</script>
+</body>
+</html>
