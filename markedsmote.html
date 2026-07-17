@@ -110,7 +110,7 @@
   .header-meeting-btn:hover { background: var(--card-button-hover); color: var(--text-inverted); }
 
   .container {
-    max-width: 1180px;
+    max-width: 1792px;
     margin: 0 auto;
     padding: 24px 28px 40px;
     display: grid;
@@ -146,16 +146,35 @@
 
   .chart-wrap { position: relative; height: 260px; }
 
-  .grid-2 {
+  .dashboard-grid {
     display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
+    grid-template-columns: 300px minmax(1124px, 1fr) 280px;
     gap: 16px;
+    align-items: start;
+  }
+  .charts-column {
+    display: grid;
+    gap: 16px;
+    min-width: 1124px;
+  }
+  .side-card { margin-bottom: 0; }
+
+  @media (max-width: 1680px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .charts-column {
+      grid-column: 1 / -1;
+      order: -1;
+      min-width: 0;
+    }
   }
 
   @media (max-width: 900px) {
     header { padding: 0 16px; flex-wrap: wrap; }
     .container { padding: 16px 16px 32px; }
-    .grid-2 { grid-template-columns: 1fr; }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .charts-column { grid-column: auto; order: 0; min-width: 0; }
     .chart-wrap { height: 220px; }
   }
 
@@ -173,6 +192,10 @@
     font-weight: 700;
   }
   td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .mom-table th,
+  .mom-table td {
+    white-space: nowrap;
+  }
   .up { color: var(--red); }
   .down { color: var(--green); }
   .flat { color: var(--text-muted); }
@@ -272,29 +295,15 @@
 </header>
 
 <div class="container">
-  <section class="chart-card">
-    <div class="card-header">
-      <div>
-        <div class="card-title">Prisutvikling · Circle K SE</div>
-        <div class="card-subtitle" id="fuel-chart-note">Siste 12 hele måneder · SEK/L eks. mva</div>
-      </div>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--diesel)"></div> Diesel</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--hvo)"></div> HVO100</div>
-      </div>
-    </div>
-    <div class="chart-wrap"><canvas id="fuelChart"></canvas></div>
-  </section>
-
-  <div class="grid-2">
-    <section class="table-card" style="margin-bottom:0">
+  <div class="dashboard-grid">
+    <section class="table-card side-card">
       <div class="card-header">
         <div>
           <div class="card-title">Måned-til-måned · siste 3 overganger</div>
           <div class="card-subtitle">Endring i %</div>
         </div>
       </div>
-      <table>
+      <table class="mom-table">
         <thead>
           <tr>
             <th>Periode</th>
@@ -308,7 +317,36 @@
       </table>
     </section>
 
-    <section class="table-card" style="margin-bottom:0">
+    <div class="charts-column">
+      <section class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Prisutvikling · Circle K SE</div>
+            <div class="card-subtitle" id="fuel-chart-note">Siste 12 hele måneder · SEK/L eks. mva</div>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--diesel)"></div> Diesel</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--hvo)"></div> HVO100</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="fuelChart"></canvas></div>
+      </section>
+
+      <section class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Brent crude · siste 12 måneder</div>
+            <div class="card-subtitle">USD/fat · daglig spot · kilde: EIA via FRED (DCOILBRENTEU)</div>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--brent)"></div> Brent</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="brentChart"></canvas></div>
+      </section>
+    </div>
+
+    <section class="table-card side-card">
       <div class="card-header">
         <div class="card-title">Kontekst</div>
       </div>
@@ -330,19 +368,6 @@
       </div>
     </section>
   </div>
-
-  <section class="chart-card">
-    <div class="card-header">
-      <div>
-        <div class="card-title">Brent crude · siste 12 måneder</div>
-        <div class="card-subtitle">USD/fat · daglig spot · kilde: EIA via FRED (DCOILBRENTEU)</div>
-      </div>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--brent)"></div> Brent</div>
-      </div>
-    </div>
-    <div class="chart-wrap"><canvas id="brentChart"></canvas></div>
-  </section>
 
   <div class="status-bar" id="statusBar"></div>
 </div>
@@ -657,7 +682,7 @@ function renderMomTable(rows) {
     const prev = withData[i - 1];
     const curr = withData[i];
     transitions.push({
-      label: MONTH_NAMES[+prev.month.split('-')[1] - 1] + '–' + MONTH_NAMES[+curr.month.split('-')[1] - 1],
+      label: MONTH_NAMES[+prev.month.split('-')[1] - 1] + '\u2011' + MONTH_NAMES[+curr.month.split('-')[1] - 1],
       diesel: pctChange(curr.diesel, prev.diesel),
       hvo: pctChange(curr.hvo, prev.hvo)
     });
