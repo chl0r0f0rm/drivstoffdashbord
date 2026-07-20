@@ -1526,9 +1526,29 @@ async function fetchAllSupabaseRows(endpoint) {
 }
 
 const DAILY_SOURCE_KEYS = ['NO_ck', 'DK_ck', 'DK_ck_inkl', 'SE_ck', 'SE_preem'];
+const NO_DAILY_CSV = 'data/circklek_NO_daglig.csv';
+
+async function loadNoDailyCsv() {
+  try {
+    const res = await fetch(NO_DAILY_CSV, { cache: 'no-store' });
+    if (!res.ok) return [];
+    const text = await res.text();
+    return text.trim().split(/\r?\n/).slice(1).map(line => {
+      const [date, diesel, hvo] = line.split(',');
+      return {
+        date: (date || '').trim(),
+        diesel: diesel ? Number(diesel) : null,
+        hvo: hvo ? Number(hvo) : null,
+      };
+    }).filter(row => row.date && row.diesel != null && !Number.isNaN(row.diesel));
+  } catch (err) {
+    console.error('NO daily CSV:', err);
+    return [];
+  }
+}
 
 async function fetchPriceData() {
-  const [rows, syncRes, ...dailyChunks] = await Promise.all([
+  const [rows, syncRes, noCsvRows, ...dailyChunks] = await Promise.all([
     fetchAllSupabaseRows(
       `${SUPABASE_URL}/rest/v1/price_data?select=source,month,diesel,hvo&order=month.asc`
     ),
@@ -1536,6 +1556,7 @@ async function fetchPriceData() {
       `${SUPABASE_URL}/rest/v1/price_source_sync?select=source,updated_at`,
       { headers: supabaseHeaders }
     ),
+    loadNoDailyCsv(),
     ...DAILY_SOURCE_KEYS.map(source =>
       fetchAllSupabaseRows(
         `${SUPABASE_URL}/rest/v1/daily_price_data?select=source,date,diesel,hvo&source=eq.${source}&order=date.asc`
@@ -1550,6 +1571,13 @@ async function fetchPriceData() {
   }
   for (const [key, meta] of Object.entries(SOURCE_META)) {
     const isDkSource = key === 'DK_ck' || key === 'DK_ck_inkl';
+    let dailyData = dailyRows
+      .filter(r => r.source === key)
+      .filter(r => !isDkSource || r.date >= '2022-01-01')
+      .map(({ date, diesel, hvo }) => ({ date, diesel, hvo }));
+    if (key === 'NO_ck' && noCsvRows.length) {
+      dailyData = noCsvRows;
+    }
     SOURCES[key] = {
       ...meta,
       lastSyncAt: SOURCE_SYNC[key] || null,
@@ -1559,10 +1587,7 @@ async function fetchPriceData() {
           .filter(r => !isDkSource || r.month >= '2022-01')
           .map(({ month, diesel, hvo }) => ({ month, diesel, hvo }))
       ),
-      dailyData: dailyRows
-        .filter(r => r.source === key)
-        .filter(r => !isDkSource || r.date >= '2022-01-01')
-        .map(({ date, diesel, hvo }) => ({ date, diesel, hvo })),
+      dailyData,
     };
   }
   renderSourceSyncLabels();

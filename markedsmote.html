@@ -1897,7 +1897,31 @@ function initSeriesToggles() {
   syncSeriesToggleButtons();
 }
 
+async function loadNoDailyCsv() {
+  try {
+    const res = await fetch('data/circklek_NO_daglig.csv', { cache: 'no-store' });
+    if (!res.ok) return [];
+    const text = await res.text();
+    return text.trim().split(/\r?\n/).slice(1).map(line => {
+      const [date, diesel, hvo] = line.split(',');
+      return {
+        date: (date || '').trim(),
+        diesel: diesel ? Number(diesel) : null,
+        hvo: hvo ? Number(hvo) : null,
+      };
+    }).filter(row => row.date && row.diesel != null && !Number.isNaN(row.diesel));
+  } catch (err) {
+    console.error('NO daily CSV:', err);
+    return [];
+  }
+}
+
 async function loadFuelDaily(sourceKey) {
+  if (sourceKey === 'NO_ck') {
+    const csvRows = await loadNoDailyCsv();
+    if (csvRows.length) return csvRows;
+  }
+
   const latestRes = await fetch(
     `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&order=date.desc&limit=1`,
     { headers: supabaseHeaders() }
@@ -3224,49 +3248,71 @@ function formatPumpDate(dateStr) {
 }
 
 async function fetchPumpStats(sourceKey) {
-  const latestUrl = `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&order=date.desc&limit=1`;
-  const latestRes = await fetch(latestUrl, { headers: supabaseHeaders() });
-  if (!latestRes.ok) throw new Error('Supabase ' + latestRes.status);
-  const latestRows = await latestRes.json();
-  const latest = latestRows[0] || null;
-  if (!latest) {
-    return {
-      latest: null,
-      previousDay: null,
-      avgPrevMonthDiesel: null,
-      avgPrevMonthHvo: null,
-      pumpDayChangePct: null,
-      vsPrevMonthDieselPct: null,
-      vsPrevMonthHvoPct: null
-    };
+  let latest = null;
+  let previousDay = null;
+  let monthRows = [];
+
+  if (sourceKey === 'NO_ck') {
+    const csvRows = await loadNoDailyCsv();
+    if (csvRows.length) {
+      latest = csvRows[csvRows.length - 1];
+      previousDay = csvRows.length > 1 ? csvRows[csvRows.length - 2] : null;
+      if (latest) {
+        const latestDate = new Date(latest.date + 'T00:00:00');
+        const prevMonthStart = new Date(latestDate.getFullYear(), latestDate.getMonth() - 1, 1);
+        const prevMonthEnd = new Date(latestDate.getFullYear(), latestDate.getMonth(), 0);
+        const prevMonthStartKey = prevMonthStart.toISOString().slice(0, 10);
+        const prevMonthEndKey = prevMonthEnd.toISOString().slice(0, 10);
+        monthRows = csvRows.filter(r => r.date >= prevMonthStartKey && r.date <= prevMonthEndKey);
+      }
+    }
   }
 
-  const twoDaysUrl = `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&order=date.desc&limit=2`;
-  const twoDaysRes = await fetch(twoDaysUrl, { headers: supabaseHeaders() });
-  if (!twoDaysRes.ok) throw new Error('Supabase ' + twoDaysRes.status);
-  const twoDays = await twoDaysRes.json();
-  const previousDay = twoDays.length > 1 ? twoDays[1] : null;
+  if (!latest) {
+    const latestUrl = `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&order=date.desc&limit=1`;
+    const latestRes = await fetch(latestUrl, { headers: supabaseHeaders() });
+    if (!latestRes.ok) throw new Error('Supabase ' + latestRes.status);
+    const latestRows = await latestRes.json();
+    latest = latestRows[0] || null;
+    if (!latest) {
+      return {
+        latest: null,
+        previousDay: null,
+        avgPrevMonthDiesel: null,
+        avgPrevMonthHvo: null,
+        pumpDayChangePct: null,
+        vsPrevMonthDieselPct: null,
+        vsPrevMonthHvoPct: null
+      };
+    }
+
+    const twoDaysUrl = `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&order=date.desc&limit=2`;
+    const twoDaysRes = await fetch(twoDaysUrl, { headers: supabaseHeaders() });
+    if (!twoDaysRes.ok) throw new Error('Supabase ' + twoDaysRes.status);
+    const twoDays = await twoDaysRes.json();
+    previousDay = twoDays.length > 1 ? twoDays[1] : null;
+
+    const latestDate = new Date(latest.date + 'T00:00:00');
+    const prevMonthStart = new Date(latestDate.getFullYear(), latestDate.getMonth() - 1, 1);
+    const prevMonthEnd = new Date(latestDate.getFullYear(), latestDate.getMonth(), 0);
+    const prevMonthStartKey = prevMonthStart.toISOString().slice(0, 10);
+    const prevMonthEndKey = prevMonthEnd.toISOString().slice(0, 10);
+
+    const monthUrl =
+      `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo` +
+      `&source=eq.${sourceKey}` +
+      `&date=gte.${prevMonthStartKey}` +
+      `&date=lte.${prevMonthEndKey}` +
+      `&order=date.asc`;
+    const monthRes = await fetch(monthUrl, { headers: supabaseHeaders() });
+    if (!monthRes.ok) throw new Error('Supabase ' + monthRes.status);
+    monthRows = await monthRes.json();
+  }
 
   let pumpDayChangePct = null;
   if (previousDay?.diesel != null && previousDay.diesel !== 0 && latest.diesel != null) {
     pumpDayChangePct = latest.diesel / previousDay.diesel - 1;
   }
-
-  const latestDate = new Date(latest.date + 'T00:00:00');
-  const prevMonthStart = new Date(latestDate.getFullYear(), latestDate.getMonth() - 1, 1);
-  const prevMonthEnd = new Date(latestDate.getFullYear(), latestDate.getMonth(), 0);
-  const prevMonthStartKey = prevMonthStart.toISOString().slice(0, 10);
-  const prevMonthEndKey = prevMonthEnd.toISOString().slice(0, 10);
-
-  const monthUrl =
-    `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo` +
-    `&source=eq.${sourceKey}` +
-    `&date=gte.${prevMonthStartKey}` +
-    `&date=lte.${prevMonthEndKey}` +
-    `&order=date.asc`;
-  const monthRes = await fetch(monthUrl, { headers: supabaseHeaders() });
-  if (!monthRes.ok) throw new Error('Supabase ' + monthRes.status);
-  const monthRows = await monthRes.json();
 
   const dieselVals = monthRows.map(r => r.diesel).filter(v => v != null);
   const hvoVals = monthRows.map(r => r.hvo).filter(v => v != null);
