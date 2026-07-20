@@ -2,7 +2,7 @@ name: Update Brent crude
 
 on:
   schedule:
-    - cron: "30 6 * * 1-5"
+    - cron: "45 6 * * 1-5"
   workflow_dispatch:
 
 jobs:

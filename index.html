@@ -2348,7 +2348,7 @@ const TAX_CHANGES = [
     end: '2025-12-31',
     periodLabel: '1. jan 2023 – 31. des 2025',
     measure: 'Midl. energiskatt −80 øre/L vs. indeksert nivå',
-    effect: '≈ −1,00 SEK/L inkl. moms vs. indeks',
+    effect: 'Vs. indeks – ikke separat pumpehopp ved utløp (2026-satser videreført)',
     kind: 'Midlertidig'
   },
   {
@@ -2357,7 +2357,7 @@ const TAX_CHANGES = [
     end: null,
     periodLabel: '1. jan 2024 →',
     measure: 'Diesel nær EU-minimum (−341 SEK/m³ vs. indeks)',
-    effect: '≈ −0,34 SEK/L vs. indeks',
+    effect: '≈ −0,34 SEK/L vs. indeks (ikke absolutt pumpesteg)',
     kind: 'Nivå'
   },
   {
@@ -2366,7 +2366,7 @@ const TAX_CHANGES = [
     end: null,
     periodLabel: '1. jan 2025',
     measure: 'Energi-/CO₂-skatt diesel −170 SEK/m³ vs. vedtatt nivå',
-    effect: '≈ −0,17 SEK/L',
+    effect: '≈ −0,21 SEK/L inkl. moms',
     kind: 'Nivå'
   },
   {
@@ -2375,7 +2375,7 @@ const TAX_CHANGES = [
     end: null,
     periodLabel: '1. jul 2025 → (også 2026)',
     measure: 'Ytterligere energiskatt diesel −320 SEK/m³',
-    effect: '≈ −0,32 SEK/L',
+    effect: '≈ −0,40 SEK/L inkl. moms',
     kind: 'Nivå'
   },
   {
@@ -2385,6 +2385,15 @@ const TAX_CHANGES = [
     periodLabel: '1. mai – 30. sep 2026',
     measure: 'Til EU-minimum: energiskatt −319 SEK/m³',
     effect: '≈ −0,40 SEK/L inkl. moms',
+    kind: 'Midlertidig'
+  },
+  {
+    country: 'SE',
+    start: '2026-07-01',
+    end: '2026-11-30',
+    periodLabel: '1. jul – 30. nov 2026',
+    measure: 'Ekstra midl. senking (Iran): CO₂-skatt −2,40 SEK/L',
+    effect: '≈ −3,00 SEK/L inkl. moms',
     kind: 'Midlertidig'
   },
   {
@@ -2410,8 +2419,8 @@ const TAX_CHANGES = [
     start: '2026-05-01',
     end: '2026-08-31',
     periodLabel: '1. mai – 1. sep 2026',
-    measure: 'Redusert CO₂-avgift autodiesel (−1,33 NOK/L)',
-    effect: 'Samlet med veibruk ≈ −4,26 NOK/L inkl. mva',
+    measure: 'Redusert CO₂-avgift autodiesel (i tillegg til veibruk=0)',
+    effect: '≈ −1,41 NOK/L inkl. mva (samlet −4,26 med veibruk)',
     kind: 'Midlertidig'
   },
   {
@@ -2419,8 +2428,8 @@ const TAX_CHANGES = [
     start: '2025-01-01',
     end: null,
     periodLabel: '1. jan 2025 →',
-    measure: 'Dieselafgift +50 øre/L eks. moms',
-    effect: '≈ +0,63 DKK/L inkl. moms',
+    measure: 'Dieselafgift +50 øre/L + årlig indeksering',
+    effect: '≈ +0,83 DKK/L inkl. moms (~66 øre/L eks. moms totalt)',
     kind: 'Økning'
   }
 ];

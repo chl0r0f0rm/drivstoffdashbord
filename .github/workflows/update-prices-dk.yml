@@ -2,7 +2,7 @@ name: Update fuel prices – DK
 
 on:
   schedule:
-    - cron: "30 7 * * *"
+    - cron: "35 6 * * *"
   workflow_dispatch:
 
 jobs:

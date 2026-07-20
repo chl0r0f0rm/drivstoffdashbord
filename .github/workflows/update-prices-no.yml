@@ -2,7 +2,7 @@ name: Update fuel prices – NO
 
 on:
   schedule:
-    - cron: "15 7 * * *"
+    - cron: "20 6 * * *"
   workflow_dispatch:
 
 jobs:
