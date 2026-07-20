@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Drivstoff-indeks – NG Group</title>
+<title>Drivstoffindeks – NG Group</title>
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -58,37 +58,74 @@
   header {
     background: var(--white);
     color: var(--text);
-    padding: 0 40px;
-    display: flex;
-    align-items: stretch;
-    justify-content: space-between;
-    gap: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-  .header-left {
-    display: flex;
+    padding: 14px 40px;
+    display: grid;
+    grid-template-columns: auto 340px auto minmax(0, 1fr) auto;
     align-items: center;
-    gap: 16px;
-    padding: 18px 0;
+    column-gap: 16px;
+    border-bottom: 1px solid var(--border);
   }
   .header-logo {
     height: 40px;
     width: auto;
     flex-shrink: 0;
+    grid-column: 1;
   }
-  .header-title h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text-contrast); }
-  .header-title p  { font-size: 0.72rem; color: var(--gray); margin-top: 2px; }
+  .header-title {
+    grid-column: 2;
+    min-width: 0;
+  }
+  .header-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-title h1 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-contrast);
+    line-height: 1.15;
+  }
+  .header-title p {
+    font-size: 0.72rem;
+    color: var(--gray);
+    margin-top: 3px;
+    line-height: 1.35;
+  }
+  .dash-icon {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    color: var(--ng-mid);
+  }
+  .dash-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .header-nav {
+    grid-column: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
   .header-right {
+    grid-column: 5;
     display: flex;
     align-items: center;
     gap: 14px;
     font-size: 0.75rem;
     color: var(--text-muted);
-    padding: 18px 0;
+    justify-self: end;
   }
   .header-meeting-btn {
     display: inline-flex;
     align-items: center;
+    gap: 8px;
+    min-width: 156px;
+    justify-content: center;
     padding: 8px 14px;
     border-radius: 6px;
     border: none;
@@ -101,6 +138,35 @@
     transition: background .12s;
   }
   .header-meeting-btn:hover { background: var(--card-button-hover); color: var(--text-inverted); }
+  .header-meeting-btn .dash-icon {
+    width: 16px;
+    height: 16px;
+    color: currentColor;
+  }
+  .header-nav-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .header-nav-hint kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: var(--white);
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-muted);
+  }
 
   .outer-layout {
     display: flex;
@@ -269,6 +335,30 @@
     text-align: center;
   }
   @media (max-width: 900px) {
+    .baf-matrix-wrap { margin-top: 0; }
+    header {
+      padding: 12px 16px;
+      grid-template-columns: auto 1fr;
+      grid-template-rows: auto auto auto;
+      row-gap: 10px;
+      column-gap: 12px;
+    }
+    .header-logo { height: 32px; grid-column: 1; grid-row: 1; }
+    .header-title { grid-column: 2; grid-row: 1; }
+    .header-nav {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      width: 100%;
+    }
+    .header-right {
+      grid-column: 1 / -1;
+      grid-row: 3;
+      justify-self: start;
+    }
+    .header-meeting-btn {
+      flex: 1;
+      justify-content: center;
+    }
     .outer-layout { flex-direction: column; padding: 0 16px; }
     .news-sidebar { width: 100% !important; margin-top: 0; }
     .news-sidebar.collapsed { width: 100% !important; }
@@ -600,6 +690,90 @@
     border: 1px solid var(--border);
   }
   .chart-wrap { position: relative; height: 240px; }
+  .baf-matrix-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  #bafMatrixTable {
+    width: max-content;
+    min-width: 100%;
+  }
+  #bafMatrixTable th,
+  #bafMatrixTable td {
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: bottom;
+  }
+  #bafMatrixTable th.baf-period,
+  #bafMatrixTable td.baf-period {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background: var(--white);
+    z-index: 1;
+    font-weight: 600;
+  }
+  #bafMatrixTable thead th.baf-period {
+    z-index: 2;
+  }
+  #bafMatrixTable th.baf-company {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-bottom: none;
+    padding-bottom: 2px;
+  }
+  #bafMatrixTable th.baf-company.color-line,
+  #bafMatrixTable th.baf-route.color-line {
+    background: #EAF4FB;
+    color: #2471A3;
+  }
+  #bafMatrixTable th.baf-company.fjord-line,
+  #bafMatrixTable th.baf-route.fjord-line {
+    background: #F3EEF8;
+    color: #6D28D9;
+    border-left: 2px solid #C4B5FD;
+  }
+  #bafMatrixTable td.fjord-line {
+    border-left: 2px solid #E9E0F8;
+  }
+  #bafMatrixTable th.baf-route {
+    font-size: 0.72rem;
+    font-weight: 600;
+    max-width: 110px;
+    white-space: normal;
+    line-height: 1.25;
+    vertical-align: bottom;
+  }
+  #bafMatrixTable td.num {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  .baf-chart-wrap { position: relative; height: 280px; }
+  .baf-filters {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+  }
+  .baf-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+  }
+  .baf-filter-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    min-width: 64px;
+  }
 
   /* ── Table ── */
   .table-card {
@@ -797,7 +971,7 @@
 
   @media (max-width: 600px) {
     .container { padding: 16px; }
-    header { padding: 0 16px; }
+    header { padding: 12px 16px; }
     .kpi .value { font-size: 1.4rem; }
   }
 </style>
@@ -809,15 +983,33 @@
 </div>
 
 <header>
-  <div class="header-left">
-    <img src="assets/logo.svg" class="header-logo" alt="NG Nordic">
-    <div class="header-title">
-      <h1>Drivstoff-indeks</h1>
-      <p>Dieseltillegg · 🇸🇪 Circle K SE · 🇸🇪 Preem SE · 🇳🇴 Circle K NO · 🇩🇰 Circle K DK</p>
+  <img src="assets/logo.svg" class="header-logo" alt="NG Nordic">
+  <div class="header-title">
+    <div class="header-title-row">
+      <span class="dash-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19h16"/>
+          <path d="M5 15l4.5-4.5 3.5 3 6-7"/>
+        </svg>
+      </span>
+      <h1>Drivstoffindeks</h1>
     </div>
+    <p>Drivstoffutvikling og tillegg som påvirker transportprisene</p>
+  </div>
+  <div class="header-nav">
+    <span class="header-nav-hint" title="Bytt dashbord med piltaster" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd></span>
+    <a href="markedsmote.html" class="header-meeting-btn">
+      <span class="dash-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l9 4.5-9 4.5L3 7.5 12 3z"/>
+          <path d="M3 12l9 4.5 9-4.5"/>
+          <path d="M3 16.5L12 21l9-4.5"/>
+        </svg>
+      </span>
+      Markedsinnsikt
+    </a>
   </div>
   <div class="header-right">
-    <a href="markedsmote.html" class="header-meeting-btn">Markedsmøte-dashbord</a>
     <span id="last-updated">—</span>
   </div>
 </header>
@@ -902,6 +1094,18 @@
       </div>
       <div class="tab" data-country="ALL" onclick="setCountry(this)">
         <span class="tab-title">Alle land</span>
+      </div>
+      <div class="tab" data-country="BAF" onclick="setCountry(this)">
+        <span class="flag-icon" aria-hidden="true">
+          <svg viewBox="0 0 22 15" width="22" height="15" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <rect width="22" height="15" rx="2" fill="#EAF4FB"/>
+            <path d="M3.5 9.2h15l-1.2 2.3H4.7L3.5 9.2z" fill="#2471A3"/>
+            <path d="M5 9.2V6.4h3.2V5.2h2.4v1.2H14V9.2" stroke="#1a1a1a" stroke-width="1.1" stroke-linejoin="round"/>
+            <path d="M2.5 12h17" stroke="#2471A3" stroke-width="1.1" stroke-linecap="round"/>
+            <path d="M4 12.8c1.2.7 2.5.7 3.7 0s2.5-.7 3.7 0 2.5.7 3.7 0 2.5-.7 3.7 0" stroke="#2471A3" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="tab-title">BAF</span>
       </div>
     </div>
     <div class="country-bar-footer">
@@ -1140,6 +1344,59 @@
     </div>
   </div>
 
+  <!-- BAF (bunker adjustment factor) -->
+  <div id="baf-section" style="display:none">
+    <p class="section-label">BAF · Bunker Adjustment Factor</p>
+    <div class="baf-filters">
+      <div class="baf-filter-row">
+        <span class="baf-filter-label">Selskap</span>
+        <div class="fuel-toggles" id="baf-company-toggles">
+          <button class="fuel-toggle active" data-company="Color Line" onclick="toggleBafCompany(this)">Color Line</button>
+          <button class="fuel-toggle active" data-company="Fjord Line" onclick="toggleBafCompany(this)">Fjord Line</button>
+        </div>
+      </div>
+      <div class="baf-filter-row">
+        <span class="baf-filter-label">Rute</span>
+        <div class="fuel-toggles" id="baf-route-toggles"></div>
+      </div>
+    </div>
+    <div class="kpi-grid" id="baf-kpi-grid"></div>
+    <div class="chart-card collapsible">
+      <div class="card-header">
+        <div>
+          <span class="card-title">BAF-utvikling · NOK/løpemeter</span>
+          <div class="data-note">Én linje per rute · periodestart</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div class="legend" id="baf-chart-legend"></div>
+          <button type="button" class="collapse-btn" onclick="toggleCollapse(this)" aria-expanded="true" title="Vis/skjul">▾</button>
+        </div>
+      </div>
+      <div class="collapsible-body">
+        <div class="baf-chart-wrap"><canvas id="bafChart"></canvas></div>
+      </div>
+    </div>
+    <div class="table-card collapsible" style="margin-top:16px">
+      <div class="card-header">
+        <div>
+          <span class="card-title">BAF-matrise · NOK/løpemeter</span>
+          <div class="data-note">Perioder × ruter · Color Line &amp; Fjord Line</div>
+        </div>
+        <button type="button" class="collapse-btn" onclick="toggleCollapse(this)" aria-expanded="true" title="Vis/skjul">▾</button>
+      </div>
+      <div class="collapsible-body">
+        <div class="baf-matrix-wrap">
+          <table id="bafMatrixTable">
+            <thead id="bafMatrixHead"></thead>
+            <tbody id="bafMatrixBody">
+              <tr><td class="empty">Laster…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /.main-col -->
 </div><!-- /.page-body -->
 </div><!-- /.container -->
@@ -1158,7 +1415,7 @@
 
 </div><!-- /.outer-layout -->
 
-<footer>Data: 🇸🇪 Circle K SE / Preem SE (SEK/L eks. mva) · 🇩🇰 Circle K DK (DKK/L eks. moms) · 🇳🇴 Circle K NO (NOK/L eks. mva) · Månedlig/daglig gjennomsnitt</footer>
+<footer>Data: 🇸🇪 Circle K SE / Preem SE (SEK/L eks. mva) · 🇩🇰 Circle K DK (DKK/L eks. moms) · 🇳🇴 Circle K NO (NOK/L eks. mva) · BAF Color Line / Fjord Line (NOK/LM) · Månedlig/daglig gjennomsnitt</footer>
 
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────────────
@@ -1181,6 +1438,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 let SOURCES = {};
 let SOURCE_SYNC = {};
+let BAF_ROWS = [];
 
 const supabaseHeaders = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
 
@@ -1383,11 +1641,24 @@ function setCountry(el) {
   if (activeCountry !== 'DK_ck') activeDkVat = 'ekskl';
 
   const isCompareView = activeCountry === 'ALL';
-  if (!isCompareView) collapseDailyPricePanels();
+  const isBafView = activeCountry === 'BAF';
+  if (!isCompareView && !isBafView) collapseDailyPricePanels();
 
-  document.getElementById('base-month-control').style.display = isCompareView ? 'none' : '';
-  document.getElementById('impact-control').style.display = isCompareView ? 'none' : '';
-  document.getElementById('view-month-slider-group').style.display = isCompareView ? 'none' : '';
+  const hideFuelControls = isCompareView || isBafView;
+  document.getElementById('base-month-control').style.display = hideFuelControls ? 'none' : '';
+  document.getElementById('impact-control').style.display = hideFuelControls ? 'none' : '';
+  document.getElementById('view-month-slider-group').style.display = hideFuelControls ? 'none' : '';
+  document.querySelector('.controls').style.display = '';
+
+  if (isBafView) {
+    populateYearSliders();
+    document.getElementById('last-updated').textContent = getBafLastUpdatedText();
+    document.getElementById('source-ref').innerHTML =
+      '<span class="source-ref-line">Color Line &amp; Fjord Line</span>' +
+      '<span class="source-ref-line">BAF NOK/løpemeter</span>';
+    render();
+    return;
+  }
 
   if (isCompareView) {
     populateYearSliders();
@@ -1424,7 +1695,8 @@ function setDkVat(vat) {
 
 function updateViewControls() {
   const isCompareView = activeCountry === 'ALL';
-  const showVat = !isCompareView && activeCountry === 'DK_ck';
+  const isBafView = activeCountry === 'BAF';
+  const showVat = !isCompareView && !isBafView && activeCountry === 'DK_ck';
   const bar = document.getElementById('view-controls');
   bar.classList.toggle('hide-vat', !showVat);
   if (showVat) bar.removeAttribute('hidden');
@@ -1521,7 +1793,9 @@ function getFilteredData() {
 
 function populateYearSliders() {
   let raw;
-  if (activeCountry === 'ALL') {
+  if (activeCountry === 'BAF') {
+    raw = BAF_ROWS.map(r => ({ month: r.validFrom, diesel: r.priceNok }));
+  } else if (activeCountry === 'ALL') {
     raw = buildCompareRows().map(r => ({ month: r.date, diesel: 1 }));
   } else {
     const src = getSource();
@@ -1531,7 +1805,7 @@ function populateYearSliders() {
       : (src.dailyData || []).map(r => ({ month: r.date, diesel: r.diesel }));
   }
   if (!raw) return;
-  const data = raw.filter(r => r.diesel != null);
+  const data = raw.filter(r => r.diesel != null && r.month);
   if (!data.length) return;
   const years = data.map(r => parseInt(r.month.substring(0, 4), 10));
   const minY  = Math.min(...years);
@@ -2180,8 +2454,12 @@ function drawLineChart(id, datasets, opts = {}) {
     ctx.lineWidth = ds.lineWidth || 2;
     ctx.setLineDash(ds.dash || []);
     let started = false;
+    const connectNulls = !!(ds.connectNulls || opts.connectNulls);
     pts.forEach(p => {
-      if (!p) { started = false; return; }
+      if (!p) {
+        if (!connectNulls) started = false;
+        return;
+      }
       if (!started) { ctx.moveTo(p.x, p.y); started = true; }
       else ctx.lineTo(p.x, p.y);
     });
@@ -2643,10 +2921,364 @@ function renderCompareTable() {
   body.innerHTML = htmlParts.join('');
 }
 
+// ── BAF (bunker adjustment factor) ────────────────────────────────────────────
+function parseCsvRows(text) {
+  const lines = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',');
+  return lines.slice(1).filter(Boolean).map(line => {
+    const cols = line.split(',');
+    const row = {};
+    headers.forEach((header, index) => {
+      row[header.trim()] = (cols[index] ?? '').trim();
+    });
+    return row;
+  });
+}
+
+async function fetchBafData() {
+  const res = await fetch('data/baf_data.csv', { cache: 'no-store' });
+  if (!res.ok) throw new Error('BAF CSV ' + res.status);
+  const rows = parseCsvRows(await res.text());
+  BAF_ROWS = rows
+    .map(row => ({
+      id: row.id,
+      company: row.company,
+      route: row.route,
+      validFrom: row.valid_from,
+      validTo: row.valid_to,
+      periodLabel: row.period_label,
+      priceNok: row.price_nok !== '' ? Number(row.price_nok) : null,
+      priceEur: row.price_eur !== '' ? Number(row.price_eur) : null,
+      sourceUrl: row.source_url,
+      updatedAt: row.updated_at
+    }))
+    .filter(row => row.company && row.validFrom)
+    .sort((a, b) => {
+      if (a.validFrom !== b.validFrom) return b.validFrom.localeCompare(a.validFrom);
+      if (a.company !== b.company) return a.company.localeCompare(b.company);
+      return a.route.localeCompare(b.route);
+    });
+}
+
+function getBafLastUpdatedText() {
+  let latest = null;
+  for (const row of BAF_ROWS) {
+    if (!row.updatedAt) continue;
+    if (!latest || row.updatedAt > latest) latest = row.updatedAt;
+  }
+  const formatted = formatSyncTime(latest);
+  return formatted ? 'Sist oppdatert: ' + formatted : '—';
+}
+
+function formatBafPeriod(row) {
+  if (row.validFrom && row.validTo) {
+    return monthLabel(row.validFrom) + ' – ' + monthLabel(row.validTo);
+  }
+  return row.periodLabel || row.validFrom || '—';
+}
+
+function getFilteredBafRows() {
+  const { from, to } = getYearRange();
+  return BAF_ROWS.filter(row => {
+    if (!row.validFrom) return false;
+    const year = parseInt(row.validFrom.substring(0, 4), 10);
+    return year >= from && year <= to;
+  });
+}
+
+function getLatestBafByRoute(rows = getBafDisplayRows()) {
+  const latestByRoute = new Map();
+  for (const row of rows) {
+    const key = row.company + '|' + row.route;
+    if (!latestByRoute.has(key)) latestByRoute.set(key, row);
+  }
+  return Array.from(latestByRoute.values());
+}
+
+function renderBafKpis() {
+  const grid = document.getElementById('baf-kpi-grid');
+  if (!grid) return;
+  const latest = getLatestBafByRoute();
+  if (!latest.length) {
+    grid.innerHTML = '';
+    return;
+  }
+
+  const palette = [
+    { bg: 'var(--key-number-bg-1)', text: 'var(--key-number-text-1)' },
+    { bg: 'var(--key-number-bg-2)', text: 'var(--key-number-text-2)' },
+    { bg: 'var(--key-number-bg-3)', text: 'var(--key-number-text-3)' },
+    { bg: 'var(--key-number-bg-4)', text: 'var(--key-number-text-4)' }
+  ];
+
+  grid.innerHTML = latest.slice(0, 6).map((row, index) => {
+    const colors = palette[index % palette.length];
+    const nok = row.priceNok != null ? row.priceNok.toFixed(0) : '—';
+    return (
+      `<div class="kpi-ng" style="background:${colors.bg};color:${colors.text}">` +
+        `<div class="kpi-ng-label">${row.company}</div>` +
+        `<div class="kpi-ng-value">${nok} <span style="font-size:0.85rem;font-weight:600">NOK/LM</span></div>` +
+        `<div class="kpi-ng-sub">${row.route}<br>${formatBafPeriod(row)}</div>` +
+      `</div>`
+    );
+  }).join('');
+}
+
+function shortBafRouteLabel(route) {
+  return String(route || '')
+    .replace(/^Domestic route:\s*/i, '')
+    .replace(/\s*[–—-]\s*/g, '–');
+}
+
+function bafCompanyActive(company) {
+  return document.querySelector(`#baf-company-toggles [data-company="${company}"]`)?.classList.contains('active');
+}
+
+function bafRouteActive(routeKey) {
+  const buttons = document.querySelectorAll('#baf-route-toggles .fuel-toggle');
+  if (!buttons.length) return true;
+  return [...buttons].some(btn => btn.dataset.routeKey === routeKey && btn.classList.contains('active'));
+}
+
+function getAvailableBafRouteMetas() {
+  const rows = getFilteredBafRows().filter(row => bafCompanyActive(row.company));
+  const metas = [];
+  const seen = new Set();
+  rows.slice().sort((a, b) => {
+    if (a.company !== b.company) return a.company.localeCompare(b.company);
+    return a.route.localeCompare(b.route);
+  }).forEach(row => {
+    const key = row.company + '|' + row.route;
+    if (seen.has(key)) return;
+    seen.add(key);
+    metas.push({
+      key,
+      company: row.company,
+      route: row.route,
+      label: shortBafRouteLabel(row.route)
+    });
+  });
+  return metas;
+}
+
+function getBafDisplayRows() {
+  return getFilteredBafRows().filter(row => {
+    if (row.priceNok == null || !row.validFrom) return false;
+    if (!bafCompanyActive(row.company)) return false;
+    return bafRouteActive(row.company + '|' + row.route);
+  });
+}
+
+function syncBafRouteToggles() {
+  const container = document.getElementById('baf-route-toggles');
+  if (!container) return;
+  const previousActive = new Set(
+    [...container.querySelectorAll('.fuel-toggle.active')].map(btn => btn.dataset.routeKey)
+  );
+  const hadButtons = previousActive.size > 0 || container.querySelectorAll('.fuel-toggle').length > 0;
+  const metas = getAvailableBafRouteMetas();
+  if (!metas.length) {
+    container.innerHTML = '<span class="data-note">Ingen ruter for valgt selskap/periode</span>';
+    return;
+  }
+  container.innerHTML = metas.map(meta => {
+    const isActive = !hadButtons || previousActive.has(meta.key);
+    const companyShort = meta.company.split(' ')[0];
+    return (
+      `<button class="fuel-toggle${isActive ? ' active' : ''}" ` +
+      `data-route-key="${meta.key.replace(/"/g, '&quot;')}" ` +
+      `onclick="toggleBafRoute(this)" title="${meta.company}">` +
+      `${companyShort} · ${meta.label}` +
+      `</button>`
+    );
+  }).join('');
+  if (![...container.querySelectorAll('.fuel-toggle.active')].length) {
+    container.querySelectorAll('.fuel-toggle').forEach(btn => btn.classList.add('active'));
+  }
+}
+
+function refreshBafVisuals() {
+  try { renderBafKpis(); } catch (err) { console.error('BAF KPIs:', err); }
+  try { renderBafChart(); } catch (err) { console.error('BAF chart:', err); }
+  try { renderBafMatrix(); } catch (err) { console.error('BAF matrix:', err); }
+}
+
+function toggleBafCompany(btn) {
+  btn.classList.toggle('active');
+  const anyActive = document.querySelectorAll('#baf-company-toggles .fuel-toggle.active').length > 0;
+  if (!anyActive) {
+    btn.classList.add('active');
+    return;
+  }
+  syncBafRouteToggles();
+  refreshBafVisuals();
+}
+
+function toggleBafRoute(btn) {
+  btn.classList.toggle('active');
+  const anyActive = document.querySelectorAll('#baf-route-toggles .fuel-toggle.active').length > 0;
+  if (!anyActive) {
+    btn.classList.add('active');
+    return;
+  }
+  refreshBafVisuals();
+}
+
+function formatBafMonthLabel(validFrom) {
+  if (!validFrom) return '—';
+  const parts = validFrom.split('-');
+  return MONTH_NAMES[+parts[1] - 1] + ' ' + parts[0];
+}
+
+function getBafMatrixColumns(rows) {
+  const columns = [];
+  const seen = new Set();
+  rows.slice().sort((a, b) => {
+    if (a.company !== b.company) return a.company.localeCompare(b.company);
+    return a.route.localeCompare(b.route);
+  }).forEach(row => {
+    const key = row.company + '|' + row.route;
+    if (seen.has(key)) return;
+    if (!bafRouteActive(key)) return;
+    seen.add(key);
+    columns.push({ key, company: row.company, route: row.route, label: shortBafRouteLabel(row.route) });
+  });
+  return columns;
+}
+
+function renderBafMatrix() {
+  const head = document.getElementById('bafMatrixHead');
+  const body = document.getElementById('bafMatrixBody');
+  if (!head || !body) return;
+
+  const rows = getBafDisplayRows();
+  const columns = getBafMatrixColumns(rows);
+  if (!columns.length) {
+    head.innerHTML = '';
+    body.innerHTML = '<tr><td class="empty">Ingen data for valgt filter</td></tr>';
+    return;
+  }
+
+  const periods = [...new Set(rows.map(row => row.validFrom))].sort().reverse();
+  const companySpans = [];
+  columns.forEach(column => {
+    const last = companySpans[companySpans.length - 1];
+    if (last && last.company === column.company) last.span += 1;
+    else companySpans.push({ company: column.company, span: 1 });
+  });
+
+  const priceByKey = new Map();
+  rows.forEach(row => {
+    priceByKey.set(row.company + '|' + row.route + '|' + row.validFrom, row.priceNok);
+  });
+
+  head.innerHTML =
+    `<tr>` +
+      `<th class="baf-period" rowspan="2">Periode</th>` +
+      companySpans.map(group => {
+        const companyClass = group.company === 'Color Line' ? 'color-line' : 'fjord-line';
+        return `<th class="baf-company ${companyClass}" colspan="${group.span}">${group.company}</th>`;
+      }).join('') +
+    `</tr>` +
+    `<tr>` +
+      columns.map(column => {
+        const companyClass = column.company === 'Color Line' ? 'color-line' : 'fjord-line';
+        return `<th class="baf-route ${companyClass}">${column.label}</th>`;
+      }).join('') +
+    `</tr>`;
+
+  body.innerHTML = periods.map(period => {
+    const cells = columns.map(column => {
+      const value = priceByKey.get(column.key + '|' + period);
+      const companyClass = column.company === 'Color Line' ? 'color-line' : 'fjord-line';
+      return `<td class="num ${companyClass}">${value != null ? value.toFixed(0) : '—'}</td>`;
+    }).join('');
+    return `<tr><td class="baf-period">${formatBafMonthLabel(period)}</td>${cells}</tr>`;
+  }).join('');
+}
+
+const BAF_ROUTE_COLORS = [
+  '#2471A3', '#C45C1A', '#2D6A4F', '#8B5CF6', '#D9584A', '#0F766E', '#B45309', '#334155'
+];
+
+function renderBafChart() {
+  const legend = document.getElementById('baf-chart-legend');
+  const canvas = document.getElementById('bafChart');
+  if (!canvas) return;
+
+  const rows = getBafDisplayRows();
+  if (!rows.length) {
+    if (legend) legend.innerHTML = '';
+    const { ctx, w, h } = getCanvas('bafChart');
+    ctx.fillStyle = C.text;
+    ctx.font = '13px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Ingen BAF-data for valgt filter', w / 2, h / 2);
+    return;
+  }
+
+  const periods = [...new Set(rows.map(row => row.validFrom))].sort();
+  const routeKeys = [];
+  const routeSeen = new Set();
+  rows.slice().sort((a, b) => {
+    if (a.company !== b.company) return a.company.localeCompare(b.company);
+    return a.route.localeCompare(b.route);
+  }).forEach(row => {
+    const key = row.company + '|' + row.route;
+    if (!routeSeen.has(key)) {
+      routeSeen.add(key);
+      routeKeys.push({ key, company: row.company, route: row.route });
+    }
+  });
+
+  const priceByRoutePeriod = new Map();
+  rows.forEach(row => {
+    priceByRoutePeriod.set(row.company + '|' + row.route + '|' + row.validFrom, row.priceNok);
+  });
+
+  const datasets = routeKeys.map((routeMeta, index) => ({
+    labels: periods,
+    data: periods.map(period => priceByRoutePeriod.get(routeMeta.key + '|' + period) ?? null),
+    color: BAF_ROUTE_COLORS[index % BAF_ROUTE_COLORS.length],
+    lineWidth: 2.2,
+    fill: false,
+    connectNulls: true
+  }));
+
+  if (legend) {
+    legend.innerHTML = routeKeys.map((routeMeta, index) => {
+      const color = BAF_ROUTE_COLORS[index % BAF_ROUTE_COLORS.length];
+      const label = routeMeta.company.split(' ')[0] + ' · ' + shortBafRouteLabel(routeMeta.route);
+      return `<div class="legend-item"><div class="legend-dot" style="background:${color}"></div> ${label}</div>`;
+    }).join('');
+  }
+
+  drawLineChart('bafChart', datasets, { connectNulls: true });
+}
+
+function renderBafView() {
+  document.getElementById('last-updated').textContent = getBafLastUpdatedText();
+  syncBafRouteToggles();
+  refreshBafVisuals();
+}
+
 // ── Main render ───────────────────────────────────────────────────────────────
 function render() {
   const isCompareView = activeCountry === 'ALL';
+  const isBafView = activeCountry === 'BAF';
   document.getElementById('compare-section').style.display = isCompareView ? '' : 'none';
+  document.getElementById('baf-section').style.display = isBafView ? '' : 'none';
+
+  if (isBafView) {
+    document.getElementById('monthly-sections').style.display = 'none';
+    document.getElementById('daily-section').style.display = 'none';
+    document.getElementById('daily-history-section').style.display = 'none';
+    document.getElementById('tax-changes-section').style.display = 'none';
+    updateViewControls();
+    renderBafView();
+    return;
+  }
 
   if (isCompareView) {
     document.getElementById('monthly-sections').style.display = 'none';
@@ -2737,6 +3369,10 @@ document.getElementById('yearFullHistory').addEventListener('change', function()
 window.addEventListener('resize', () => { try { render(); } catch(e) {} });
 
 fetchPriceData()
+  .then(() => fetchBafData().catch(err => {
+    console.error('BAF data:', err);
+    BAF_ROWS = [];
+  }))
   .then(() => {
     document.getElementById('loadingOverlay').style.display = 'none';
     populateYearSliders();
@@ -2853,6 +3489,15 @@ async function loadNews(forceRefresh = false) {
 
 loadNews();
 setInterval(() => loadNews(true), NEWS_CACHE_TTL_MS);
+
+document.addEventListener('keydown', (event) => {
+  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  const tag = event.target && event.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || event.target.isContentEditable) return;
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+  event.preventDefault();
+  window.location.href = 'markedsmote.html';
+});
 </script>
 </body>
 </html>

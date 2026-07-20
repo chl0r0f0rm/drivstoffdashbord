@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markedsmøte – Circle K SE · NG Group</title>
+<title>Markedsinnsikt – Circle K SE · NG Group</title>
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -58,32 +58,63 @@
   header {
     background: var(--white);
     color: var(--text);
-    padding: 0 40px;
-    display: flex;
-    align-items: stretch;
-    justify-content: space-between;
-    gap: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-  .header-left {
-    display: flex;
+    padding: 14px 40px;
+    display: grid;
+    grid-template-columns: auto 340px auto minmax(0, 1fr) auto;
     align-items: center;
-    gap: 16px;
-    padding: 18px 0;
+    column-gap: 16px;
+    border-bottom: 1px solid var(--border);
   }
   .header-logo {
     height: 40px;
     width: auto;
     flex-shrink: 0;
+    grid-column: 1;
+  }
+  .header-title {
+    grid-column: 2;
+    min-width: 0;
+  }
+  .header-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
   .header-title h1 {
-    font-size: 1.1rem; font-weight: 700;
-    letter-spacing: -0.01em; color: var(--text-contrast);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-contrast);
+    line-height: 1.15;
   }
-  .header-title p { font-size: 0.72rem; color: var(--gray); margin-top: 2px; }
+  .header-title p {
+    font-size: 0.72rem;
+    color: var(--gray);
+    margin-top: 3px;
+    line-height: 1.35;
+  }
   .header-title a { color: var(--ng-mid); text-decoration: none; font-weight: 600; }
   .header-title a:hover { text-decoration: underline; }
+  .dash-icon {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    color: var(--ng-mid);
+  }
+  .dash-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .header-nav {
+    grid-column: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
   .header-right {
+    grid-column: 5;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -91,11 +122,14 @@
     gap: 14px;
     font-size: 0.75rem;
     color: var(--text-muted);
-    padding: 18px 0;
+    justify-self: end;
   }
   .header-meeting-btn {
     display: inline-flex;
     align-items: center;
+    gap: 8px;
+    min-width: 156px;
+    justify-content: center;
     padding: 8px 14px;
     border-radius: 6px;
     border: none;
@@ -108,6 +142,35 @@
     transition: background .12s;
   }
   .header-meeting-btn:hover { background: var(--card-button-hover); color: var(--text-inverted); }
+  .header-meeting-btn .dash-icon {
+    width: 16px;
+    height: 16px;
+    color: currentColor;
+  }
+  .header-nav-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .header-nav-hint kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: var(--white);
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-muted);
+  }
 
   .container {
     max-width: 1792px;
@@ -525,26 +588,28 @@
 
   @media (max-width: 900px) {
     header {
-      padding: 0 14px;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0;
+      padding: 12px 14px;
+      grid-template-columns: auto 1fr;
+      grid-template-rows: auto auto auto;
+      row-gap: 10px;
+      column-gap: 12px;
     }
-    .header-left {
-      padding: 14px 0 8px;
-      gap: 12px;
-    }
-    .header-logo { height: 32px; }
+    .header-logo { height: 32px; grid-column: 1; grid-row: 1; }
+    .header-title { grid-column: 2; grid-row: 1; }
     .header-title h1 { font-size: 1rem; }
     .header-title p { font-size: 0.68rem; }
+    .header-nav {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      width: 100%;
+    }
     .header-right {
-      padding: 0 0 14px;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
+      grid-column: 1 / -1;
+      grid-row: 3;
+      justify-self: start;
     }
     .header-meeting-btn {
-      width: 100%;
+      flex: 1;
       justify-content: center;
       padding: 10px 14px;
       font-size: 0.8rem;
@@ -1220,15 +1285,33 @@
 <body class="ng-orange">
 
 <header>
-  <div class="header-left">
-    <img src="assets/logo.svg" class="header-logo" alt="NG Nordic">
-    <div class="header-title">
-      <h1>Markedsmøte</h1>
-      <p>Circle K Sverige · Diesel &amp; HVO · siste 12 måneder</p>
+  <img src="assets/logo.svg" class="header-logo" alt="NG Nordic">
+  <div class="header-title">
+    <div class="header-title-row">
+      <span class="dash-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l9 4.5-9 4.5L3 7.5 12 3z"/>
+          <path d="M3 12l9 4.5 9-4.5"/>
+          <path d="M3 16.5L12 21l9-4.5"/>
+        </svg>
+      </span>
+      <h1>Markedsinnsikt</h1>
     </div>
+    <p>Analyse av mekanismer som påvirker pumpe- og spotpriser</p>
+  </div>
+  <div class="header-nav">
+    <span class="header-nav-hint" title="Bytt dashbord med piltaster" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd></span>
+    <a href="index.html" class="header-meeting-btn">
+      <span class="dash-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19h16"/>
+          <path d="M5 15l4.5-4.5 3.5 3 6-7"/>
+        </svg>
+      </span>
+      Drivstoffindeks
+    </a>
   </div>
   <div class="header-right">
-    <a href="index.html" class="header-meeting-btn">← Tilbake til drivstoff-indeks</a>
     <span id="last-updated">—</span>
   </div>
 </header>
@@ -3482,6 +3565,15 @@ async function boot() {
     console.error(err);
   }
 }
+
+document.addEventListener('keydown', (event) => {
+  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  const tag = event.target && event.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || event.target.isContentEditable) return;
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+  event.preventDefault();
+  window.location.href = 'index.html';
+});
 
 window.addEventListener('resize', () => { try { boot(); } catch (e) {} });
 boot();
