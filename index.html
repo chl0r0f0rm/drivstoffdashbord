@@ -750,29 +750,67 @@
     font-weight: 600;
   }
   .baf-chart-wrap { position: relative; height: 280px; }
-  .baf-filters {
-    display: grid;
-    gap: 10px;
-    margin-bottom: 16px;
-    padding: 12px 14px;
-    background: var(--white);
+  .baf-table-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 14px 20px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: var(--ng-bg);
     border: 1px solid var(--border);
     border-radius: 8px;
-    box-shadow: var(--shadow);
   }
-  .baf-filter-row {
+  .baf-table-filter-group {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px 10px;
+    gap: 8px 12px;
   }
-  .baf-filter-label {
+  .baf-table-filter-label {
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-muted);
-    min-width: 64px;
+  }
+  .baf-company-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+  }
+  .baf-company-checks label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+  }
+  .baf-company-checks input {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--ng-mid);
+    cursor: pointer;
+  }
+  #baf-route-select {
+    min-width: 220px;
+    max-width: 340px;
+    min-height: 88px;
+    padding: 4px 6px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--text);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+  #baf-route-select:focus {
+    outline: none;
+    border-color: var(--ng-mid);
   }
 
   /* ── Table ── */
@@ -1347,19 +1385,6 @@
   <!-- BAF (bunker adjustment factor) -->
   <div id="baf-section" style="display:none">
     <p class="section-label">BAF · Bunker Adjustment Factor</p>
-    <div class="baf-filters">
-      <div class="baf-filter-row">
-        <span class="baf-filter-label">Selskap</span>
-        <div class="fuel-toggles" id="baf-company-toggles">
-          <button class="fuel-toggle active" data-company="Color Line" onclick="toggleBafCompany(this)">Color Line</button>
-          <button class="fuel-toggle active" data-company="Fjord Line" onclick="toggleBafCompany(this)">Fjord Line</button>
-        </div>
-      </div>
-      <div class="baf-filter-row">
-        <span class="baf-filter-label">Rute</span>
-        <div class="fuel-toggles" id="baf-route-toggles"></div>
-      </div>
-    </div>
     <div class="kpi-grid" id="baf-kpi-grid"></div>
     <div class="chart-card collapsible">
       <div class="card-header">
@@ -1385,6 +1410,19 @@
         <button type="button" class="collapse-btn" onclick="toggleCollapse(this)" aria-expanded="true" title="Vis/skjul">▾</button>
       </div>
       <div class="collapsible-body">
+        <div class="baf-table-filters">
+          <div class="baf-table-filter-group">
+            <span class="baf-table-filter-label">Selskap</span>
+            <div class="baf-company-checks" id="baf-company-checks">
+              <label><input type="checkbox" data-company="Color Line" checked onchange="onBafCompanyFilterChange()">Color Line</label>
+              <label><input type="checkbox" data-company="Fjord Line" checked onchange="onBafCompanyFilterChange()">Fjord Line</label>
+            </div>
+          </div>
+          <div class="baf-table-filter-group">
+            <span class="baf-table-filter-label">Rute</span>
+            <select id="baf-route-select" multiple size="4" onchange="onBafRouteFilterChange()"></select>
+          </div>
+        </div>
         <div class="baf-matrix-wrap">
           <table id="bafMatrixTable">
             <thead id="bafMatrixHead"></thead>
@@ -3032,13 +3070,15 @@ function shortBafRouteLabel(route) {
 }
 
 function bafCompanyActive(company) {
-  return document.querySelector(`#baf-company-toggles [data-company="${company}"]`)?.classList.contains('active');
+  const checkbox = document.querySelector(`#baf-company-checks input[data-company="${company}"]`);
+  if (!checkbox) return true;
+  return checkbox.checked;
 }
 
 function bafRouteActive(routeKey) {
-  const buttons = document.querySelectorAll('#baf-route-toggles .fuel-toggle');
-  if (!buttons.length) return true;
-  return [...buttons].some(btn => btn.dataset.routeKey === routeKey && btn.classList.contains('active'));
+  const select = document.getElementById('baf-route-select');
+  if (!select || !select.options.length) return true;
+  return [...select.selectedOptions].some(option => option.value === routeKey);
 }
 
 function getAvailableBafRouteMetas() {
@@ -3071,30 +3111,31 @@ function getBafDisplayRows() {
 }
 
 function syncBafRouteToggles() {
-  const container = document.getElementById('baf-route-toggles');
-  if (!container) return;
-  const previousActive = new Set(
-    [...container.querySelectorAll('.fuel-toggle.active')].map(btn => btn.dataset.routeKey)
-  );
-  const hadButtons = previousActive.size > 0 || container.querySelectorAll('.fuel-toggle').length > 0;
+  const select = document.getElementById('baf-route-select');
+  if (!select) return;
+  const previousActive = new Set([...select.selectedOptions].map(option => option.value));
+  const hadOptions = select.options.length > 0;
   const metas = getAvailableBafRouteMetas();
   if (!metas.length) {
-    container.innerHTML = '<span class="data-note">Ingen ruter for valgt selskap/periode</span>';
+    select.innerHTML = '';
+    select.disabled = true;
+    select.title = 'Ingen ruter for valgt selskap/periode';
     return;
   }
-  container.innerHTML = metas.map(meta => {
-    const isActive = !hadButtons || previousActive.has(meta.key);
+  select.disabled = false;
+  select.title = 'Hold Ctrl/Cmd for å velge flere ruter';
+  select.innerHTML = metas.map(meta => {
+    const isActive = !hadOptions || previousActive.has(meta.key);
     const companyShort = meta.company.split(' ')[0];
     return (
-      `<button class="fuel-toggle${isActive ? ' active' : ''}" ` +
-      `data-route-key="${meta.key.replace(/"/g, '&quot;')}" ` +
-      `onclick="toggleBafRoute(this)" title="${meta.company}">` +
+      `<option value="${meta.key.replace(/"/g, '&quot;')}"` +
+      `${isActive ? ' selected' : ''}>` +
       `${companyShort} · ${meta.label}` +
-      `</button>`
+      `</option>`
     );
   }).join('');
-  if (![...container.querySelectorAll('.fuel-toggle.active')].length) {
-    container.querySelectorAll('.fuel-toggle').forEach(btn => btn.classList.add('active'));
+  if (![...select.selectedOptions].length) {
+    [...select.options].forEach(option => { option.selected = true; });
   }
 }
 
@@ -3104,23 +3145,21 @@ function refreshBafVisuals() {
   try { renderBafMatrix(); } catch (err) { console.error('BAF matrix:', err); }
 }
 
-function toggleBafCompany(btn) {
-  btn.classList.toggle('active');
-  const anyActive = document.querySelectorAll('#baf-company-toggles .fuel-toggle.active').length > 0;
-  if (!anyActive) {
-    btn.classList.add('active');
-    return;
+function onBafCompanyFilterChange() {
+  const checked = document.querySelectorAll('#baf-company-checks input:checked');
+  if (!checked.length) {
+    const first = document.querySelector('#baf-company-checks input');
+    if (first) first.checked = true;
   }
   syncBafRouteToggles();
   refreshBafVisuals();
 }
 
-function toggleBafRoute(btn) {
-  btn.classList.toggle('active');
-  const anyActive = document.querySelectorAll('#baf-route-toggles .fuel-toggle.active').length > 0;
-  if (!anyActive) {
-    btn.classList.add('active');
-    return;
+function onBafRouteFilterChange() {
+  const select = document.getElementById('baf-route-select');
+  if (!select || !select.options.length) return;
+  if (![...select.selectedOptions].length) {
+    select.options[0].selected = true;
   }
   refreshBafVisuals();
 }
