@@ -3016,10 +3016,15 @@ function formatBafPeriod(row) {
   return row.periodLabel || row.validFrom || '—';
 }
 
+function isHiddenBafRoute(route) {
+  return /Bergen\s*\/\s*Stavanger/i.test(String(route || ''));
+}
+
 function getFilteredBafRows() {
   const { from, to } = getYearRange();
   return BAF_ROWS.filter(row => {
     if (!row.validFrom) return false;
+    if (isHiddenBafRoute(row.route)) return false;
     const year = parseInt(row.validFrom.substring(0, 4), 10);
     return year >= from && year <= to;
   });

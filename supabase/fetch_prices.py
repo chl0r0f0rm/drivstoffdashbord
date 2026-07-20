@@ -263,8 +263,32 @@ def prune_csv_months_after(filepath, fieldnames, key_column, after_value):
     write_csv_full(filepath, kept, fieldnames, key_column)
 
 
-def gap_fill_daily_rows(latest_row, existing_dates):
-    """Fill missing calendar days from last stored date through today with current price."""
+def read_last_daily_row(filepath):
+    if not os.path.exists(filepath):
+        return None
+    last = None
+    with open(filepath, "r", encoding="utf-8") as file_handle:
+        for row in csv.DictReader(file_handle):
+            last = row
+    if not last:
+        return None
+    diesel = safe_float(last.get("diesel"))
+    hvo = safe_float(last.get("hvo"))
+    if diesel is None:
+        return None
+    return {
+        "date": last.get("date"),
+        "diesel": diesel,
+        "hvo": hvo,
+    }
+
+
+def gap_fill_daily_rows(latest_row, existing_dates, effective_date=None, prior_row=None):
+    """Fill missing calendar days through today.
+
+    Days before effective_date reuse prior_row prices (unchanged list price).
+    Days on/after effective_date use latest_row prices.
+    """
     today = date.fromisoformat(latest_row["date"])
     if existing_dates:
         last_stored = max(date.fromisoformat(d) for d in existing_dates)
@@ -273,13 +297,23 @@ def gap_fill_daily_rows(latest_row, existing_dates):
         start = today
     if start > today:
         return []
+
+    try:
+        change_on = date.fromisoformat(effective_date) if effective_date else today
+    except ValueError:
+        change_on = today
+
     filled = []
     current = start
     while current <= today:
+        if prior_row and current < change_on:
+            source = prior_row
+        else:
+            source = latest_row
         filled.append({
             "date": str(current),
-            "diesel": latest_row["diesel"],
-            "hvo": latest_row.get("hvo"),
+            "diesel": source["diesel"],
+            "hvo": source.get("hvo"),
         })
         current += timedelta(days=1)
     return filled
@@ -780,20 +814,27 @@ def fetch_ck_se_daily():
 # ── Circle K Norge ───────────────────────────────────────────────────────────
 
 CK_NO_URL = "https://www.circlek.no/bedrift/produkter/drivstoff/priser"
+CK_NO_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "nb-NO,nb;q=0.9,en-US;q=0.8,en;q=0.7",
+}
 
 PRODUCT_ALIASES = {
     "diesel":  ["diesel"],
-    "hvo":     ["hvo100", "anleggsbio hvo100"],
+    "hvo":     ["hvo100"],
 }
 
 def fetch_ck_no():
     print("\n── Circle K Norge ───────────────────────────────────────────────────")
     try:
-        resp = requests.get(CK_NO_URL, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+        resp = requests.get(CK_NO_URL, timeout=30, headers=CK_NO_HEADERS)
         resp.raise_for_status()
     except requests.RequestException as error:
-        print(f"  Failed to load page: {error}")
-        return []
+        raise RuntimeError(f"Circle K NO: failed to load price page: {error}") from error
 
     soup = BeautifulSoup(resp.text, "html.parser")
 
@@ -813,17 +854,14 @@ def fetch_ck_no():
             cell_texts = [c.get_text(" ", strip=True) for c in cells]
             row_text = " ".join(cell_texts).lower()
 
-            # Extract numeric value from a cell (handles "Pris eks. mva.: 14,83" or "14,83")
             def extract_number(text):
                 m = re.search(r"(\d+)[,.](\d+)", text)
                 return round(float(m.group(1) + "." + m.group(2)), 4) if m else None
 
-            # Extract date from a cell (handles "Gjeldende fra: 2026-06-02" or "2026-06-02")
             def extract_date(text):
                 m = re.search(r"(\d{4}-\d{2}-\d{2})", text)
                 return m.group(1) if m else None
 
-            # Find which product this row is
             matched_product = None
             for product_key, aliases in PRODUCT_ALIASES.items():
                 for alias in aliases:
@@ -836,20 +874,16 @@ def fetch_ck_no():
             if not matched_product:
                 continue
 
-            # Skip "anleggs" variants (they are a different product tier)
-            if "anleggsdiesel" in row_text:
+            if "anleggsdiesel" in row_text or "anleggsbio" in row_text:
                 continue
 
-            # Find price ex. VAT and effective date across all cells
             price_val = None
             row_date = None
-            for i, cell_text in enumerate(cell_texts):
+            for cell_text in cell_texts:
                 v = extract_number(cell_text)
                 d = extract_date(cell_text)
                 if d:
                     row_date = d
-                # Heuristic: the ex-VAT price is in the cell after "Produkt" column,
-                # value is between 10 and 30 NOK/L
                 if v and 10 < v < 30 and price_val is None:
                     price_val = v
 
@@ -859,16 +893,22 @@ def fetch_ck_no():
                 date_effective = row_date
 
     if not prices.get("diesel"):
-        print("  Could not find diesel price on page")
-        return []
+        raise RuntimeError(
+            "Circle K NO: could not find diesel price on page "
+            f"(html_bytes={len(resp.text)}, tables={len(soup.find_all('table'))})"
+        )
 
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     row = {
-        "date":   today,
+        "date": today,
         "diesel": prices.get("diesel"),
-        "hvo":    prices.get("hvo"),
+        "hvo": prices.get("hvo"),
+        "effective_date": date_effective or today,
     }
-    print(f"  Diesel: {row['diesel']} NOK/L  HVO: {row['hvo']} NOK/L  (gjeldende fra {date_effective or '?'}, lagres som {today})")
+    print(
+        f"  Diesel: {row['diesel']} NOK/L  HVO: {row['hvo']} NOK/L  "
+        f"(gjeldende fra {row['effective_date']}, lagres som {today})"
+    )
     return [row]
 
 
@@ -1008,17 +1048,25 @@ def main():
     ck_no_daily = fetch_ck_no() if run_daily and "no" in countries else []
     if ck_no_daily:
         no_csv = os.path.join(DATA_DIR, "circklek_NO_daglig.csv")
+        latest = dict(ck_no_daily[0])
+        effective_date = latest.pop("effective_date", latest["date"])
+        prior_row = read_last_daily_row(no_csv)
         ck_no_daily = gap_fill_daily_rows(
-            ck_no_daily[0], read_existing_keys(no_csv, "date")
+            latest,
+            read_existing_keys(no_csv, "date"),
+            effective_date=effective_date,
+            prior_row=prior_row,
         )
-    if ck_no_daily:
-        synced_sources.append("NO_ck")
-        n = append_csv(no_csv, ck_no_daily, ["date", "diesel", "hvo"], "date")
-        report.append(f"NO_ck: +{n} rows (through {ck_no_daily[-1]['date']})")
-        daily_upsert += [
-            {"source": "NO_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
-            for r in ck_no_daily
-        ]
+        if not ck_no_daily:
+            report.append("NO_ck: already up to date")
+        else:
+            synced_sources.append("NO_ck")
+            n = append_csv(no_csv, ck_no_daily, ["date", "diesel", "hvo"], "date")
+            report.append(f"NO_ck: +{n} rows (through {ck_no_daily[-1]['date']})")
+            daily_upsert += [
+                {"source": "NO_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
+                for r in ck_no_daily
+            ]
 
     print("\n── Supabase upsert ───────────────────────────────────────────────────")
     upsert_ok = True
