@@ -12,12 +12,23 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
+      - name: Pull latest changes
+        run: git pull --rebase origin main
+
+      - name: Install dependencies
+        run: pip install requests
+
       - name: Fetch Brent daily prices
+        env:
+          SUPABASE_URL: https://fnkdbuqsschkvpzeumbz.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: python supabase/fetch_brent.py
 
       - name: Commit if changed

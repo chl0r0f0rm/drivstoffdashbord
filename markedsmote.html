@@ -147,35 +147,157 @@
   .chart-wrap { position: relative; height: 260px; }
 
   .dashboard-grid {
-    display: grid;
-    grid-template-columns: 300px minmax(1124px, 1fr) 280px;
-    gap: 16px;
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
-  .charts-column {
+  .dashboard-section {
     display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
     gap: 16px;
-    min-width: 1124px;
+    align-items: stretch;
+  }
+  .section-fuel {
+    grid-template-rows: auto 1fr;
+  }
+  .section-brent {
+    grid-template-rows: 1fr;
+  }
+  .fuel-chart-card {
+    grid-column: 1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .fuel-chart-card .chart-wrap {
+    flex: 1;
+    min-height: 260px;
+  }
+  .mom-card {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+  }
+  .fuel-context-card {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .brent-chart-card {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .brent-chart-card .chart-wrap {
+    flex: 1;
+    min-height: 260px;
+  }
+  .brent-context-card {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .fuel-context-card .context-stack,
+  .brent-context-card .brent-context-body {
+    flex: 1;
   }
   .side-card { margin-bottom: 0; }
 
+  .pump-prices-wrap {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .pump-prices-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+  .pump-prices-title {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow);
+  }
+  .pump-price-card .country {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .pump-price-card .prices {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .pump-price-card .price-block .fuel {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .pump-price-card .price-block .value {
+    font-size: 1.15rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  .pump-price-card .price-block.diesel .value { color: var(--diesel); }
+  .pump-price-card .price-block.hvo .value { color: var(--hvo); }
+  .pump-price-card .date {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  .chart-section-divider {
+    height: 1px;
+    background: #e8dfd6;
+    margin: 20px 0;
+    flex-shrink: 0;
+  }
+
   @media (max-width: 1680px) {
-    .dashboard-grid {
-      grid-template-columns: 1fr 1fr;
+    .dashboard-section {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
     }
-    .charts-column {
-      grid-column: 1 / -1;
-      order: -1;
-      min-width: 0;
+    .pump-prices-wrap,
+    .mom-card,
+    .fuel-chart-card,
+    .fuel-context-card,
+    .brent-chart-card,
+    .brent-context-card {
+      grid-column: 1;
+      grid-row: auto;
     }
   }
 
   @media (max-width: 900px) {
     header { padding: 0 16px; flex-wrap: wrap; }
     .container { padding: 16px 16px 32px; }
-    .dashboard-grid { grid-template-columns: 1fr; }
-    .charts-column { grid-column: auto; order: 0; min-width: 0; }
+    .pump-prices { grid-template-columns: 1fr; }
     .chart-wrap { height: 220px; }
+    .fuel-chart-card .chart-wrap,
+    .brent-chart-card .chart-wrap {
+      min-height: 220px;
+    }
   }
 
   table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
@@ -232,6 +354,30 @@
     font-size: 0.75rem;
     font-weight: 500;
     opacity: 0.7;
+  }
+  .brent-context-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .brent-context-note {
+    margin-top: 0;
+    padding: 12px 14px;
+    border-radius: 6px;
+    background: var(--ng-bg);
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--text);
+  }
+  .brent-context-note strong {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
   }
 
   .tax-list { list-style: none; display: grid; gap: 8px; }
@@ -296,29 +442,36 @@
 
 <div class="container">
   <div class="dashboard-grid">
-    <section class="table-card side-card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">Måned-til-måned · siste 3 overganger</div>
-          <div class="card-subtitle">Endring i %</div>
+    <div class="dashboard-section section-fuel">
+      <div class="pump-prices-wrap">
+        <div class="pump-prices-title">Dagens pumpepris · Circle K</div>
+        <div class="pump-prices" id="pumpPrices">
+          <div class="pump-price-card"><div class="country">Laster…</div></div>
         </div>
       </div>
-      <table class="mom-table">
-        <thead>
-          <tr>
-            <th>Periode</th>
-            <th>Diesel</th>
-            <th>HVO100</th>
-          </tr>
-        </thead>
-        <tbody id="momBody">
-          <tr><td colspan="3" class="empty">Laster…</td></tr>
-        </tbody>
-      </table>
-    </section>
 
-    <div class="charts-column">
-      <section class="chart-card">
+      <section class="table-card side-card mom-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Måned-til-måned · siste 3 overganger</div>
+            <div class="card-subtitle">Circle K SE · endring i %</div>
+          </div>
+        </div>
+        <table class="mom-table">
+          <thead>
+            <tr>
+              <th>Periode</th>
+              <th>Diesel</th>
+              <th>HVO100</th>
+            </tr>
+          </thead>
+          <tbody id="momBody">
+            <tr><td colspan="3" class="empty">Laster…</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="chart-card fuel-chart-card">
         <div class="card-header">
           <div>
             <div class="card-title">Prisutvikling · Circle K SE</div>
@@ -332,11 +485,29 @@
         <div class="chart-wrap"><canvas id="fuelChart"></canvas></div>
       </section>
 
-      <section class="chart-card">
+      <section class="table-card side-card fuel-context-card">
+        <div class="card-header">
+          <div class="card-title">Drivstoff · kontekst</div>
+        </div>
+        <div class="context-stack">
+          <div>
+            <div class="card-title" style="margin-bottom:8px">Relevante avgiftsendringer · SE</div>
+            <ul class="tax-list" id="taxList">
+              <li class="empty">Laster…</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="chart-section-divider" aria-hidden="true"></div>
+
+    <div class="dashboard-section section-brent">
+      <section class="chart-card brent-chart-card">
         <div class="card-header">
           <div>
-            <div class="card-title">Brent crude · siste 12 måneder</div>
-            <div class="card-subtitle">USD/fat · daglig spot · kilde: EIA via FRED (DCOILBRENTEU)</div>
+            <div class="card-title">Brent crude · siste 6 måneder</div>
+            <div class="card-subtitle" id="brent-chart-note">USD/fat · daglig spot · kilde: EIA via FRED (DCOILBRENTEU)</div>
           </div>
           <div class="legend">
             <div class="legend-item"><div class="legend-dot" style="background:var(--brent)"></div> Brent</div>
@@ -344,35 +515,33 @@
         </div>
         <div class="chart-wrap"><canvas id="brentChart"></canvas></div>
       </section>
-    </div>
 
-    <section class="table-card side-card">
-      <div class="card-header">
-        <div class="card-title">Kontekst</div>
-      </div>
-      <div class="context-stack">
-        <div class="brent-kpi">
-          <div>
-            <div class="label">Brent crude</div>
-            <div class="value" id="brentValue">—</div>
+      <section class="table-card side-card brent-context-card">
+        <div class="card-header">
+          <div class="card-title">Brent · kontekst</div>
+        </div>
+        <div class="brent-context-body">
+          <div class="brent-kpi">
+            <div>
+              <div class="label">Brent crude</div>
+              <div class="value" id="brentValue">—</div>
+            </div>
+            <div id="brentChange" class="num"></div>
+            <div class="sub" id="brentSub">USD/fat · daglig spot (EIA/FRED)</div>
           </div>
-          <div id="brentChange" class="num"></div>
-          <div class="sub" id="brentSub">USD/fat · daglig spot (EIA/FRED)</div>
+          <p class="brent-context-note">
+            <strong>Hvorfor betyr det noe?</strong>
+            Diesel lages av råolje. Brent er referanseprisen for innkjøp i Europa, og bevegelser i spotprisen følges typisk av grossist- og listepriser i Norge, Sverige og Danmark – med noen ukers etterslep og justert for valuta, avgifter og marginer.
+          </p>
         </div>
-        <div>
-          <div class="card-title" style="margin-bottom:8px">Relevante avgiftsendringer · SE</div>
-          <ul class="tax-list" id="taxList">
-            <li class="empty">Laster…</li>
-          </ul>
-        </div>
-      </div>
-    </section>
+      </section>
+    </div>
   </div>
 
   <div class="status-bar" id="statusBar"></div>
 </div>
 
-<footer>Data: Circle K SE (SEK/L eks. mva) · Brent: EIA via FRED DCOILBRENTEU</footer>
+<footer>Data: 🇳🇴🇩🇰🇸🇪 Circle K (daglig pumpepris) · Circle K SE månedlig (SEK/L eks. mva) · Brent: EIA via FRED DCOILBRENTEU</footer>
 
 <script>
 const SUPABASE_URL  = 'https://fnkdbuqsschkvpzeumbz.supabase.co';
@@ -384,32 +553,17 @@ const monthLabel = m => {
   return MONTH_NAMES[+mo - 1] + ' ' + y;
 };
 
-const TAX_CHANGES_SE = [
-  {
-    start: '2025-01-01', end: null,
-    periodLabel: '1. jan 2025',
-    measure: 'Energi-/CO₂-skatt diesel −170 SEK/m³ vs. vedtatt nivå',
-    effect: '≈ −0,17 SEK/L'
-  },
-  {
-    start: '2025-07-01', end: null,
-    periodLabel: '1. jul 2025 → (også 2026)',
-    measure: 'Ytterligere energiskatt diesel −320 SEK/m³',
-    effect: '≈ −0,32 SEK/L'
-  },
-  {
-    start: '2026-05-01', end: '2026-09-30',
-    periodLabel: '1. mai – 30. sep 2026',
-    measure: 'Til EU-minimum: energiskatt −319 SEK/m³',
-    effect: '≈ −0,40 SEK/L inkl. moms'
-  },
-  {
-    start: '2024-01-01', end: null,
-    periodLabel: '1. jan 2024 →',
-    measure: 'Diesel nær EU-minimum (−341 SEK/m³ vs. indeks)',
-    effect: '≈ −0,34 SEK/L vs. indeks'
-  }
+const PUMP_SOURCES = [
+  { key: 'NO_ck', flag: '🇳🇴', label: 'Norge', currency: 'NOK' },
+  { key: 'SE_ck', flag: '🇸🇪', label: 'Sverige', currency: 'SEK' },
+  { key: 'DK_ck', flag: '🇩🇰', label: 'Danmark', currency: 'DKK' },
 ];
+
+const TAX_CHANGE_SE_SUMMER = {
+  periodLabel: '1. mai – 30. sep 2026',
+  measure: 'Til EU-minimum: energiskatt −319 SEK/m³',
+  effect: '≈ −0,40 SEK/L inkl. moms'
+};
 
 const C = {
   diesel: '#2D6A4F',
@@ -697,30 +851,18 @@ function renderMomTable(rows) {
   ).join('');
 }
 
-function renderTaxContext(fromMonth, toMonth) {
-  const viewStart = fromMonth + '-01';
-  const viewEnd = toMonth + '-31';
-  const relevant = TAX_CHANGES_SE.filter(c => {
-    if (c.start > viewEnd) return false;
-    if (c.end != null && c.end < viewStart) return false;
-    return true;
-  }).slice(0, 4);
-
+function renderTaxContext() {
+  const c = TAX_CHANGE_SE_SUMMER;
   const list = document.getElementById('taxList');
-  if (!relevant.length) {
-    list.innerHTML = '<li class="empty">Ingen relevante SE-avgiftsendringer i perioden</li>';
-    return;
-  }
-  list.innerHTML = relevant.map(c =>
+  list.innerHTML =
     `<li>` +
     `<div class="period">${c.periodLabel}</div>` +
     `<div class="measure">${c.measure}</div>` +
     `<div class="effect">${c.effect}</div>` +
-    `</li>`
-  ).join('');
+    `</li>`;
 }
 
-async function loadBrent() {
+async function loadBrentFromCsv() {
   const res = await fetch('data/brent_daily.csv', { cache: 'no-store' });
   if (!res.ok) throw new Error('Brent CSV ' + res.status);
   const text = await res.text();
@@ -735,12 +877,45 @@ async function loadBrent() {
   return rows;
 }
 
-function lastTwelveMonthsDaily(rows) {
+async function loadBrent() {
+  try {
+    const latestRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel&source=eq.BRENT&order=date.desc&limit=1`,
+      { headers: supabaseHeaders() }
+    );
+    if (!latestRes.ok) throw new Error('Supabase ' + latestRes.status);
+    const latestRows = await latestRes.json();
+    if (!latestRows.length) throw new Error('No Brent rows in Supabase');
+
+    const endDate = new Date(latestRows[0].date + 'T00:00:00');
+    const start = new Date(endDate);
+    start.setMonth(start.getMonth() - 6);
+    const startKey = start.toISOString().slice(0, 10);
+    const rows = await fetchAllRows(
+      `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel&source=eq.BRENT&date=gte.${startKey}&order=date.asc`
+    );
+    if (rows.length) {
+      return rows.map(r => ({ date: r.date, price: r.diesel }));
+    }
+  } catch (err) {
+    console.warn('Brent Supabase:', err);
+  }
+  return loadBrentFromCsv();
+}
+
+function updateBrentChartNote(latestDate) {
+  const el = document.getElementById('brent-chart-note');
+  if (!el || !latestDate) return;
+  el.textContent =
+    `USD/fat · daglig spot · siste observasjon ${formatPumpDate(latestDate)} · EIA/FRED`;
+}
+
+function lastSixMonthsDaily(rows) {
   if (!rows.length) return [];
   const end = rows[rows.length - 1].date;
   const endDate = new Date(end + 'T00:00:00');
   const start = new Date(endDate);
-  start.setFullYear(start.getFullYear() - 1);
+  start.setMonth(start.getMonth() - 6);
   const startKey = start.toISOString().slice(0, 10);
   return rows.filter(r => r.date >= startKey);
 }
@@ -776,6 +951,53 @@ function formatSyncTime(iso) {
   });
 }
 
+function formatPrice(v) {
+  return v != null ? v.toFixed(2).replace('.', ',') : '—';
+}
+
+function formatPumpDate(dateStr) {
+  if (!dateStr) return '—';
+  const [y, m, d] = dateStr.split('-');
+  return `${parseInt(d, 10)}. ${MONTH_NAMES[+m - 1]} ${y}`;
+}
+
+async function fetchLatestPumpPrice(sourceKey) {
+  const url = `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&order=date.desc&limit=1`;
+  const res = await fetch(url, { headers: supabaseHeaders() });
+  if (!res.ok) throw new Error('Supabase ' + res.status);
+  const rows = await res.json();
+  return rows[0] || null;
+}
+
+function renderPumpPrices(entries) {
+  const el = document.getElementById('pumpPrices');
+  el.innerHTML = entries.map(({ flag, label, currency, latest }) => {
+    if (!latest) {
+      return `<div class="pump-price-card"><div class="country">${flag} ${label}</div><div class="date">Ingen daglig data</div></div>`;
+    }
+    return `<div class="pump-price-card">` +
+      `<div class="country">${flag} ${label} · Circle K</div>` +
+      `<div class="prices">` +
+      `<div class="price-block diesel"><div class="fuel">Diesel</div><div class="value">${formatPrice(latest.diesel)} <span style="font-size:0.72rem;font-weight:600">${currency}</span></div></div>` +
+      `<div class="price-block hvo"><div class="fuel">HVO100</div><div class="value">${formatPrice(latest.hvo)} <span style="font-size:0.72rem;font-weight:600">${currency}</span></div></div>` +
+      `</div>` +
+      `<div class="date">${formatPumpDate(latest.date)} · eks. mva</div>` +
+      `</div>`;
+  }).join('');
+}
+
+async function loadPumpPrices() {
+  const entries = await Promise.all(PUMP_SOURCES.map(async src => {
+    try {
+      const latest = await fetchLatestPumpPrice(src.key);
+      return { ...src, latest };
+    } catch (e) {
+      return { ...src, latest: null };
+    }
+  }));
+  renderPumpPrices(entries);
+}
+
 async function loadLastUpdated() {
   const el = document.getElementById('last-updated');
   try {
@@ -797,6 +1019,8 @@ async function loadLastUpdated() {
 
 async function boot() {
   await loadLastUpdated();
+  loadPumpPrices().catch(err => console.error('Pump prices:', err));
+  renderTaxContext();
 
   try {
     const monthly = await fetchAllRows(
@@ -831,9 +1055,6 @@ async function boot() {
     ]);
 
     renderMomTable(last12);
-    if (last12.length) {
-      renderTaxContext(last12[0].month, last12[last12.length - 1].month);
-    }
   } catch (err) {
     document.getElementById('statusBar').className = 'status-bar error';
     document.getElementById('statusBar').textContent = 'Kunne ikke hente Circle K SE-priser: ' + err.message;
@@ -842,8 +1063,10 @@ async function boot() {
 
   try {
     const brent = await loadBrent();
-    const windowRows = lastTwelveMonthsDaily(brent);
+    const windowRows = lastSixMonthsDaily(brent);
+    const latest = brent[brent.length - 1];
     renderBrentKpi(brent);
+    updateBrentChartNote(latest?.date);
     drawMultiLine('brentChart', [{
       labels: windowRows.map(r => r.date),
       data: windowRows.map(r => r.price),
@@ -851,10 +1074,10 @@ async function boot() {
       lineWidth: 2
     }], { events: BRENT_EVENTS });
     document.getElementById('statusBar').textContent =
-      'Brent: ' + brent.length + ' dagsobservasjoner · oppdatert via data/brent_daily.csv (FRED DCOILBRENTEU)';
+      'Brent: ' + brent.length + ' dagsobservasjoner · siste ' + formatPumpDate(latest?.date) + ' · Supabase (BRENT)';
   } catch (err) {
     document.getElementById('brentSub').textContent =
-      'Fant ikke data/brent_daily.csv – kjør supabase/fetch_brent.py eller vent på GitHub Action';
+      'Fant ikke Brent-data – kjør supabase/fetch_brent.py eller vent på GitHub Action';
     console.error(err);
   }
 }
