@@ -263,24 +263,26 @@ def prune_csv_months_after(filepath, fieldnames, key_column, after_value):
     write_csv_full(filepath, kept, fieldnames, key_column)
 
 
-def read_last_daily_row(filepath):
+def read_daily_csv_rows(filepath):
     if not os.path.exists(filepath):
-        return None
-    last = None
+        return []
+    rows = []
     with open(filepath, "r", encoding="utf-8") as file_handle:
         for row in csv.DictReader(file_handle):
-            last = row
-    if not last:
-        return None
-    diesel = safe_float(last.get("diesel"))
-    hvo = safe_float(last.get("hvo"))
-    if diesel is None:
-        return None
-    return {
-        "date": last.get("date"),
-        "diesel": diesel,
-        "hvo": hvo,
-    }
+            diesel = safe_float(row.get("diesel"))
+            if diesel is None or not row.get("date"):
+                continue
+            rows.append({
+                "date": row["date"],
+                "diesel": diesel,
+                "hvo": safe_float(row.get("hvo")),
+            })
+    return rows
+
+
+def read_last_daily_row(filepath):
+    rows = read_daily_csv_rows(filepath)
+    return rows[-1] if rows else None
 
 
 def gap_fill_daily_rows(latest_row, existing_dates, effective_date=None, prior_row=None):
@@ -1051,22 +1053,27 @@ def main():
         latest = dict(ck_no_daily[0])
         effective_date = latest.pop("effective_date", latest["date"])
         prior_row = read_last_daily_row(no_csv)
-        ck_no_daily = gap_fill_daily_rows(
+        new_rows = gap_fill_daily_rows(
             latest,
             read_existing_keys(no_csv, "date"),
             effective_date=effective_date,
             prior_row=prior_row,
         )
-        if not ck_no_daily:
-            report.append("NO_ck: already up to date")
+        if new_rows:
+            n = append_csv(no_csv, new_rows, ["date", "diesel", "hvo"], "date")
+            report.append(f"NO_ck: +{n} rows (through {new_rows[-1]['date']})")
         else:
-            synced_sources.append("NO_ck")
-            n = append_csv(no_csv, ck_no_daily, ["date", "diesel", "hvo"], "date")
-            report.append(f"NO_ck: +{n} rows (through {ck_no_daily[-1]['date']})")
-            daily_upsert += [
-                {"source": "NO_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
-                for r in ck_no_daily
-            ]
+            report.append("NO_ck: CSV already up to date")
+        # Always upsert full CSV so dashboard (Supabase) matches git even after manual backfill
+        csv_rows = read_daily_csv_rows(no_csv)
+        if not csv_rows:
+            raise RuntimeError("Circle K NO: CSV is empty after fetch")
+        synced_sources.append("NO_ck")
+        daily_upsert += [
+            {"source": "NO_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
+            for r in csv_rows
+        ]
+        report.append(f"NO_ck: upsert {len(csv_rows)} CSV rows to Supabase")
 
     print("\n── Supabase upsert ───────────────────────────────────────────────────")
     upsert_ok = True
