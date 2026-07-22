@@ -440,6 +440,7 @@
     border-radius: 8px;
     padding: 12px 14px;
     box-shadow: var(--shadow);
+    position: relative;
   }
   .pump-price-card .country {
     font-size: 0.68rem;
@@ -515,12 +516,19 @@
     flex-direction: column;
     justify-content: center;
   }
+  .pump-price-cell .value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
   .pump-price-cell .value {
     font-size: 1.05rem;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
     line-height: 1.2;
+    white-space: nowrap;
   }
   .pump-price-cell.diesel .value { color: var(--diesel); }
   .pump-price-cell.hvo .value { color: var(--hvo); }
@@ -528,6 +536,26 @@
     font-size: 0.72rem;
     font-weight: 600;
   }
+  .pump-price-cell .day-delta {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    flex-shrink: 0;
+    font-size: 0.62rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .pump-price-cell .day-delta .day-arrow {
+    font-size: 0.72rem;
+    line-height: 1;
+  }
+  .pump-price-cell .day-delta.up,
+  .pump-price-cell .day-delta.up .day-arrow { color: var(--red, #C0392B); }
+  .pump-price-cell .day-delta.down,
+  .pump-price-cell .day-delta.down .day-arrow { color: var(--green, #1E8449); }
+  .pump-price-cell .day-delta.flat,
+  .pump-price-cell .day-delta.flat .day-arrow { color: var(--text-muted); }
   .pump-delta-cell {
     font-size: 0.78rem;
     font-weight: 800;
@@ -535,10 +563,17 @@
     text-align: center;
     align-self: stretch;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 1px;
     white-space: nowrap;
     padding: 0 8px;
+    line-height: 1.15;
+  }
+  .pump-delta-cell .delta-kr {
+    font-size: 0.78rem;
+    font-weight: 800;
   }
   .pump-col-label.delta,
   .pump-delta-cell,
@@ -549,13 +584,92 @@
   .pump-price-card .date {
     font-size: 0.68rem;
     color: var(--text-muted);
-    margin-top: 8px;
+    margin: 0;
+    min-width: 0;
   }
-  .pump-price-card .day-change {
+
+  .pump-card-footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  .pump-weekly-trend {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
     font-size: 0.68rem;
     font-weight: 800;
-    margin-top: 4px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    line-height: 1.15;
   }
+  .pump-weekly-trend .period {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    border-right: 1px solid var(--border);
+    padding-right: 8px;
+  }
+  .pump-weekly-trend .period-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 11px;
+    height: 11px;
+  }
+  .pump-weekly-trend .period-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .pump-weekly-trend .item {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    line-height: 1.15;
+  }
+  .pump-weekly-trend .item-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .pump-weekly-trend .kr {
+    font-size: 0.58rem;
+    font-weight: 700;
+    padding-left: 0;
+  }
+  .pump-weekly-trend .item.up .kr { color: var(--red, #C0392B); }
+  .pump-weekly-trend .item.down .kr { color: var(--green, #1E8449); }
+  .pump-weekly-trend .item.flat .kr { color: var(--text-muted); }
+  .pump-weekly-trend .fuel-tag {
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+  .pump-weekly-trend .item.diesel .fuel-tag { color: var(--diesel); }
+  .pump-weekly-trend .item.hvo .fuel-tag { color: var(--hvo); }
+  .pump-weekly-trend .symbol {
+    font-size: 0.85rem;
+    line-height: 1;
+  }
+  .pump-weekly-trend .item.up .symbol,
+  .pump-weekly-trend .item.up .pct { color: var(--red, #C0392B); }
+  .pump-weekly-trend .item.down .symbol,
+  .pump-weekly-trend .item.down .pct { color: var(--green, #1E8449); }
+  .pump-weekly-trend .item.flat .symbol,
+  .pump-weekly-trend .item.flat .pct { color: var(--text-muted); }
 
   .chart-section-divider {
     height: 1px;
@@ -2442,6 +2556,9 @@ function pctChange(curr, prev) {
   return curr / prev - 1;
 }
 
+const WEEKLY_TREND_DAYS = 7;
+const WEEKLY_STABLE_CHANGE_PCT = 0.003;
+
 function formatPct(v) {
   if (v == null) return '—';
   const sign = v > 0 ? '+' : '';
@@ -2458,6 +2575,58 @@ function formatPctWithArrow(v) {
 function deltaClass(v) {
   if (v == null || Math.abs(v) < 0.0005) return 'flat';
   return v > 0 ? 'up' : 'down';
+}
+
+function weeklyTrendSymbol(v) {
+  if (v == null) return '—';
+  if (Math.abs(v) < WEEKLY_STABLE_CHANGE_PCT) return '→';
+  return v > 0 ? '↑' : '↓';
+}
+
+function weeklyTrendClass(v) {
+  if (v == null || Math.abs(v) < WEEKLY_STABLE_CHANGE_PCT) return 'flat';
+  return v > 0 ? 'up' : 'down';
+}
+
+function formatWeeklyTrendPct(v) {
+  return v == null ? '—' : formatPct(v).replace('.', ',');
+}
+
+function dayBeforeDeltaHtml(pct, kr, currency) {
+  if (pct == null && kr == null) return '';
+  const cls = deltaClass(pct != null ? pct : kr);
+  const arrow = pct == null
+    ? (kr == null || Math.abs(kr) < 0.005 ? '→' : (kr > 0 ? '↑' : '↓'))
+    : (Math.abs(pct) < 0.0005 ? '→' : (pct > 0 ? '↑' : '↓'));
+  if (kr == null) return '';
+  return (
+    `<span class="day-delta ${cls}">` +
+      `<span class="day-arrow">${arrow}</span>` +
+      `<span class="day-kr">${formatSignedPrice(kr, currency)}</span>` +
+    `</span>`
+  );
+}
+
+function weeklyTrendHtml(fuelClass, label, pct, kr, currency) {
+  if (pct == null && kr == null) {
+    return (
+      `<span class="item ${fuelClass} flat">` +
+        `<span class="item-main">` +
+          `<span class="fuel-tag">${label}</span>` +
+          `<span class="symbol">—</span>` +
+        `</span>` +
+      `</span>`
+    );
+  }
+  return (
+    `<span class="item ${fuelClass} ${weeklyTrendClass(pct != null ? pct : kr)}">` +
+      `<span class="item-main">` +
+        `<span class="fuel-tag">${label}</span>` +
+        `<span class="symbol">${weeklyTrendSymbol(pct != null ? pct : (kr / 100))}</span>` +
+        `<span class="kr">${kr != null ? formatSignedPrice(kr, currency) : '—'}</span>` +
+      `</span>` +
+    `</span>`
+  );
 }
 
 function monthKeyFromDate(dateStr) {
@@ -3251,6 +3420,10 @@ async function fetchPumpStats(sourceKey) {
   let latest = null;
   let previousDay = null;
   let monthRows = [];
+  let weeklyTrendDieselPct = null;
+  let weeklyTrendHvoPct = null;
+  let weeklyTrendDieselKr = null;
+  let weeklyTrendHvoKr = null;
 
   if (sourceKey === 'NO_ck') {
     const csvRows = await loadNoDailyCsv();
@@ -3264,6 +3437,17 @@ async function fetchPumpStats(sourceKey) {
         const prevMonthStartKey = prevMonthStart.toISOString().slice(0, 10);
         const prevMonthEndKey = prevMonthEnd.toISOString().slice(0, 10);
         monthRows = csvRows.filter(r => r.date >= prevMonthStartKey && r.date <= prevMonthEndKey);
+      }
+
+      const earliestForWeekIndex = Math.max(0, csvRows.length - WEEKLY_TREND_DAYS);
+      const earliestForWeek = csvRows[earliestForWeekIndex];
+      if (earliestForWeek?.diesel != null && latest?.diesel != null) {
+        weeklyTrendDieselPct = pctChange(latest.diesel, earliestForWeek.diesel);
+        weeklyTrendDieselKr = latest.diesel - earliestForWeek.diesel;
+      }
+      if (earliestForWeek?.hvo != null && latest?.hvo != null) {
+        weeklyTrendHvoPct = pctChange(latest.hvo, earliestForWeek.hvo);
+        weeklyTrendHvoKr = latest.hvo - earliestForWeek.hvo;
       }
     }
   }
@@ -3280,9 +3464,16 @@ async function fetchPumpStats(sourceKey) {
         previousDay: null,
         avgPrevMonthDiesel: null,
         avgPrevMonthHvo: null,
-        pumpDayChangePct: null,
+        pumpDayChangeDieselPct: null,
+        pumpDayChangeDieselKr: null,
+        pumpDayChangeHvoPct: null,
+        pumpDayChangeHvoKr: null,
         vsPrevMonthDieselPct: null,
-        vsPrevMonthHvoPct: null
+        vsPrevMonthHvoPct: null,
+        weeklyTrendDieselPct: null,
+        weeklyTrendHvoPct: null,
+        weeklyTrendDieselKr: null,
+        weeklyTrendHvoKr: null
       };
     }
 
@@ -3307,11 +3498,36 @@ async function fetchPumpStats(sourceKey) {
     const monthRes = await fetch(monthUrl, { headers: supabaseHeaders() });
     if (!monthRes.ok) throw new Error('Supabase ' + monthRes.status);
     monthRows = await monthRes.json();
+
+    const weeklyUrl = `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&order=date.desc&limit=${WEEKLY_TREND_DAYS}`;
+    const weeklyRes = await fetch(weeklyUrl, { headers: supabaseHeaders() });
+    if (!weeklyRes.ok) throw new Error('Supabase ' + weeklyRes.status);
+    const weeklyRows = await weeklyRes.json();
+    if (weeklyRows.length >= 2) {
+      const latestForWeek = weeklyRows[0];
+      const earliestForWeek = weeklyRows[weeklyRows.length - 1];
+      weeklyTrendDieselPct = pctChange(latestForWeek?.diesel, earliestForWeek?.diesel);
+      weeklyTrendHvoPct = pctChange(latestForWeek?.hvo, earliestForWeek?.hvo);
+      if (latestForWeek?.diesel != null && earliestForWeek?.diesel != null) {
+        weeklyTrendDieselKr = latestForWeek.diesel - earliestForWeek.diesel;
+      }
+      if (latestForWeek?.hvo != null && earliestForWeek?.hvo != null) {
+        weeklyTrendHvoKr = latestForWeek.hvo - earliestForWeek.hvo;
+      }
+    }
   }
 
-  let pumpDayChangePct = null;
+  let pumpDayChangeDieselPct = null;
+  let pumpDayChangeDieselKr = null;
+  let pumpDayChangeHvoPct = null;
+  let pumpDayChangeHvoKr = null;
   if (previousDay?.diesel != null && previousDay.diesel !== 0 && latest.diesel != null) {
-    pumpDayChangePct = latest.diesel / previousDay.diesel - 1;
+    pumpDayChangeDieselPct = latest.diesel / previousDay.diesel - 1;
+    pumpDayChangeDieselKr = latest.diesel - previousDay.diesel;
+  }
+  if (previousDay?.hvo != null && previousDay.hvo !== 0 && latest.hvo != null) {
+    pumpDayChangeHvoPct = latest.hvo / previousDay.hvo - 1;
+    pumpDayChangeHvoKr = latest.hvo - previousDay.hvo;
   }
 
   const dieselVals = monthRows.map(r => r.diesel).filter(v => v != null);
@@ -3331,9 +3547,16 @@ async function fetchPumpStats(sourceKey) {
     previousDay,
     avgPrevMonthDiesel,
     avgPrevMonthHvo,
-    pumpDayChangePct,
+    pumpDayChangeDieselPct,
+    pumpDayChangeDieselKr,
+    pumpDayChangeHvoPct,
+    pumpDayChangeHvoKr,
     vsPrevMonthDieselPct,
-    vsPrevMonthHvoPct
+    vsPrevMonthHvoPct,
+    weeklyTrendDieselPct,
+    weeklyTrendHvoPct,
+    weeklyTrendDieselKr,
+    weeklyTrendHvoKr
   };
 }
 
@@ -3346,40 +3569,52 @@ function renderPumpPrices(entries) {
     latest,
     avgPrevMonthDiesel,
     avgPrevMonthHvo,
-    pumpDayChangePct,
-    vsPrevMonthDieselPct,
-    vsPrevMonthHvoPct
+    pumpDayChangeDieselPct,
+    pumpDayChangeDieselKr,
+    pumpDayChangeHvoPct,
+    pumpDayChangeHvoKr,
+    weeklyTrendDieselPct,
+    weeklyTrendHvoPct,
+    weeklyTrendDieselKr,
+    weeklyTrendHvoKr
   }) => {
     const flag = countryFlag(country);
     if (!latest) {
       return `<div class="pump-price-card"><div class="country">${flag}<span>${label}</span></div><div class="date">Ingen daglig data</div></div>`;
     }
-    const changeClass = pumpDayChangePct == null ? 'flat' : deltaClass(pumpDayChangePct);
     const prevMonthLabel = (() => {
       const d = new Date(latest.date + 'T00:00:00');
       d.setMonth(d.getMonth() - 1);
       return MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear();
     })();
-    const dieselDelta = formatPctWithArrow(vsPrevMonthDieselPct);
-    const hvoDelta = formatPctWithArrow(vsPrevMonthHvoPct);
+    const dieselDeltaKrValue = latest.diesel != null && avgPrevMonthDiesel != null
+      ? latest.diesel - avgPrevMonthDiesel
+      : null;
+    const hvoDeltaKrValue = latest.hvo != null && avgPrevMonthHvo != null
+      ? latest.hvo - avgPrevMonthHvo
+      : null;
+    const dieselDeltaKr = dieselDeltaKrValue != null ? formatSignedPrice(dieselDeltaKrValue, currency) : '—';
+    const hvoDeltaKr = hvoDeltaKrValue != null ? formatSignedPrice(hvoDeltaKrValue, currency) : '—';
     return `<div class="pump-price-card">` +
       `<div class="country">${flag}<span>${label} · Circle K</span></div>` +
       `<div class="pump-price-grid">` +
       `<div></div>` +
-      `<div class="pump-col-label">Daglig</div>` +
-      `<div class="pump-col-label delta">Dagens vs snitt</div>` +
+      `<div class="pump-col-label">Siste pumpepris</div>` +
+      `<div class="pump-col-label delta">Nyeste vs snitt</div>` +
       `<div class="pump-col-label avg">Snitt ${prevMonthLabel}</div>` +
       `<div class="pump-fuel-name">Diesel</div>` +
-      `<div class="pump-price-cell diesel"><div class="value">${formatPrice(latest.diesel)} <span class="currency">${currency}</span></div></div>` +
-      `<div class="pump-delta-cell ${deltaClass(vsPrevMonthDieselPct)}">${dieselDelta}</div>` +
+      `<div class="pump-price-cell diesel"><div class="value-row"><div class="value">${formatPrice(latest.diesel)} <span class="currency">${currency}</span></div>${dayBeforeDeltaHtml(pumpDayChangeDieselPct, pumpDayChangeDieselKr, currency)}</div></div>` +
+      `<div class="pump-delta-cell ${deltaClass(dieselDeltaKrValue)}"><span class="delta-kr">${dieselDeltaKr}</span></div>` +
       `<div class="pump-price-cell diesel avg"><div class="value">${avgPrevMonthDiesel != null ? formatPrice(avgPrevMonthDiesel) : '—'} <span class="currency">${currency}</span></div></div>` +
       `<div class="pump-fuel-name">HVO100</div>` +
-      `<div class="pump-price-cell hvo"><div class="value">${formatPrice(latest.hvo)} <span class="currency">${currency}</span></div></div>` +
-      `<div class="pump-delta-cell ${deltaClass(vsPrevMonthHvoPct)}">${hvoDelta}</div>` +
+      `<div class="pump-price-cell hvo"><div class="value-row"><div class="value">${formatPrice(latest.hvo)} <span class="currency">${currency}</span></div>${dayBeforeDeltaHtml(pumpDayChangeHvoPct, pumpDayChangeHvoKr, currency)}</div></div>` +
+      `<div class="pump-delta-cell ${deltaClass(hvoDeltaKrValue)}"><span class="delta-kr">${hvoDeltaKr}</span></div>` +
       `<div class="pump-price-cell hvo avg"><div class="value">${avgPrevMonthHvo != null ? formatPrice(avgPrevMonthHvo) : '—'} <span class="currency">${currency}</span></div></div>` +
       `</div>` +
+      `<div class="pump-card-footer">` +
       `<div class="date">${formatPumpDate(latest.date)} · eks. mva</div>` +
-      `<div class="day-change ${changeClass}">${pumpDayChangePct != null ? formatPct(pumpDayChangePct).replace('.', ',') : '—'} vs i går</div>` +
+      `<div class="pump-weekly-trend"><span class="period"><span class="period-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>7 dagers trend</span>${weeklyTrendHtml('diesel', 'Diesel', weeklyTrendDieselPct, weeklyTrendDieselKr, currency)}${weeklyTrendHtml('hvo', 'HVO', weeklyTrendHvoPct, weeklyTrendHvoKr, currency)}</div>` +
+      `</div>` +
       `</div>`;
   }).join('');
 }
@@ -3390,7 +3625,23 @@ async function loadPumpPrices() {
       const stats = await fetchPumpStats(src.key);
       return { ...src, ...stats };
     } catch (e) {
-      return { ...src, latest: null, previousDay: null, avgPrevMonthDiesel: null, avgPrevMonthHvo: null, pumpDayChangePct: null, vsPrevMonthDieselPct: null, vsPrevMonthHvoPct: null };
+      return {
+        ...src,
+        latest: null,
+        previousDay: null,
+        avgPrevMonthDiesel: null,
+        avgPrevMonthHvo: null,
+        pumpDayChangeDieselPct: null,
+        pumpDayChangeDieselKr: null,
+        pumpDayChangeHvoPct: null,
+        pumpDayChangeHvoKr: null,
+        vsPrevMonthDieselPct: null,
+        vsPrevMonthHvoPct: null,
+        weeklyTrendDieselPct: null,
+        weeklyTrendHvoPct: null,
+        weeklyTrendDieselKr: null,
+        weeklyTrendHvoKr: null
+      };
     }
   }));
   renderPumpPrices(entries);
