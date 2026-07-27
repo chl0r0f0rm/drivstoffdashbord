@@ -2072,7 +2072,7 @@ async function setFuelCountry(countryKey) {
     }
     fuelMonthlyAll = fuelMonthlyByCountry[countryKey] || [];
     fuelDailyAll = fuelDailyByCountry[countryKey] || [];
-    renderMomTable(fuelMonthlyAll);
+    renderMomTable(monthlyRowsForMom(fuelMonthlyAll, fuelDailyAll));
     renderTaxContext();
     updateFuelChartRange(fuelRangeMonths);
     updateFuelCountryLabels();
@@ -2678,6 +2678,45 @@ function firstLastValue(rows, valueKey) {
 
 function periodsOverlap(aStart, aEnd, bStart, bEnd) {
   return aStart <= bEnd && bStart <= aEnd;
+}
+
+function monthlyAveragesFromDaily(dailyRows) {
+  const buckets = {};
+  (dailyRows || []).forEach(row => {
+    if (row.diesel == null || !row.date) return;
+    const month = String(row.date).slice(0, 7);
+    if (!buckets[month]) buckets[month] = { diesel: [], hvo: [] };
+    buckets[month].diesel.push(Number(row.diesel));
+    if (row.hvo != null && Number.isFinite(Number(row.hvo))) {
+      buckets[month].hvo.push(Number(row.hvo));
+    }
+  });
+  return Object.keys(buckets).sort().map(month => {
+    const dieselVals = buckets[month].diesel;
+    const hvoVals = buckets[month].hvo;
+    return {
+      month,
+      diesel: dieselVals.length
+        ? dieselVals.reduce((sum, value) => sum + value, 0) / dieselVals.length
+        : null,
+      hvo: hvoVals.length
+        ? hvoVals.reduce((sum, value) => sum + value, 0) / hvoVals.length
+        : null
+    };
+  });
+}
+
+function monthlyRowsForMom(monthlyRows, dailyRows) {
+  const fromDaily = monthlyAveragesFromDaily(dailyRows);
+  if (!fromDaily.length) return monthlyRows || [];
+  const byMonth = {};
+  (monthlyRows || []).forEach(row => {
+    if (row.month) byMonth[row.month] = row;
+  });
+  fromDaily.forEach(row => {
+    byMonth[row.month] = row;
+  });
+  return Object.keys(byMonth).sort().map(month => byMonth[month]);
 }
 
 function renderMomTable(rows) {
@@ -3850,7 +3889,7 @@ async function boot() {
     const latest = brent[brent.length - 1];
     renderBrentKpi(brent);
     updateBrentChartRange(12);
-    renderMomTable(fuelMonthlyAll);
+    renderMomTable(monthlyRowsForMom(fuelMonthlyAll, fuelDailyAll));
     renderDecomposition();
     renderTaxContext();
     requestAnimationFrame(() => syncBrentLayout());

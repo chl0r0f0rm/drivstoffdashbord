@@ -754,14 +754,98 @@ def fetch_ck_dk():
     return results
 
 
-# ── Circle K SE (daglig listpris) ────────────────────────────────────────────
+# ── Circle K SE / Preem SE (daglig listpris) ─────────────────────────────────
 
 CK_SE_DAILY_URL = "https://www.circlek.se/foretag/drivmedel/priser"
+PREEM_DAILY_URL = "https://www.preem.se/foretag/listpriser/"
+SE_MOMS_FACTOR = 1.25
 
 SE_DAILY_PRODUCT_MAP = {
     "miles diesel": "diesel",
     "hvo100":       "hvo",
 }
+
+
+def _parse_sek_per_liter(text):
+    match = re.search(r"(\d+)[,.](\d{2})", text.replace(" ", ""))
+    if not match:
+        return None
+    value = float(match.group(1) + "." + match.group(2))
+    if 8 < value < 45:
+        return round(value, 4)
+    return None
+
+
+def _parse_iso_date(text):
+    match = re.search(r"(20\d{2}-\d{2}-\d{2})", text)
+    return match.group(1) if match else None
+
+
+def apply_live_daily_source(
+    source_key,
+    csv_path,
+    live_rows,
+    synced_sources,
+    report,
+    daily_upsert,
+    require_rows=False,
+):
+    if not live_rows:
+        return
+    latest = dict(live_rows[0])
+    effective_date = latest.pop("effective_date", latest["date"])
+    prior_row = read_last_daily_row(csv_path)
+    new_rows = gap_fill_daily_rows(
+        latest,
+        read_existing_keys(csv_path, "date"),
+        effective_date=effective_date,
+        prior_row=prior_row,
+    )
+    if new_rows:
+        added = append_csv(csv_path, new_rows, ["date", "diesel", "hvo"], "date")
+        report.append(
+            f"{source_key} daily live: +{added} rows (through {new_rows[-1]['date']})"
+        )
+    else:
+        report.append(f"{source_key} daily live: CSV already up to date")
+
+    csv_rows = read_daily_csv_rows(csv_path)
+    if not csv_rows:
+        if require_rows:
+            raise RuntimeError(f"{source_key}: CSV is empty after daily fetch")
+        return
+    if source_key not in synced_sources:
+        synced_sources.append(source_key)
+    daily_upsert += [
+        {"source": source_key, "date": row["date"], "diesel": row["diesel"], "hvo": row["hvo"]}
+        for row in csv_rows
+    ]
+    report.append(f"{source_key}: upsert {len(csv_rows)} CSV rows to Supabase")
+
+
+def merge_excel_daily_source(
+    source_key,
+    csv_path,
+    excel_daily,
+    synced_sources,
+    report,
+    daily_upsert,
+):
+    if not excel_daily:
+        return
+    excel_daily = sorted(excel_daily, key=lambda row: row["date"])
+    merge_csv_rows(csv_path, excel_daily, ["date", "diesel", "hvo"], "date")
+    if source_key not in synced_sources:
+        synced_sources.append(source_key)
+    csv_rows = read_daily_csv_rows(csv_path)
+    daily_upsert += [
+        {"source": source_key, "date": row["date"], "diesel": row["diesel"], "hvo": row["hvo"]}
+        for row in csv_rows
+    ]
+    report.append(
+        f"{source_key} daily (XLS merge): Excel through {excel_daily[-1]['date']}, "
+        f"CSV {len(csv_rows)} rows"
+    )
 
 
 def fetch_ck_se_daily():
@@ -777,6 +861,7 @@ def fetch_ck_se_daily():
 
     soup = BeautifulSoup(resp.text, "html.parser")
     prices = {}
+    date_effective = None
 
     for table in soup.find_all("table"):
         for row in table.find_all("tr"):
@@ -791,25 +876,101 @@ def fetch_ck_se_daily():
                 if product_key in row_text:
                     matched_product = product_name
                     break
-
-            if not matched_product:
+            if not matched_product or matched_product in prices:
                 continue
 
+            price_val = None
+            row_date = None
             for cell_text in cell_texts:
-                m = re.search(r"(\d+)[,.](\d+)", cell_text)
-                if m:
-                    val = float(m.group(1) + "." + m.group(2))
-                    if 15 < val < 35:  # SEK/L range for diesel/HVO
-                        prices[matched_product] = round(val, 4)
-                        break
+                row_date = row_date or _parse_iso_date(cell_text)
+                if price_val is None:
+                    price_val = _parse_sek_per_liter(cell_text)
+            if price_val is None:
+                continue
+            prices[matched_product] = price_val
+            if row_date:
+                date_effective = row_date
 
     if not prices.get("diesel"):
         print("  Could not find diesel price on Circle K SE page")
         return []
 
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    row = {"date": today, "diesel": prices.get("diesel"), "hvo": prices.get("hvo")}
-    print(f"  Diesel: {row['diesel']} SEK/L  HVO: {row.get('hvo')} SEK/L  (lagres som {today})")
+    row = {
+        "date": today,
+        "diesel": prices.get("diesel"),
+        "hvo": prices.get("hvo"),
+        "effective_date": date_effective or today,
+    }
+    print(
+        f"  Diesel: {row['diesel']} SEK/L  HVO: {row.get('hvo')} SEK/L  "
+        f"(gjeldende fra {row['effective_date']}, lagres som {today})"
+    )
+    return [row]
+
+
+def fetch_preem_se_daily():
+    print("\n── Preem SE (daglig listpris) ───────────────────────────────────────")
+    try:
+        resp = requests.get(
+            PREEM_DAILY_URL, timeout=30, headers={"User-Agent": "Mozilla/5.0"}
+        )
+        resp.raise_for_status()
+    except requests.RequestException as error:
+        print(f"  Failed to load page: {error}")
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    prices = {}
+    date_effective = None
+
+    for table in soup.find_all("table"):
+        for row in table.find_all("tr"):
+            cells = row.find_all(["td", "th"])
+            if len(cells) < 2:
+                continue
+            cell_texts = [c.get_text(" ", strip=True) for c in cells]
+            row_text = " ".join(cell_texts).lower()
+
+            matched_product = None
+            if "evolution diesel" in row_text and "diesel" not in prices:
+                matched_product = "diesel"
+            elif re.search(r"\bhvo100\b", row_text) and "hvo" not in prices:
+                matched_product = "hvo"
+            if not matched_product:
+                continue
+
+            price_inkl = None
+            row_date = None
+            for cell_text in cell_texts:
+                row_date = row_date or _parse_iso_date(cell_text)
+                if price_inkl is None:
+                    price_inkl = _parse_sek_per_liter(cell_text)
+            if price_inkl is None:
+                continue
+
+            prices[matched_product] = round(price_inkl / SE_MOMS_FACTOR, 4)
+            if row_date:
+                date_effective = row_date
+
+        if "diesel" in prices and "hvo" in prices:
+            break
+
+    if not prices.get("diesel"):
+        print("  Could not find diesel price on Preem page")
+        return []
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    row = {
+        "date": today,
+        "diesel": prices.get("diesel"),
+        "hvo": prices.get("hvo"),
+        "effective_date": date_effective or today,
+    }
+    print(
+        f"  Diesel: {row['diesel']} SEK/L eks. moms  HVO: {row.get('hvo')} SEK/L  "
+        f"(gjeldende fra {row['effective_date']}, lagres som {today})"
+    )
     return [row]
 
 
@@ -962,16 +1123,14 @@ def main():
         if preem_daily:
             if "SE_preem" not in synced_sources:
                 synced_sources.append("SE_preem")
-            preem_daily = sorted(preem_daily, key=lambda row: row["date"])
-            preem_daily_csv = os.path.join(DATA_DIR, "preem_SE_daglig.csv")
-            write_csv_full(preem_daily_csv, preem_daily, ["date", "diesel", "hvo"], "date")
-            report.append(
-                f"SE_preem daily: {len(preem_daily)} rows (through {preem_daily[-1]['date']})"
+            merge_excel_daily_source(
+                "SE_preem",
+                os.path.join(DATA_DIR, "preem_SE_daglig.csv"),
+                preem_daily,
+                synced_sources,
+                report,
+                daily_upsert,
             )
-            daily_upsert += [
-                {"source": "SE_preem", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
-                for r in preem_daily
-            ]
 
         ck_se_monthly, ck_se_daily = fetch_ck_se()
         if ck_se_monthly:
@@ -986,15 +1145,14 @@ def main():
                 for r in ck_se_monthly
             ]
         if ck_se_daily:
-            n = append_csv(
+            merge_excel_daily_source(
+                "SE_ck",
                 os.path.join(DATA_DIR, "circklek_SE_daglig.csv"),
-                ck_se_daily, ["date", "diesel", "hvo"], "date",
+                ck_se_daily,
+                synced_sources,
+                report,
+                daily_upsert,
             )
-            report.append(f"SE_ck daily (XLS): +{n} days")
-            daily_upsert += [
-                {"source": "SE_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
-                for r in ck_se_daily
-            ]
 
     if run_daily and "dk" in countries:
         dk_results = fetch_ck_dk()
@@ -1031,21 +1189,23 @@ def main():
                     for r in ck_dk_daily
                 ]
 
-    ck_se_live = fetch_ck_se_daily() if run_daily and "se" in countries else []
-    if ck_se_live:
-        se_live_csv = os.path.join(DATA_DIR, "circklek_SE_daglig.csv")
-        ck_se_live = gap_fill_daily_rows(
-            ck_se_live[0], read_existing_keys(se_live_csv, "date")
+    if run_daily and "se" in countries:
+        apply_live_daily_source(
+            "SE_ck",
+            os.path.join(DATA_DIR, "circklek_SE_daglig.csv"),
+            fetch_ck_se_daily(),
+            synced_sources,
+            report,
+            daily_upsert,
         )
-    if ck_se_live:
-        if "SE_ck" not in synced_sources:
-            synced_sources.append("SE_ck")
-        n = append_csv(se_live_csv, ck_se_live, ["date", "diesel", "hvo"], "date")
-        report.append(f"SE_ck daily live: +{n} rows (through {ck_se_live[-1]['date']})")
-        daily_upsert += [
-            {"source": "SE_ck", "date": r["date"], "diesel": r["diesel"], "hvo": r["hvo"]}
-            for r in ck_se_live
-        ]
+        apply_live_daily_source(
+            "SE_preem",
+            os.path.join(DATA_DIR, "preem_SE_daglig.csv"),
+            fetch_preem_se_daily(),
+            synced_sources,
+            report,
+            daily_upsert,
+        )
 
     ck_no_daily = fetch_ck_no() if run_daily and "no" in countries else []
     if ck_no_daily:
@@ -1081,7 +1241,7 @@ def main():
     upsert_ok = supabase_upsert(daily_upsert,   table="daily_price_data") and upsert_ok
 
     # Compute true monthly averages from all accumulated daily data for web-scraped sources
-    daily_sources = [s for s in ("NO_ck",) if s in synced_sources]
+    daily_sources = [s for s in ("NO_ck", "SE_ck", "SE_preem") if s in synced_sources]
     if daily_sources:
         print("\n── Monthly averages from daily data ──────────────────────────────────")
         monthly_from_daily = compute_monthly_from_daily(daily_sources)
