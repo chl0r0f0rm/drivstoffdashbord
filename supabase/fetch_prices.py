@@ -48,10 +48,12 @@ MONTH_HEADER_DK = re.compile(
     r"^(\w+)\s+(20\d{2})\s+(?:ekskl|inkl)",
     re.IGNORECASE,
 )
-DK_MIN_MONTH = "2022-01"
-DK_MIN_DATE = "2022-01-01"
+DK_MIN_MONTH = "2020-01"
+DK_MIN_DATE = "2020-01-01"
 DK_PUMP_DIESEL_MIN = 8.0
 DK_PUMP_DIESEL_MAX = 25.0
+SE_HISTORY_START_YEAR = 2020
+SE_HISTORY_START_DATE = "2020-01-01"
 
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
@@ -511,6 +513,25 @@ def fetch_preem_se():
 
 # ── Circle K SE ───────────────────────────────────────────────────────────────
 
+def _ck_se_sheet_year(sheet_name):
+    name = str(sheet_name).strip()
+    if re.fullmatch(r"20\d{2}", name):
+        return int(name)
+    return None
+
+
+def _ck_se_fuel_columns(header_row):
+    diesel_col = None
+    hvo_col = None
+    for index, cell in enumerate(header_row):
+        label = str(cell).strip().lower().replace(" ", "")
+        if label == "diesel":
+            diesel_col = index
+        elif label == "hvo100":
+            hvo_col = index
+    return diesel_col, hvo_col
+
+
 def fetch_ck_se():
     print("\n── Circle K SE ──────────────────────────────────────────────────────")
     try:
@@ -553,15 +574,44 @@ def fetch_ck_se():
         return [], []
 
     wb = xlrd.open_workbook(file_contents=resp.content)
-    target_sheets = [s for s in wb.sheet_names() if s.strip() in ("2025", "2026")]
+    target_sheets = []
+    for sheet_name in wb.sheet_names():
+        sheet_year = _ck_se_sheet_year(sheet_name)
+        if sheet_year is not None and sheet_year >= SE_HISTORY_START_YEAR:
+            target_sheets.append((sheet_year, sheet_name))
+    target_sheets.sort(key=lambda item: item[0])
+
+    if not target_sheets:
+        print("  No year sheets from", SE_HISTORY_START_YEAR, "found")
+        return [], []
+    print(
+        "  Sheets:",
+        ", ".join(name for _, name in target_sheets),
+    )
 
     monthly_data = {}
-    daily_rows = []
-    current_month = None
+    daily_by_date = {}
 
-    for sheet_name in target_sheets:
+    for _, sheet_name in target_sheets:
         ws = wb.sheet_by_name(sheet_name)
-        for row_idx in range(3, ws.nrows):
+        diesel_col = 5
+        hvo_col = 11
+        header_row_index = None
+        for row_idx in range(min(8, ws.nrows)):
+            row = ws.row_values(row_idx)
+            found_diesel, found_hvo = _ck_se_fuel_columns(row)
+            if found_diesel is not None:
+                diesel_col = found_diesel
+                if found_hvo is not None:
+                    hvo_col = found_hvo
+                header_row_index = row_idx
+                break
+        if header_row_index is None:
+            print(f"  Skip {sheet_name}: no Diesel header")
+            continue
+
+        current_month = None
+        for row_idx in range(header_row_index + 1, ws.nrows):
             row = ws.row_values(row_idx)
             if not row or row[0] is None:
                 continue
@@ -569,8 +619,8 @@ def fetch_ck_se():
 
             if re.match(r"^Genomsnitt\s+", label, re.IGNORECASE):
                 if current_month:
-                    diesel_ore = safe_float(row[5] if len(row) > 5 else None)
-                    hvo_ore = safe_float(row[11] if len(row) > 11 else None)
+                    diesel_ore = safe_float(row[diesel_col] if len(row) > diesel_col else None)
+                    hvo_ore = safe_float(row[hvo_col] if len(row) > hvo_col else None)
                     diesel_sek = round(diesel_ore / 100, 4) if diesel_ore else None
                     hvo_sek = round(hvo_ore / 100, 4) if hvo_ore else None
                     if diesel_sek:
@@ -580,27 +630,48 @@ def fetch_ck_se():
                         }
                 continue
 
-            date = excel_serial_to_date(row[0])
-            if not date:
+            date_value = excel_serial_to_date(row[0])
+            if not date_value:
+                continue
+            date_key = str(date_value)
+            if date_key < SE_HISTORY_START_DATE:
                 continue
 
-            diesel_ore = safe_float(row[5] if len(row) > 5 else None)
-            hvo_ore = safe_float(row[11] if len(row) > 11 else None)
+            diesel_ore = safe_float(row[diesel_col] if len(row) > diesel_col else None)
+            hvo_ore = safe_float(row[hvo_col] if len(row) > hvo_col else None)
             if not diesel_ore:
                 continue
 
-            current_month = f"{date.year}-{date.month:02d}"
-            daily_rows.append({
-                "date": str(date),
+            current_month = f"{date_value.year}-{date_value.month:02d}"
+            daily_by_date[date_key] = {
+                "date": date_key,
                 "diesel": round(diesel_ore / 100, 4),
                 "hvo": round(hvo_ore / 100, 4) if hvo_ore else None,
-            })
+            }
+
+    daily_rows = [daily_by_date[key] for key in sorted(daily_by_date)]
+    if not monthly_data and daily_rows:
+        by_month = defaultdict(lambda: {"diesel": [], "hvo": []})
+        for row in daily_rows:
+            month_key = row["date"][:7]
+            by_month[month_key]["diesel"].append(row["diesel"])
+            if row["hvo"] is not None:
+                by_month[month_key]["hvo"].append(row["hvo"])
+        for month_key, values in by_month.items():
+            monthly_data[month_key] = {
+                "diesel_avg": monthly_avg(values["diesel"]),
+                "hvo_avg": monthly_avg(values["hvo"]),
+            }
 
     monthly_rows = [
         {"month": m, "diesel_avg": v["diesel_avg"], "hvo_avg": v["hvo_avg"]}
         for m, v in sorted(monthly_data.items())
+        if m >= f"{SE_HISTORY_START_YEAR}-01"
     ]
-    print(f"  {len(monthly_rows)} months, {len(daily_rows)} daily rows")
+    print(
+        f"  {len(monthly_rows)} months, {len(daily_rows)} daily rows"
+        + (f" ({daily_rows[0]['date']} – {daily_rows[-1]['date']})" if daily_rows else "")
+    )
     return monthly_rows, daily_rows
 
 
@@ -1135,11 +1206,12 @@ def main():
         ck_se_monthly, ck_se_daily = fetch_ck_se()
         if ck_se_monthly:
             synced_sources.append("SE_ck")
-            n = append_csv(
-                os.path.join(DATA_DIR, "circklek_SE_månedlig.csv"),
+            se_monthly_csv = os.path.join(DATA_DIR, "circklek_SE_månedlig.csv")
+            n = merge_csv_rows(
+                se_monthly_csv,
                 ck_se_monthly, ["month", "diesel_avg", "hvo_avg"], "month",
             )
-            report.append(f"SE_ck: +{n} months (latest: {ck_se_monthly[-1]['month']})")
+            report.append(f"SE_ck: merge {n} months (latest: {ck_se_monthly[-1]['month']})")
             monthly_upsert += [
                 {"source": "SE_ck", "month": r["month"], "diesel": r["diesel_avg"], "hvo": r["hvo_avg"]}
                 for r in ck_se_monthly

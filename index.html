@@ -7,6 +7,12 @@
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+try {
+  const savedTheme = localStorage.getItem('ng-dashboard-theme');
+  if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+} catch (e) {}
+</script>
 <style>
   /* ── NG Nordic design tokens ── */
   .ng-orange {
@@ -43,6 +49,49 @@
     --text:      #1a1a1a;
     --text-muted:#6B6B6B;
     --white:     #ffffff;
+    --chart-grid: #ede8e2;
+    --chart-text: #6B6B6B;
+    --control-bg: rgba(255,255,255,0.85);
+    --control-bg-hover: rgba(255,255,255,0.95);
+  }
+
+  html[data-theme="dark"] .ng-orange {
+    --card-button:        #e85c0d;
+    --card-button-hover:  #ff7a33;
+    --text-contrast:      #f0f0f0;
+    --text-contrast-header: #ff7a33;
+    --text-default:       #d8d8d8;
+    --text-inverted:      #ffffff;
+    --navbar-bg:          #2c2c2e;
+    --footer:             #f0f0f0;
+    --border:             #4a4a4c;
+    --bg-page:            #2c2c2e;
+    --bg-card:            #3a3a3c;
+    --key-number-bg-1: #e85c0d; --key-number-text-1: #ffffff;
+    --key-number-bg-2: #454548; --key-number-text-2: #f0f0f0;
+    --key-number-bg-3: #f0f0f0; --key-number-text-3: #2c2c2e;
+    --key-number-bg-4: #343436; --key-number-text-4: #ff7a33;
+    --red:        #E57368;
+    --red-light:  #4a3332;
+    --green:      #5CB88A;
+    --green-light:#2f4238;
+    --blue:       #5BA3D0;
+    --blue-light: #2c3c48;
+    --gray:       #a8a8a8;
+    --shadow:     0 1px 3px rgba(0,0,0,0.28);
+    --shadow-md:  0 3px 12px rgba(0,0,0,0.35);
+    --ng-dark:   #f0f0f0;
+    --ng-mid:    #e85c0d;
+    --ng-bright: #ff7a33;
+    --ng-light:  #454548;
+    --ng-bg:     #2c2c2e;
+    --text:      #f0f0f0;
+    --text-muted:#a8a8a8;
+    --white:     #3a3a3c;
+    --chart-grid: #4a4a4c;
+    --chart-text: #a8a8a8;
+    --control-bg: #454548;
+    --control-bg-hover: #525255;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -115,11 +164,119 @@
     grid-column: 5;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     font-size: 0.75rem;
     color: var(--text-muted);
     justify-self: end;
   }
+  .header-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .header-refresh select {
+    appearance: none;
+    height: 32px;
+    border: 1px solid var(--border);
+    background: var(--control-bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    padding: 0 28px 0 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    line-height: 1;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B6B6B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+  html[data-theme="dark"] .header-refresh select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a89f96' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  }
+  .theme-switch {
+    appearance: none;
+    position: relative;
+    width: 64px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--control-bg);
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .18s, border-color .18s;
+  }
+  .theme-switch:hover {
+    border-color: var(--ng-mid);
+    background: var(--control-bg-hover);
+  }
+  .theme-switch-track {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 7px;
+    pointer-events: none;
+  }
+  .theme-switch-icon {
+    width: 14px;
+    height: 14px;
+    display: block;
+    opacity: 0.55;
+    transition: opacity .18s, color .18s;
+  }
+  .theme-switch-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: var(--ng-mid);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+    transition: left .22s cubic-bezier(.2,.8,.2,1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+  }
+  .theme-switch-thumb svg {
+    width: 13px;
+    height: 13px;
+    display: none;
+  }
+  .theme-switch-thumb .thumb-sun { display: block; }
+  .theme-switch-thumb .thumb-moon { display: none; }
+  html[data-theme="dark"] .theme-switch-thumb {
+    left: calc(100% - 27px);
+  }
+  html[data-theme="dark"] .theme-switch-thumb .thumb-sun { display: none; }
+  html[data-theme="dark"] .theme-switch-thumb .thumb-moon { display: block; }
+  html[data-theme="dark"] .theme-switch .theme-switch-icon.sun { opacity: 0.35; }
+  html[data-theme="dark"] .theme-switch .theme-switch-icon.moon {
+    opacity: 1;
+    color: var(--ng-bright);
+  }
+  .theme-switch .theme-switch-icon.sun {
+    opacity: 1;
+    color: var(--ng-mid);
+  }
+  .theme-switch .theme-switch-icon.moon { opacity: 0.35; }
   .header-meeting-btn {
     display: inline-flex;
     align-items: center;
@@ -208,7 +365,7 @@
   }
   select:focus, input:focus {
     border-color: var(--ng-mid);
-    background: white;
+    background: var(--white);
   }
 
   /* ── Page layout ── */
@@ -354,6 +511,12 @@
       grid-column: 1 / -1;
       grid-row: 3;
       justify-self: start;
+      flex-wrap: wrap;
+      width: 100%;
+      justify-content: space-between;
+    }
+    .header-controls {
+      flex-wrap: wrap;
     }
     .header-meeting-btn {
       flex: 1;
@@ -1048,6 +1211,38 @@
     </a>
   </div>
   <div class="header-right">
+    <div class="header-controls">
+      <label class="header-refresh" for="autoRefreshSelect">
+        <span>Oppdater</span>
+        <select id="autoRefreshSelect" aria-label="Automatisk oppdatering">
+          <option value="0">Av</option>
+          <option value="300000">5 min</option>
+          <option value="600000">10 min</option>
+          <option value="900000">15 min</option>
+          <option value="1800000">30 min</option>
+        </select>
+      </label>
+      <button type="button" class="theme-switch" id="themeToggle" role="switch" aria-checked="false" aria-label="Bytt til mørk modus" title="Bytt til mørk modus">
+        <span class="theme-switch-track" aria-hidden="true">
+          <svg class="theme-switch-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="theme-switch-icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/>
+          </svg>
+          <span class="theme-switch-thumb">
+            <svg class="thumb-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+            </svg>
+            <svg class="thumb-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/>
+            </svg>
+          </span>
+        </span>
+      </button>
+    </div>
     <span id="last-updated">—</span>
   </div>
 </header>
@@ -1514,7 +1709,12 @@ async function fetchAllSupabaseRows(endpoint) {
   while (true) {
     const separator = endpoint.includes('?') ? '&' : '?';
     const url = `${endpoint}${separator}limit=${pageSize}&offset=${offset}`;
-    const res = await fetch(url, { headers: supabaseHeaders });
+    const res = await fetch(url, {
+      headers: {
+        ...supabaseHeaders,
+        Prefer: 'count=exact'
+      }
+    });
     if (!res.ok) throw new Error(`Supabase fetch failed: ${res.status}`);
     const chunk = await res.json();
     if (!chunk.length) break;
@@ -1547,6 +1747,41 @@ async function loadNoDailyCsv() {
   }
 }
 
+function monthlyAveragesFromDailyRows(dailyRows) {
+  const byMonth = {};
+  (dailyRows || []).forEach(row => {
+    if (!row?.date || row.diesel == null || !Number.isFinite(Number(row.diesel))) return;
+    const month = row.date.slice(0, 7);
+    if (!byMonth[month]) byMonth[month] = { diesel: [], hvo: [] };
+    byMonth[month].diesel.push(Number(row.diesel));
+    if (row.hvo != null && Number.isFinite(Number(row.hvo))) {
+      byMonth[month].hvo.push(Number(row.hvo));
+    }
+  });
+  return Object.keys(byMonth).sort().map(month => {
+    const dieselVals = byMonth[month].diesel;
+    const hvoVals = byMonth[month].hvo;
+    return {
+      month,
+      diesel: dieselVals.reduce((sum, value) => sum + value, 0) / dieselVals.length,
+      hvo: hvoVals.length
+        ? hvoVals.reduce((sum, value) => sum + value, 0) / hvoVals.length
+        : null
+    };
+  });
+}
+
+function mergeMonthlyWithDailyAverages(monthlyRows, dailyRows) {
+  const byMonth = {};
+  (monthlyRows || []).forEach(row => {
+    if (row?.month) byMonth[row.month] = row;
+  });
+  monthlyAveragesFromDailyRows(dailyRows).forEach(row => {
+    byMonth[row.month] = row;
+  });
+  return Object.keys(byMonth).sort().map(month => byMonth[month]);
+}
+
 async function fetchPriceData() {
   const [rows, syncRes, noCsvRows, ...dailyChunks] = await Promise.all([
     fetchAllSupabaseRows(
@@ -1573,20 +1808,19 @@ async function fetchPriceData() {
     const isDkSource = key === 'DK_ck' || key === 'DK_ck_inkl';
     let dailyData = dailyRows
       .filter(r => r.source === key)
-      .filter(r => !isDkSource || r.date >= '2022-01-01')
+      .filter(r => !isDkSource || r.date >= '2020-01-01')
       .map(({ date, diesel, hvo }) => ({ date, diesel, hvo }));
     if (key === 'NO_ck' && noCsvRows.length) {
       dailyData = noCsvRows;
     }
+    const monthlyFromDb = rows
+      .filter(r => r.source === key)
+      .filter(r => !isDkSource || r.month >= '2020-01')
+      .map(({ month, diesel, hvo }) => ({ month, diesel, hvo }));
     SOURCES[key] = {
       ...meta,
       lastSyncAt: SOURCE_SYNC[key] || null,
-      data: sanitizeMonthlyData(
-        rows
-          .filter(r => r.source === key)
-          .filter(r => !isDkSource || r.month >= '2022-01')
-          .map(({ month, diesel, hvo }) => ({ month, diesel, hvo }))
-      ),
+      data: sanitizeMonthlyData(mergeMonthlyWithDailyAverages(monthlyFromDb, dailyData)),
       dailyData,
     };
   }
@@ -2267,8 +2501,8 @@ function renderTable(data, baseMonth) {
     return `<span class="badge ${cls}">${lbl}</span>`;
   };
 
-  // Vis bare måneder fra og med basismåneden
-  const rows = [...data].filter(r => r.diesel != null && r.month >= baseMonth).reverse();
+  // Vis alle måneder i valgt årsperiode (år-slider). Basismåned markeres i tabellen.
+  const rows = [...data].filter(r => r.diesel != null).reverse();
 
   document.getElementById('tableBody').innerHTML = rows.map(r => {
     const isBase = r.month === baseMonth;
@@ -2292,17 +2526,99 @@ const C = {
   ng:      '#e85c0d',
   ngDark:  '#c94e0a',
   bright:  '#e85c0d',
-  red:     '#D9584A',
-  green:   '#48A876',
+  get red() {
+    return getComputedStyle(document.body).getPropertyValue('--red').trim() || '#D9584A';
+  },
+  get green() {
+    return getComputedStyle(document.body).getPropertyValue('--green').trim() || '#48A876';
+  },
   redFill: 'rgba(217, 88, 74, 0.14)',
   greenFill: 'rgba(72, 168, 118, 0.14)',
   neutralFill: 'rgba(107, 107, 107, 0.06)',
   redBar:  'rgba(217, 88, 74, 0.72)',
   greenBar:'rgba(72, 168, 118, 0.72)',
-  grid:    '#ede8e2',
-  text:    '#6B6B6B',
-  bg:      '#FFFFFF',
+  get grid() {
+    return getComputedStyle(document.body).getPropertyValue('--chart-grid').trim() || '#ede8e2';
+  },
+  get text() {
+    return getComputedStyle(document.body).getPropertyValue('--chart-text').trim() || '#6B6B6B';
+  },
+  get bg() {
+    return getComputedStyle(document.body).getPropertyValue('--white').trim() || '#FFFFFF';
+  },
 };
+
+const THEME_STORAGE_KEY = 'ng-dashboard-theme';
+const REFRESH_STORAGE_KEY = 'ng-dashboard-refresh-ms';
+const REFRESH_MIN_MS = 60000;
+let autoRefreshTimer = null;
+
+function currentTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+  const next = theme === 'dark' ? 'dark' : 'light';
+  if (next === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
+  try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch (e) {}
+
+  const button = document.getElementById('themeToggle');
+  if (button) {
+    const isDark = next === 'dark';
+    button.setAttribute('aria-checked', isDark ? 'true' : 'false');
+    button.title = isDark ? 'Bytt til lys modus' : 'Bytt til mørk modus';
+    button.setAttribute('aria-label', isDark ? 'Bytt til lys modus' : 'Bytt til mørk modus');
+  }
+
+  try { render(); } catch (e) {}
+}
+
+function initThemeControls() {
+  const button = document.getElementById('themeToggle');
+  if (!button || button.dataset.bound === '1') {
+    applyTheme(currentTheme());
+    return;
+  }
+  button.dataset.bound = '1';
+  applyTheme(currentTheme());
+  button.addEventListener('click', () => {
+    applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+  });
+}
+
+function scheduleAutoRefresh(ms) {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+  }
+  const intervalMs = Number(ms) || 0;
+  if (intervalMs < REFRESH_MIN_MS) return;
+  autoRefreshTimer = setInterval(() => {
+    if (document.hidden) return;
+    window.location.reload();
+  }, intervalMs);
+}
+
+function initAutoRefreshControls() {
+  const select = document.getElementById('autoRefreshSelect');
+  let savedMs = 0;
+  try { savedMs = Number(localStorage.getItem(REFRESH_STORAGE_KEY) || 0) || 0; } catch (e) {}
+  if (select) {
+    const allowed = new Set([...select.options].map(option => option.value));
+    if (!allowed.has(String(savedMs))) savedMs = 0;
+    select.value = String(savedMs);
+    if (select.dataset.bound !== '1') {
+      select.dataset.bound = '1';
+      select.addEventListener('change', () => {
+        const value = Number(select.value) || 0;
+        try { localStorage.setItem(REFRESH_STORAGE_KEY, String(value)); } catch (e) {}
+        scheduleAutoRefresh(value);
+      });
+    }
+  }
+  scheduleAutoRefresh(savedMs);
+}
 
 function getCanvas(id) {
   const el  = document.getElementById(id);
@@ -3436,6 +3752,9 @@ document.getElementById('yearFullHistory').addEventListener('change', function()
 
 // Redraw charts on resize
 window.addEventListener('resize', () => { try { render(); } catch(e) {} });
+
+initThemeControls();
+initAutoRefreshControls();
 
 fetchPriceData()
   .then(() => fetchBafData().catch(err => {

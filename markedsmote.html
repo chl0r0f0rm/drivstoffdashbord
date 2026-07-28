@@ -7,6 +7,12 @@
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+try {
+  const savedTheme = localStorage.getItem('ng-dashboard-theme');
+  if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+} catch (e) {}
+</script>
 <style>
   .ng-orange {
     --card-button:        #e85c0d;
@@ -44,6 +50,52 @@
     --diesel:    #2D6A4F;
     --hvo:       #C45C1A;
     --brent:     #2471A3;
+    --chart-grid: #E8F0EB;
+    --chart-text: #5D7A6A;
+    --control-bg: rgba(255,255,255,0.85);
+    --control-bg-hover: rgba(255,255,255,0.95);
+  }
+
+  html[data-theme="dark"] .ng-orange {
+    --card-button:        #e85c0d;
+    --card-button-hover:  #ff7a33;
+    --text-contrast:      #f0f0f0;
+    --text-contrast-header: #ff7a33;
+    --text-default:       #d8d8d8;
+    --text-inverted:      #ffffff;
+    --navbar-bg:          #2c2c2e;
+    --footer:             #f0f0f0;
+    --border:             #4a4a4c;
+    --bg-page:            #2c2c2e;
+    --bg-card:            #3a3a3c;
+    --key-number-bg-1: #e85c0d; --key-number-text-1: #ffffff;
+    --key-number-bg-2: #454548; --key-number-text-2: #f0f0f0;
+    --key-number-bg-3: #f0f0f0; --key-number-text-3: #2c2c2e;
+    --key-number-bg-4: #343436; --key-number-text-4: #ff7a33;
+    --red:        #E57368;
+    --red-light:  #4a3332;
+    --green:      #5CB88A;
+    --green-light:#2f4238;
+    --blue:       #5BA3D0;
+    --blue-light: #2c3c48;
+    --gray:       #a8a8a8;
+    --shadow:     0 1px 3px rgba(0,0,0,0.28);
+    --shadow-md:  0 3px 12px rgba(0,0,0,0.35);
+    --ng-dark:   #f0f0f0;
+    --ng-mid:    #e85c0d;
+    --ng-bright: #ff7a33;
+    --ng-light:  #454548;
+    --ng-bg:     #2c2c2e;
+    --text:      #f0f0f0;
+    --text-muted:#a8a8a8;
+    --white:     #3a3a3c;
+    --diesel:    #6FBF97;
+    --hvo:       #E08A4F;
+    --brent:     #5BA3D0;
+    --chart-grid: #4a4a4c;
+    --chart-text: #a8a8a8;
+    --control-bg: #454548;
+    --control-bg-hover: #525255;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -119,11 +171,119 @@
     flex-direction: row;
     align-items: center;
     justify-content: flex-end;
-    gap: 14px;
+    gap: 12px;
     font-size: 0.75rem;
     color: var(--text-muted);
     justify-self: end;
   }
+  .header-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .header-refresh select {
+    appearance: none;
+    height: 32px;
+    border: 1px solid var(--border);
+    background: var(--control-bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    padding: 0 28px 0 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    line-height: 1;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B6B6B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+  html[data-theme="dark"] .header-refresh select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a89f96' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  }
+  .theme-switch {
+    appearance: none;
+    position: relative;
+    width: 64px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--control-bg);
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .18s, border-color .18s;
+  }
+  .theme-switch:hover {
+    border-color: var(--ng-mid);
+    background: var(--control-bg-hover);
+  }
+  .theme-switch-track {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 7px;
+    pointer-events: none;
+  }
+  .theme-switch-icon {
+    width: 14px;
+    height: 14px;
+    display: block;
+    opacity: 0.55;
+    transition: opacity .18s, color .18s;
+  }
+  .theme-switch-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: var(--ng-mid);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+    transition: left .22s cubic-bezier(.2,.8,.2,1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+  }
+  .theme-switch-thumb svg {
+    width: 13px;
+    height: 13px;
+    display: none;
+  }
+  .theme-switch-thumb .thumb-sun { display: block; }
+  .theme-switch-thumb .thumb-moon { display: none; }
+  html[data-theme="dark"] .theme-switch-thumb {
+    left: calc(100% - 27px);
+  }
+  html[data-theme="dark"] .theme-switch-thumb .thumb-sun { display: none; }
+  html[data-theme="dark"] .theme-switch-thumb .thumb-moon { display: block; }
+  html[data-theme="dark"] .theme-switch .theme-switch-icon.sun { opacity: 0.35; }
+  html[data-theme="dark"] .theme-switch .theme-switch-icon.moon {
+    opacity: 1;
+    color: var(--ng-bright);
+  }
+  .theme-switch .theme-switch-icon.sun {
+    opacity: 1;
+    color: var(--ng-mid);
+  }
+  .theme-switch .theme-switch-icon.moon { opacity: 0.35; }
   .header-meeting-btn {
     display: inline-flex;
     align-items: center;
@@ -209,39 +369,62 @@
   .legend-toggle {
     appearance: none;
     border: 1px solid var(--border);
-    background: rgba(255,255,255,0.85);
+    background: var(--control-bg);
     color: var(--text-muted);
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 5px 9px;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    padding: 6px 10px;
     border-radius: 6px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 6px;
     transition: background .12s, border-color .12s, color .12s, opacity .12s;
+    white-space: nowrap;
+  }
+  .legend-toggle[data-series="diesel"] {
+    --series-color: var(--diesel);
+  }
+  .legend-toggle[data-series="hvo"] {
+    --series-color: var(--hvo);
+  }
+  .legend-toggle[data-series="brent"] {
+    --series-color: var(--brent);
   }
   .legend-toggle:hover {
-    border-color: #d8cfc6;
-    background: rgba(255,255,255,0.95);
+    border-color: var(--series-color, var(--ng-mid));
+    background: var(--control-bg-hover);
+    color: var(--series-color, var(--text));
   }
   .legend-toggle.active {
-    border-color: #c9ddd0;
-    background: #eef6f1;
-    color: var(--text);
+    background: var(--series-color, var(--ng-mid));
+    border-color: var(--series-color, var(--ng-mid));
+    color: #ffffff;
   }
   .legend-toggle:not(.active) {
-    opacity: 0.55;
+    opacity: 0.7;
+    border-color: var(--series-color, var(--border));
+    color: var(--series-color, var(--text-muted));
   }
   .legend-toggle:not(.active) .legend-dot {
-    background: #b7c4bc !important;
+    background: var(--series-color, var(--gray)) !important;
+    opacity: 0.55;
+  }
+  .legend-toggle.active .legend-dot {
+    background: #ffffff !important;
   }
 
-  .chart-wrap { position: relative; height: 260px; }
+  .chart-wrap {
+    position: relative;
+    height: 260px;
+    overscroll-behavior: contain;
+  }
   .chart-wrap canvas {
     width: 100%;
     height: 100%;
     display: block;
+    touch-action: none;
   }
   .card-header-right {
     display: flex;
@@ -265,7 +448,7 @@
   .range-btn {
     appearance: none;
     border: 1px solid var(--border);
-    background: rgba(255,255,255,0.85);
+    background: var(--control-bg);
     color: var(--text-muted);
     font-size: 0.66rem;
     font-weight: 800;
@@ -277,8 +460,8 @@
     white-space: nowrap;
   }
   .range-btn:hover {
-    border-color: #d8cfc6;
-    background: rgba(255,255,255,0.95);
+    border-color: var(--ng-mid);
+    background: var(--control-bg-hover);
   }
   .range-btn.active {
     background: var(--ng-mid);
@@ -288,7 +471,7 @@
   .country-btn {
     appearance: none;
     border: 1px solid var(--border);
-    background: rgba(255,255,255,0.85);
+    background: var(--control-bg);
     color: var(--text-muted);
     font-size: 0.66rem;
     font-weight: 800;
@@ -303,8 +486,8 @@
     gap: 6px;
   }
   .country-btn:hover {
-    border-color: #d8cfc6;
-    background: rgba(255,255,255,0.95);
+    border-color: var(--ng-mid);
+    background: var(--control-bg-hover);
   }
   .country-btn.active {
     background: var(--ng-mid);
@@ -721,6 +904,12 @@
       grid-column: 1 / -1;
       grid-row: 3;
       justify-self: start;
+      flex-wrap: wrap;
+      width: 100%;
+      justify-content: space-between;
+    }
+    .header-controls {
+      flex-wrap: wrap;
     }
     .header-meeting-btn {
       flex: 1;
@@ -1426,6 +1615,38 @@
     </a>
   </div>
   <div class="header-right">
+    <div class="header-controls">
+      <label class="header-refresh" for="autoRefreshSelect">
+        <span>Oppdater</span>
+        <select id="autoRefreshSelect" aria-label="Automatisk oppdatering">
+          <option value="0">Av</option>
+          <option value="300000">5 min</option>
+          <option value="600000">10 min</option>
+          <option value="900000">15 min</option>
+          <option value="1800000">30 min</option>
+        </select>
+      </label>
+      <button type="button" class="theme-switch" id="themeToggle" role="switch" aria-checked="false" aria-label="Bytt til mørk modus" title="Bytt til mørk modus">
+        <span class="theme-switch-track" aria-hidden="true">
+          <svg class="theme-switch-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="theme-switch-icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/>
+          </svg>
+          <span class="theme-switch-thumb">
+            <svg class="thumb-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+            </svg>
+            <svg class="thumb-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/>
+            </svg>
+          </span>
+        </span>
+      </button>
+    </div>
     <span id="last-updated">—</span>
   </div>
 </header>
@@ -1520,7 +1741,7 @@
         <div class="card-header">
           <div>
             <div class="card-title" id="fuel-chart-title">Prisutvikling · Circle K SE</div>
-            <div class="card-subtitle" id="fuel-chart-note">Siste 12 hele måneder · SEK/L eks. mva</div>
+            <div class="card-subtitle" id="fuel-chart-note">Siste 6 måneder · SEK/L eks. mva</div>
           </div>
           <div class="card-header-right">
             <div class="chart-country-controls" aria-label="Velg land">
@@ -1530,16 +1751,19 @@
             </div>
             <div class="chart-range-controls" data-chart="fuelChart" aria-label="Velg tidsperiode">
               <button type="button" class="range-btn" data-range="3m">Siste 3 mnd</button>
-              <button type="button" class="range-btn" data-range="6m">Siste 6 mnd</button>
-              <button type="button" class="range-btn active" data-range="12m">Siste 12 mnd</button>
+              <button type="button" class="range-btn active" data-range="6m">Siste 6 mnd</button>
+              <button type="button" class="range-btn" data-range="12m">Siste 12 mnd</button>
               <button type="button" class="range-btn" data-range="5y">Siste 5 år</button>
             </div>
-            <div class="legend" role="group" aria-label="Vis drivstofftyper">
+            <div class="legend" role="group" aria-label="Vis serier">
               <button type="button" class="legend-toggle active" data-series="diesel" aria-pressed="true">
                 <span class="legend-dot" style="background:var(--diesel)"></span> Diesel
               </button>
               <button type="button" class="legend-toggle active" data-series="hvo" aria-pressed="true">
                 <span class="legend-dot" style="background:var(--hvo)"></span> HVO100
+              </button>
+              <button type="button" class="legend-toggle" data-series="brent" aria-pressed="false">
+                <span class="legend-dot" style="background:var(--brent)"></span> Brent
               </button>
             </div>
           </div>
@@ -1557,7 +1781,7 @@
       <section class="chart-card brent-chart-card">
         <div class="card-header">
           <div>
-            <div class="card-title" id="brent-chart-title">Brent crude · siste 12 måneder</div>
+            <div class="card-title" id="brent-chart-title">Brent crude · siste 6 måneder</div>
             <div class="card-subtitle" id="brent-chart-note">USD/fat · daglig spot · kilde: EIA via FRED (DCOILBRENTEU)</div>
           </div>
           <div class="card-header-right">
@@ -1799,17 +2023,112 @@ const TAX_CHANGES = [
 ];
 
 const C = {
-  diesel: '#2D6A4F',
-  hvo: '#C45C1A',
-  brent: '#2471A3',
-  grid: '#E8F0EB',
-  text: '#5D7A6A',
+  get diesel() {
+    return getComputedStyle(document.body).getPropertyValue('--diesel').trim() || '#2D6A4F';
+  },
+  get hvo() {
+    return getComputedStyle(document.body).getPropertyValue('--hvo').trim() || '#C45C1A';
+  },
+  get brent() {
+    return getComputedStyle(document.body).getPropertyValue('--brent').trim() || '#2471A3';
+  },
+  get grid() {
+    return getComputedStyle(document.body).getPropertyValue('--chart-grid').trim() || '#E8F0EB';
+  },
+  get text() {
+    return getComputedStyle(document.body).getPropertyValue('--chart-text').trim() || '#5D7A6A';
+  },
   event: 'rgba(232,92,13,0.55)'
 };
+
+const THEME_STORAGE_KEY = 'ng-dashboard-theme';
+const REFRESH_STORAGE_KEY = 'ng-dashboard-refresh-ms';
+const REFRESH_MIN_MS = 60000;
+let autoRefreshTimer = null;
+
+function currentTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+  const next = theme === 'dark' ? 'dark' : 'light';
+  if (next === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
+  try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch (e) {}
+
+  const button = document.getElementById('themeToggle');
+  if (button) {
+    const isDark = next === 'dark';
+    button.setAttribute('aria-checked', isDark ? 'true' : 'false');
+    button.title = isDark ? 'Bytt til lys modus' : 'Bytt til mørk modus';
+    button.setAttribute('aria-label', isDark ? 'Bytt til lys modus' : 'Bytt til mørk modus');
+  }
+
+  try {
+    if (fuelDailyAll || fuelMonthlyAll) updateFuelChartRange(fuelRangeMonths, true);
+    if (brentDailyAll) updateBrentChartRange(brentRangeMonths, true);
+  } catch (e) {
+    console.error('Theme chart redraw:', e);
+  }
+}
+
+function initThemeControls() {
+  const button = document.getElementById('themeToggle');
+  if (!button || button.dataset.bound === '1') {
+    applyTheme(currentTheme());
+    return;
+  }
+  button.dataset.bound = '1';
+  applyTheme(currentTheme());
+  button.addEventListener('click', () => {
+    applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+  });
+}
+
+function scheduleAutoRefresh(ms) {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+  }
+  const intervalMs = Number(ms) || 0;
+  if (intervalMs < REFRESH_MIN_MS) return;
+  autoRefreshTimer = setInterval(() => {
+    if (document.hidden) return;
+    window.location.reload();
+  }, intervalMs);
+}
+
+function initAutoRefreshControls() {
+  const select = document.getElementById('autoRefreshSelect');
+  let savedMs = 0;
+  try { savedMs = Number(localStorage.getItem(REFRESH_STORAGE_KEY) || 0) || 0; } catch (e) {}
+  if (select) {
+    const allowed = new Set([...select.options].map(option => option.value));
+    if (!allowed.has(String(savedMs))) savedMs = 0;
+    select.value = String(savedMs);
+    if (select.dataset.bound !== '1') {
+      select.dataset.bound = '1';
+      select.addEventListener('change', () => {
+        const value = Number(select.value) || 0;
+        try { localStorage.setItem(REFRESH_STORAGE_KEY, String(value)); } catch (e) {}
+        scheduleAutoRefresh(value);
+      });
+    }
+  }
+  scheduleAutoRefresh(savedMs);
+}
 
 const CHART_STATE = {};
 const CHART_HOVER_INDEX = {};
 const CHART_BOUND = {};
+const CHART_ZOOM = {};
+const CHART_ZOOM_BOUND = {};
+const CHART_ZOOM_MIN_DAYS = 14;
+const CHART_ZOOM_FACTOR = 1.2;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const DATA_HISTORY_START = '2020-01-01';
+const DATA_HISTORY_MONTH_START = '2020-01';
 
 const RANGE_MONTHS_BY_KEY = {
   '3m': 3,
@@ -1822,11 +2141,13 @@ let fuelMonthlyAll = null;
 let fuelMonthlyByCountry = {};
 let fuelDailyAll = null;
 let fuelDailyByCountry = {};
+let fuelChartSeriesAll = null;
 let fuelCountryKey = 'SE_ck';
-let fuelRangeMonths = 12;
-let brentRangeMonths = 12;
+let fuelRangeMonths = 6;
+let brentRangeMonths = 6;
 let fuelShowDiesel = true;
 let fuelShowHvo = true;
+let fuelShowBrent = false;
 let brentDailyAll = null;
 let rangeButtonsBound = false;
 let countryButtonsBound = false;
@@ -1839,7 +2160,9 @@ const BRENT_EVENTS = [
   { date: '2026-02-28', label: 'Iran-krigen bryter ut' },
   { date: '2026-03-08', label: 'Hormuz stenges · Brent $100+' },
   { date: '2026-06-17', label: 'Våpenhvile Iran' },
-  { date: '2026-07-12', label: 'Ny spenning i Hormuz' }
+  { date: '2026-07-12', label: 'Ny spenning i Hormuz' },
+  { date: '2026-07-23', label: 'Houthi angriper tankere · Brent $100+' },
+  { date: '2026-07-25', label: 'USA–Iran pauser angrep' }
 ];
 
 function eventIndexForDate(labels, eventDate) {
@@ -1944,9 +2267,11 @@ function initRangeButtons() {
 function applySharedChartRange(rangeKey, months) {
   fuelRangeMonths = months;
   brentRangeMonths = months;
+  clearChartZoom('fuelChart');
+  clearChartZoom('brentChart');
   setActiveRangeButtons('fuelChart', rangeKey);
-  updateFuelChartRange(months);
-  updateBrentChartRange(months);
+  updateFuelChartRange(months, true);
+  updateBrentChartRange(months, true);
   renderDecomposition();
   renderTaxContext();
 }
@@ -1980,10 +2305,17 @@ function initCountryButtons() {
   countryButtonsBound = true;
 }
 
+function fuelVisibleSeriesCount() {
+  return (fuelShowDiesel ? 1 : 0) + (fuelShowHvo ? 1 : 0) + (fuelShowBrent ? 1 : 0);
+}
+
 function syncSeriesToggleButtons() {
   document.querySelectorAll('.legend-toggle[data-series]').forEach(btn => {
     const series = btn.getAttribute('data-series');
-    const active = series === 'diesel' ? fuelShowDiesel : fuelShowHvo;
+    let active = false;
+    if (series === 'diesel') active = fuelShowDiesel;
+    else if (series === 'hvo') active = fuelShowHvo;
+    else if (series === 'brent') active = fuelShowBrent;
     btn.classList.toggle('active', active);
     btn.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
@@ -1995,20 +2327,43 @@ function initSeriesToggles() {
     btn.addEventListener('click', () => {
       const series = btn.getAttribute('data-series');
       if (series === 'diesel') {
-        if (fuelShowDiesel && !fuelShowHvo) return;
+        if (fuelShowDiesel && fuelVisibleSeriesCount() === 1) return;
         fuelShowDiesel = !fuelShowDiesel;
       } else if (series === 'hvo') {
-        if (fuelShowHvo && !fuelShowDiesel) return;
+        if (fuelShowHvo && fuelVisibleSeriesCount() === 1) return;
         fuelShowHvo = !fuelShowHvo;
+      } else if (series === 'brent') {
+        if (fuelShowBrent && fuelVisibleSeriesCount() === 1) return;
+        fuelShowBrent = !fuelShowBrent;
       } else {
         return;
       }
       syncSeriesToggleButtons();
-      updateFuelChartRange(fuelRangeMonths);
+      updateFuelChartRange(fuelRangeMonths, true);
     });
   });
   seriesTogglesBound = true;
   syncSeriesToggleButtons();
+}
+
+function alignBrentToDates(labels, brentRows) {
+  if (!labels.length || !brentRows || !brentRows.length) {
+    return labels.map(() => null);
+  }
+  let cursor = 0;
+  let lastPrice = null;
+  const firstDate = labels[0];
+  while (cursor < brentRows.length && brentRows[cursor].date <= firstDate) {
+    if (brentRows[cursor].price != null) lastPrice = brentRows[cursor].price;
+    cursor += 1;
+  }
+  return labels.map(date => {
+    while (cursor < brentRows.length && brentRows[cursor].date <= date) {
+      if (brentRows[cursor].price != null) lastPrice = brentRows[cursor].price;
+      cursor += 1;
+    }
+    return lastPrice;
+  });
 }
 
 async function loadNoDailyCsv() {
@@ -2036,22 +2391,12 @@ async function loadFuelDaily(sourceKey) {
     if (csvRows.length) return csvRows;
   }
 
-  const latestRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&order=date.desc&limit=1`,
-    { headers: supabaseHeaders() }
-  );
-  if (!latestRes.ok) throw new Error('Supabase ' + latestRes.status);
-  const latestRows = await latestRes.json();
-  if (!latestRows.length) return [];
-
-  const endDate = new Date(latestRows[0].date + 'T00:00:00');
-  const start = new Date(endDate);
-  start.setMonth(start.getMonth() - 60);
-  const startKey = start.toISOString().slice(0, 10);
   const rows = await fetchAllRows(
-    `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&date=gte.${startKey}&order=date.asc`
+    `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&date=gte.${DATA_HISTORY_START}&order=date.asc`
   );
-  return rows.map(r => ({ date: r.date, diesel: r.diesel, hvo: r.hvo }));
+  return rows
+    .map(r => ({ date: r.date, diesel: r.diesel, hvo: r.hvo }))
+    .filter(r => r.date >= DATA_HISTORY_START);
 }
 
 async function setFuelCountry(countryKey) {
@@ -2064,7 +2409,7 @@ async function setFuelCountry(countryKey) {
   try {
     if (!fuelMonthlyByCountry[countryKey]) {
       fuelMonthlyByCountry[countryKey] = await fetchAllRows(
-        `${SUPABASE_URL}/rest/v1/price_data?select=month,diesel,hvo&source=eq.${countryKey}&order=month.asc`
+        `${SUPABASE_URL}/rest/v1/price_data?select=month,diesel,hvo&source=eq.${countryKey}&month=gte.${DATA_HISTORY_MONTH_START}&order=month.asc`
       );
     }
     if (!fuelDailyByCountry[countryKey]) {
@@ -2072,6 +2417,7 @@ async function setFuelCountry(countryKey) {
     }
     fuelMonthlyAll = fuelMonthlyByCountry[countryKey] || [];
     fuelDailyAll = fuelDailyByCountry[countryKey] || [];
+    fuelChartSeriesAll = buildFuelChartSeries(fuelDailyAll, fuelMonthlyAll);
     renderMomTable(monthlyRowsForMom(fuelMonthlyAll, fuelDailyAll));
     renderTaxContext();
     updateFuelChartRange(fuelRangeMonths);
@@ -2093,6 +2439,43 @@ function updateFuelCountryLabels() {
   if (momSub) momSub.textContent = `${meta.label} · endring i % · Brent MoM`;
 }
 
+function monthEndDate(monthKey) {
+  const parts = String(monthKey || '').split('-');
+  if (parts.length < 2) return null;
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  if (!year || !month) return null;
+  const lastDay = new Date(year, month, 0).getDate();
+  return `${parts[0]}-${parts[1]}-${String(lastDay).padStart(2, '0')}`;
+}
+
+function buildFuelChartSeries(dailyRows, monthlyRows) {
+  const daily = (dailyRows || [])
+    .filter(row => row.date && row.date >= DATA_HISTORY_START)
+    .map(row => ({
+      date: row.date,
+      diesel: row.diesel,
+      hvo: row.hvo,
+      resolution: 'daily'
+    }));
+  const dailyStart = daily.length ? daily[0].date : null;
+  const monthlyPoints = [];
+  (monthlyRows || []).forEach(row => {
+    if (!row.month || row.diesel == null) return;
+    const date = monthEndDate(row.month);
+    if (!date || date < DATA_HISTORY_START) return;
+    if (dailyStart && date >= dailyStart) return;
+    monthlyPoints.push({
+      date,
+      diesel: row.diesel,
+      hvo: row.hvo,
+      resolution: 'monthly'
+    });
+  });
+  monthlyPoints.sort((a, b) => a.date.localeCompare(b.date));
+  return monthlyPoints.concat(daily);
+}
+
 function lastNMonths(rows, months) {
   const withData = rows.filter(r => r.diesel != null);
   return withData.slice(-months);
@@ -2104,14 +2487,145 @@ function lastNDailyMonths(rows, months) {
   const endDate = new Date(end + 'T00:00:00');
   const start = new Date(endDate);
   start.setMonth(start.getMonth() - months);
-  const startKey = start.toISOString().slice(0, 10);
+  let startKey = start.toISOString().slice(0, 10);
+  if (startKey < DATA_HISTORY_START) startKey = DATA_HISTORY_START;
   return rows.filter(r => r.date >= startKey);
+}
+
+function dateToMs(dateStr) {
+  return new Date(dateStr + 'T00:00:00').getTime();
+}
+
+function msToDateKey(ms) {
+  const date = new Date(ms);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function filterRowsByDateRange(rows, start, end) {
+  if (!rows.length) return [];
+  return rows.filter(row => row.date >= start && row.date <= end);
+}
+
+function clearChartZoom(chartId) {
+  delete CHART_ZOOM[chartId];
+}
+
+function getChartSourceRows(chartId) {
+  if (chartId === 'fuelChart') return fuelChartSeriesAll || fuelDailyAll || [];
+  if (chartId === 'brentChart') return brentDailyAll || [];
+  return [];
+}
+
+function getChartDefaultWindow(chartId) {
+  const months = chartId === 'brentChart' ? brentRangeMonths : fuelRangeMonths;
+  const rows = lastNDailyMonths(getChartSourceRows(chartId), months);
+  if (!rows.length) return null;
+  return { start: rows[0].date, end: rows[rows.length - 1].date };
+}
+
+function getChartViewWindow(chartId) {
+  return CHART_ZOOM[chartId] || getChartDefaultWindow(chartId);
+}
+
+function getChartPlotPadding(chartId) {
+  const chart = CHART_STATE[chartId];
+  const hasDualAxis = (chart?.seriesList || []).some(s => s.axis === 'right') &&
+    (chart?.seriesList || []).some(s => s.axis !== 'right');
+  return {
+    left: 46,
+    right: hasDualAxis ? 46 : 16
+  };
+}
+
+function clampNumber(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function handleChartWheelZoom(chartId, event) {
+  const source = getChartSourceRows(chartId);
+  if (source.length < 2) return;
+
+  const dataStartMs = dateToMs(source[0].date);
+  const dataEndMs = dateToMs(source[source.length - 1].date);
+  const maxSpan = Math.max(dataEndMs - dataStartMs, DAY_MS);
+  const minSpan = Math.min(CHART_ZOOM_MIN_DAYS * DAY_MS, maxSpan);
+
+  const view = getChartViewWindow(chartId);
+  if (!view) return;
+
+  const canvas = document.getElementById(chartId);
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  const pad = getChartPlotPadding(chartId);
+  const plotWidth = Math.max(1, rect.width - pad.left - pad.right);
+  const ratio = clampNumber((event.clientX - rect.left - pad.left) / plotWidth, 0, 1);
+
+  const startMs = dateToMs(view.start);
+  const endMs = dateToMs(view.end);
+  const span = Math.max(endMs - startMs, minSpan);
+  const focusMs = startMs + ratio * span;
+  const zoomIn = event.deltaY < 0;
+  const factor = zoomIn ? (1 / CHART_ZOOM_FACTOR) : CHART_ZOOM_FACTOR;
+  let newSpan = clampNumber(span * factor, minSpan, maxSpan);
+
+  let newStart = focusMs - ratio * newSpan;
+  let newEnd = newStart + newSpan;
+  if (newStart < dataStartMs) {
+    newStart = dataStartMs;
+    newEnd = newStart + newSpan;
+  }
+  if (newEnd > dataEndMs) {
+    newEnd = dataEndMs;
+    newStart = newEnd - newSpan;
+    if (newStart < dataStartMs) newStart = dataStartMs;
+  }
+
+  CHART_ZOOM[chartId] = {
+    start: msToDateKey(newStart),
+    end: msToDateKey(newEnd)
+  };
+
+  if (chartId === 'fuelChart') updateFuelChartRange(fuelRangeMonths, true, true);
+  else if (chartId === 'brentChart') updateBrentChartRange(brentRangeMonths, true);
+}
+
+function labelsLookLikeDates(labels) {
+  if (!labels.length) return false;
+  const sample = String(labels[0]);
+  return sample.length === 10 && sample[4] === '-' && sample[7] === '-';
+}
+
+function nearestIndexByTime(times, targetMs) {
+  if (!times.length) return 0;
+  let low = 0;
+  let high = times.length - 1;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (times[mid] < targetMs) low = mid + 1;
+    else high = mid;
+  }
+  if (low > 0) {
+    const prevDist = Math.abs(times[low - 1] - targetMs);
+    const currDist = Math.abs(times[low] - targetMs);
+    if (prevDist <= currDist) return low - 1;
+  }
+  return low;
+}
+
+function formatAxisDateLabel(dateStr) {
+  const parts = String(dateStr).split('-');
+  if (parts.length < 2) return String(dateStr);
+  return MONTH_NAMES[+parts[1] - 1] + ' ' + String(parts[0]).slice(2);
 }
 
 function bindChartHover(id) {
   if (CHART_BOUND[id]) return;
   const canvas = document.getElementById(id);
   if (!canvas) return;
+  const wrap = canvas.parentElement;
 
   const updateHover = clientX => {
     const chart = CHART_STATE[id];
@@ -2120,11 +2634,18 @@ function bindChartHover(id) {
     if (!n) return;
 
     const rect = canvas.getBoundingClientRect();
-    const left = 46;
-    const right = 16;
-    const cw = Math.max(1, rect.width - left - right);
+    const pad = getChartPlotPadding(id);
+    const cw = Math.max(1, rect.width - pad.left - pad.right);
     const x = clientX - rect.left;
-    let index = Math.round(((x - left) / cw) * (n - 1));
+    let index = 0;
+    if (chart.timeAxis && chart.timeAxis.times?.length) {
+      const { tMin, tMax, times } = chart.timeAxis;
+      const ratio = clampNumber((x - pad.left) / cw, 0, 1);
+      const targetMs = tMin + ratio * Math.max(tMax - tMin, 1);
+      index = nearestIndexByTime(times, targetMs);
+    } else {
+      index = Math.round(((x - pad.left) / cw) * (n - 1));
+    }
     if (!Number.isFinite(index)) index = 0;
     if (index < 0) index = 0;
     if (index > n - 1) index = n - 1;
@@ -2144,26 +2665,51 @@ function bindChartHover(id) {
     }
   });
 
+  if (wrap && !CHART_ZOOM_BOUND[id]) {
+    const onWheel = event => {
+      event.preventDefault();
+      event.stopPropagation();
+      handleChartWheelZoom(id, event);
+    };
+    wrap.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    CHART_ZOOM_BOUND[id] = true;
+  }
+
   CHART_BOUND[id] = true;
 }
 
 function drawMultiLine(id, seriesList, opts = {}) {
-  CHART_STATE[id] = { seriesList, opts };
+  const labels = seriesList[0]?.labels || [];
+  const n = labels.length;
+  const useTimeAxis = labelsLookLikeDates(labels);
+  const times = useTimeAxis ? labels.map(label => dateToMs(label)) : null;
+  const tMin = useTimeAxis ? times[0] : 0;
+  const tMax = useTimeAxis ? times[n - 1] : 0;
+  const tSpan = useTimeAxis ? Math.max(tMax - tMin, 1) : 1;
+
+  CHART_STATE[id] = {
+    seriesList,
+    opts,
+    timeAxis: useTimeAxis ? { tMin, tMax, times } : null
+  };
   bindChartHover(id);
 
   const { ctx, w, h } = getCanvas(id);
   const hasPointLabels = seriesList.some(s => s.pointLabels);
   const events = opts.events || [];
   const extremesInput = opts.extremes || [];
-  const labels = seriesList[0]?.labels || [];
-  const n = labels.length;
   const EVENT_ROW_HEIGHT = 15;
   const EVENT_LABEL_GAP = 6;
+  const hasDualAxisProvisional = seriesList.some(s => s.axis === 'right') &&
+    seriesList.some(s => s.axis !== 'right');
+  const provisionalRight = hasDualAxisProvisional ? 46 : 16;
 
   const xOfProvisional = i => {
     const left = 46;
-    const cw = w - left - 16;
-    return left + (n <= 1 ? cw / 2 : (i / (n - 1)) * cw);
+    const cw = w - left - provisionalRight;
+    if (n <= 1) return left + cw / 2;
+    if (useTimeAxis) return left + ((times[i] - tMin) / tSpan) * cw;
+    return left + (i / (n - 1)) * cw;
   };
 
   ctx.font = '600 10px Inter, -apple-system, sans-serif';
@@ -2223,16 +2769,23 @@ function drawMultiLine(id, seriesList, opts = {}) {
     : 0;
   const provisionalPadTop = hasPointLabels ? 48 : 18;
 
+  const leftSeries = seriesList.filter(s => s.axis !== 'right');
+  const rightSeries = seriesList.filter(s => s.axis === 'right');
+  const hasDualAxis = leftSeries.length > 0 && rightSeries.length > 0;
+  const scaleLeftSeries = hasDualAxis ? leftSeries : seriesList;
+  const scaleRightSeries = hasDualAxis ? rightSeries : [];
+
   const pad = {
     top: Math.max(provisionalPadTop, markerBand || provisionalPadTop),
-    right: 16,
+    right: hasDualAxis ? 46 : 16,
     bottom: 42,
     left: 46
   };
   const cw = w - pad.left - pad.right;
   const ch = h - pad.top - pad.bottom;
-  const allVals = seriesList.flatMap(s => s.data.filter(v => v != null));
-  if (!allVals.length) {
+  const leftVals = scaleLeftSeries.flatMap(s => s.data.filter(v => v != null));
+  const rightVals = scaleRightSeries.flatMap(s => s.data.filter(v => v != null));
+  if (!leftVals.length && !rightVals.length) {
     ctx.fillStyle = C.text;
     ctx.font = '13px Inter, -apple-system, sans-serif';
     ctx.textAlign = 'center';
@@ -2240,22 +2793,42 @@ function drawMultiLine(id, seriesList, opts = {}) {
     return;
   }
 
-  const minV = Math.min(...allVals);
-  const maxV = Math.max(...allVals);
-  const span = maxV - minV || 1;
-  const vMin = minV - span * 0.08;
-  const vMax = maxV + span * 0.08;
-  const vSpan = vMax - vMin;
-  const xOf = i => pad.left + (n === 1 ? cw / 2 : (i / (n - 1)) * cw);
-  const yOf = v => pad.top + ch * (1 - (v - vMin) / vSpan);
+  function axisScale(values) {
+    const minV = Math.min(...values);
+    const maxV = Math.max(...values);
+    const span = maxV - minV || 1;
+    const vMin = minV - span * 0.08;
+    const vMax = maxV + span * 0.08;
+    return { vMin, vMax, vSpan: vMax - vMin };
+  }
+
+  const leftScale = leftVals.length
+    ? axisScale(leftVals)
+    : axisScale(rightVals);
+  const rightScale = rightVals.length
+    ? axisScale(rightVals)
+    : leftScale;
+
+  const xOf = i => {
+    if (n <= 1) return pad.left + cw / 2;
+    if (useTimeAxis) return pad.left + ((times[i] - tMin) / tSpan) * cw;
+    return pad.left + (i / (n - 1)) * cw;
+  };
+  const xOfTime = ms => pad.left + ((ms - tMin) / tSpan) * cw;
+  const yOfAxis = (v, axis) => {
+    const scale = axis === 'right' && hasDualAxis ? rightScale : leftScale;
+    return pad.top + ch * (1 - (v - scale.vMin) / scale.vSpan);
+  };
+  const yOfSeries = (series, v) => yOfAxis(v, series.axis === 'right' ? 'right' : 'left');
+  const yOf = v => yOfAxis(v, 'left');
 
   bandMarkers.forEach(marker => { marker.x = xOf(marker.index); });
 
   ctx.font = '10px Inter, -apple-system, sans-serif';
   ctx.fillStyle = C.text;
   for (let i = 0; i <= 4; i++) {
-    const v = vMin + (vSpan * i / 4);
-    const y = yOf(v);
+    const v = leftScale.vMin + (leftScale.vSpan * i / 4);
+    const y = yOfAxis(v, 'left');
     ctx.strokeStyle = C.grid;
     ctx.beginPath();
     ctx.moveTo(pad.left, y);
@@ -2263,6 +2836,17 @@ function drawMultiLine(id, seriesList, opts = {}) {
     ctx.stroke();
     ctx.textAlign = 'right';
     ctx.fillText(v.toFixed(1), pad.left - 6, y + 3);
+  }
+
+  if (hasDualAxis) {
+    ctx.fillStyle = C.brent;
+    for (let i = 0; i <= 4; i++) {
+      const v = rightScale.vMin + (rightScale.vSpan * i / 4);
+      const y = yOfAxis(v, 'right');
+      ctx.textAlign = 'left';
+      ctx.fillText(v.toFixed(1), pad.left + cw + 6, y + 3);
+    }
+    ctx.fillStyle = C.text;
   }
 
   bandMarkers.forEach(marker => {
@@ -2286,17 +2870,27 @@ function drawMultiLine(id, seriesList, opts = {}) {
     ctx.stroke();
   });
 
-  const step = Math.max(1, Math.ceil(n / 8));
-  for (let i = 0; i < n; i += step) {
-    const parts = String(labels[i]).split('-');
-    const label = parts.length >= 2
-      ? MONTH_NAMES[+parts[1] - 1] + ' ' + String(parts[0]).slice(2)
-      : labels[i];
-    ctx.textAlign = 'center';
-    ctx.fillStyle = C.text;
-    ctx.font = '10px Inter, -apple-system, sans-serif';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(label, xOf(i), h - 14);
+  const AXIS_TICK_COUNT = 8;
+  if (useTimeAxis && n > 1) {
+    for (let i = 0; i < AXIS_TICK_COUNT; i++) {
+      const ms = tMin + (tSpan * i / (AXIS_TICK_COUNT - 1));
+      const nearest = nearestIndexByTime(times, ms);
+      const label = formatAxisDateLabel(labels[nearest]);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = C.text;
+      ctx.font = '10px Inter, -apple-system, sans-serif';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(label, xOfTime(ms), h - 14);
+    }
+  } else {
+    const step = Math.max(1, Math.ceil(n / 8));
+    for (let i = 0; i < n; i += step) {
+      ctx.textAlign = 'center';
+      ctx.fillStyle = C.text;
+      ctx.font = '10px Inter, -apple-system, sans-serif';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(formatAxisDateLabel(labels[i]), xOf(i), h - 14);
+    }
   }
 
   seriesList.forEach(series => {
@@ -2308,7 +2902,7 @@ function drawMultiLine(id, seriesList, opts = {}) {
     series.data.forEach((v, i) => {
       if (v == null) { started = false; return; }
       const x = xOf(i);
-      const y = yOf(v);
+      const y = yOfSeries(series, v);
       if (!started) { ctx.moveTo(x, y); started = true; }
       else ctx.lineTo(x, y);
     });
@@ -2325,7 +2919,7 @@ function drawMultiLine(id, seriesList, opts = {}) {
       markerIndexes.forEach(i => {
         if (series.data[i] == null) return;
         const x = xOf(i);
-        const y = yOf(series.data[i]);
+        const y = yOfSeries(series, series.data[i]);
         ctx.beginPath();
         ctx.arc(x, y, MONTH_MARKER_RADIUS, 0, Math.PI * 2);
         ctx.fillStyle = series.color;
@@ -2338,7 +2932,7 @@ function drawMultiLine(id, seriesList, opts = {}) {
       series.data.forEach((v, i) => {
         if (v == null) return;
         ctx.beginPath();
-        ctx.arc(xOf(i), yOf(v), 2.6, 0, Math.PI * 2);
+        ctx.arc(xOf(i), yOfSeries(series, v), 2.6, 0, Math.PI * 2);
         ctx.fillStyle = series.color;
         ctx.fill();
       });
@@ -2365,7 +2959,7 @@ function drawMultiLine(id, seriesList, opts = {}) {
         text,
         color,
         x: xOf(i),
-        y: yOf(series.data[i])
+        y: yOfSeries(series, series.data[i])
       });
     });
   });
@@ -2395,7 +2989,7 @@ function drawMultiLine(id, seriesList, opts = {}) {
         if (seriesIndex === item.seriesIndex) return false;
         const value = series.data[item.index];
         if (value == null) return false;
-        return Math.abs(textY - yOf(value)) < 11;
+        return Math.abs(textY - yOfSeries(series, value)) < 11;
       });
       if (otherLineClash) continue;
 
@@ -2481,8 +3075,9 @@ function drawMultiLine(id, seriesList, opts = {}) {
         name: series.name || `Serie ${seriesIndex + 1}`,
         color: series.color,
         value,
+        unit: series.unit || '',
         x: xOf(hoverIndex),
-        y: yOf(value)
+        y: yOfSeries(series, value)
       };
     })
     .filter(Boolean);
@@ -2513,7 +3108,10 @@ function drawMultiLine(id, seriesList, opts = {}) {
   const header = id === 'fuelChart'
     ? formatHoverHeader('fuel', labels[hoverIndex])
     : String(labels[hoverIndex] || '');
-  const valueLines = hoverItems.map(item => `${item.name}: ${formatHoverValue(item.value)}`);
+  const valueLines = hoverItems.map(item => {
+    const unit = item.unit ? ` ${item.unit}` : '';
+    return `${item.name}: ${formatHoverValue(item.value)}${unit}`;
+  });
   const lines = [header, ...valueLines];
 
   ctx.font = '600 10px Inter, -apple-system, sans-serif';
@@ -3081,10 +3679,21 @@ function renderLagCard() {
     `</div>`;
 }
 
-function buildMonthEndMarkers(dailyRows, monthlyByKey) {
+function shiftMonthKey(monthKey, deltaMonths) {
+  const parts = String(monthKey || '').split('-');
+  if (parts.length < 2) return null;
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  if (!year || !month) return null;
+  const date = new Date(year, month - 1 + deltaMonths, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function buildMonthEndMarkers(dailyRows, monthlyByKey, monthStep = 1) {
   const markerIndexes = [];
   const dieselLabels = dailyRows.map(() => null);
   const hvoLabels = dailyRows.map(() => null);
+  const step = Math.max(1, monthStep);
 
   const lastIndexByMonth = {};
   dailyRows.forEach((row, index) => {
@@ -3093,9 +3702,16 @@ function buildMonthEndMarkers(dailyRows, monthlyByKey) {
   });
 
   const monthKeys = Object.keys(lastIndexByMonth).sort();
-  for (let i = 1; i < monthKeys.length; i++) {
-    const prevKey = monthKeys[i - 1];
+  for (let i = 0; i < monthKeys.length; i++) {
     const currKey = monthKeys[i];
+    const monthNumber = Number(currKey.split('-')[1]);
+    if (step > 1 && monthNumber % step !== 0) continue;
+
+    const prevKey = step > 1
+      ? shiftMonthKey(currKey, -step)
+      : (i > 0 ? monthKeys[i - 1] : null);
+    if (!prevKey) continue;
+
     const index = lastIndexByMonth[currKey];
     markerIndexes.push(index);
     dieselLabels[index] = pctChange(monthlyByKey[currKey]?.diesel, monthlyByKey[prevKey]?.diesel);
@@ -3234,7 +3850,7 @@ async function loadBrentFromCsv() {
   const rows = [];
   for (const line of text.trim().split(/\r?\n/).slice(1)) {
     const [date, price] = line.split(',');
-    if (!date || !price) continue;
+    if (!date || !price || date < DATA_HISTORY_START) continue;
     const value = Number(price);
     if (!Number.isFinite(value)) continue;
     rows.push({ date, price: value });
@@ -3244,23 +3860,13 @@ async function loadBrentFromCsv() {
 
 async function loadBrent() {
   try {
-    const latestRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel&source=eq.BRENT&order=date.desc&limit=1`,
-      { headers: supabaseHeaders() }
-    );
-    if (!latestRes.ok) throw new Error('Supabase ' + latestRes.status);
-    const latestRows = await latestRes.json();
-    if (!latestRows.length) throw new Error('No Brent rows in Supabase');
-
-    const endDate = new Date(latestRows[0].date + 'T00:00:00');
-    const start = new Date(endDate);
-    start.setMonth(start.getMonth() - 60);
-    const startKey = start.toISOString().slice(0, 10);
     const rows = await fetchAllRows(
-      `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel&source=eq.BRENT&date=gte.${startKey}&order=date.asc`
+      `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel&source=eq.BRENT&date=gte.${DATA_HISTORY_START}&order=date.asc`
     );
     if (rows.length) {
-      return rows.map(r => ({ date: r.date, price: r.diesel }));
+      return rows
+        .map(r => ({ date: r.date, price: r.diesel }))
+        .filter(r => r.date >= DATA_HISTORY_START);
     }
   } catch (err) {
     console.warn('Brent Supabase:', err);
@@ -3706,10 +4312,15 @@ async function loadLastUpdated() {
   el.textContent = '—';
 }
 
-function updateFuelChartRange(months) {
+function updateFuelChartRange(months, keepZoom = false, skipContext = false) {
+  if (!keepZoom) clearChartZoom('fuelChart');
   const meta = FUEL_COUNTRIES[fuelCountryKey] || FUEL_COUNTRIES.SE_ck;
-  const dailyRows = lastNDailyMonths(fuelDailyAll || [], months);
-  if (!dailyRows.length) {
+  const seriesRows = fuelChartSeriesAll || fuelDailyAll || [];
+  const zoom = CHART_ZOOM.fuelChart;
+  const chartRows = zoom
+    ? filterRowsByDateRange(seriesRows, zoom.start, zoom.end)
+    : lastNDailyMonths(seriesRows, months);
+  if (!chartRows.length) {
     document.getElementById('fuel-chart-note').textContent =
       `${formatRangeMonthsText(months)} · ${meta.currency}/L eks. mva`;
     drawMultiLine('fuelChart', [{
@@ -3718,25 +4329,43 @@ function updateFuelChartRange(months) {
       name: 'Diesel',
       color: C.diesel
     }]);
-    renderDecomposition();
-    renderTaxContext();
+    if (!skipContext) {
+      renderDecomposition();
+      renderTaxContext();
+    }
     requestAnimationFrame(() => syncFuelLayout());
     return;
   }
 
-  const labels = dailyRows.map(r => r.date);
-  const dieselVals = dailyRows.map(r => r.diesel);
-  const hvoVals = dailyRows.map(r => r.hvo);
-  const { diesel, hvo } = renderFuelRangeStats(dailyRows, meta.currency);
+  const labels = chartRows.map(r => r.date);
+  const dieselVals = chartRows.map(r => r.diesel);
+  const hvoVals = chartRows.map(r => r.hvo);
+  const { diesel, hvo } = renderFuelRangeStats(chartRows, meta.currency);
+  const hasMonthlyHistory = chartRows.some(row => row.resolution === 'monthly');
 
   const monthlyByKey = {};
   (fuelMonthlyAll || []).forEach(r => {
     if (r.month) monthlyByKey[r.month] = r;
   });
-  const { markerIndexes, dieselLabels, hvoLabels } = buildMonthEndMarkers(dailyRows, monthlyByKey);
+  monthlyAveragesFromDaily(fuelDailyAll || []).forEach(r => {
+    if (r.month) monthlyByKey[r.month] = r;
+  });
+  const visibleMonthsApprox = Math.max(
+    1,
+    Math.round((dateToMs(chartRows[chartRows.length - 1].date) - dateToMs(chartRows[0].date)) / (DAY_MS * 30.44))
+  );
+  const monthStep = (months >= 60 || visibleMonthsApprox >= 48) ? 3 : 1;
+  const { markerIndexes, dieselLabels, hvoLabels } = buildMonthEndMarkers(
+    chartRows,
+    monthlyByKey,
+    monthStep
+  );
 
-  document.getElementById('fuel-chart-note').textContent =
-    `${formatPumpDate(dailyRows[0].date)} – ${formatPumpDate(dailyRows[dailyRows.length - 1].date)} · ${meta.currency}/L eks. mva · MoM %`;
+  const historyNote = hasMonthlyHistory ? ' · månedssnitt + daglig' : '';
+  const changeNote = monthStep === 3 ? ' · QoQ %' : ' · MoM %';
+  document.getElementById('fuel-chart-note').textContent = fuelShowBrent
+    ? `${formatPumpDate(chartRows[0].date)} – ${formatPumpDate(chartRows[chartRows.length - 1].date)} · ${meta.currency}/L eks. mva (venstre) · Brent USD/fat (høyre)${historyNote}${changeNote}`
+    : `${formatPumpDate(chartRows[0].date)} – ${formatPumpDate(chartRows[chartRows.length - 1].date)} · ${meta.currency}/L eks. mva${historyNote}${changeNote}`;
 
   const seriesList = [];
   if (fuelShowDiesel) {
@@ -3747,7 +4376,8 @@ function updateFuelChartRange(months) {
       color: C.diesel,
       lineWidth: 2.2,
       markerIndexes,
-      pointLabels: dieselLabels
+      pointLabels: dieselLabels,
+      unit: meta.currency + '/L'
     });
   }
   if (fuelShowHvo) {
@@ -3758,7 +4388,19 @@ function updateFuelChartRange(months) {
       color: C.hvo,
       lineWidth: 2.2,
       markerIndexes,
-      pointLabels: hvoLabels
+      pointLabels: hvoLabels,
+      unit: meta.currency + '/L'
+    });
+  }
+  if (fuelShowBrent) {
+    seriesList.push({
+      labels,
+      data: alignBrentToDates(labels, brentDailyAll || []),
+      name: 'Brent',
+      color: C.brent,
+      lineWidth: 2,
+      axis: 'right',
+      unit: 'USD/fat'
     });
   }
   if (!seriesList.length) {
@@ -3775,9 +4417,11 @@ function updateFuelChartRange(months) {
     extremes: buildFuelExtremes(labels, diesel, hvo)
   });
 
-  renderDecomposition();
-  renderTaxContext();
-  requestAnimationFrame(() => syncFuelLayout());
+  if (!skipContext) {
+    renderDecomposition();
+    renderTaxContext();
+    requestAnimationFrame(() => syncFuelLayout());
+  }
 }
 
 function syncFuelLayout() {
@@ -3817,9 +4461,13 @@ function syncBrentLayout() {
   if (state) drawMultiLine('brentChart', state.seriesList, state.opts);
 }
 
-function updateBrentChartRange(months) {
+function updateBrentChartRange(months, keepZoom = false) {
+  if (!keepZoom) clearChartZoom('brentChart');
   if (!brentDailyAll || !brentDailyAll.length) return;
-  const windowRows = lastNDailyMonths(brentDailyAll, months);
+  const zoom = CHART_ZOOM.brentChart;
+  const windowRows = zoom
+    ? filterRowsByDateRange(brentDailyAll, zoom.start, zoom.end)
+    : lastNDailyMonths(brentDailyAll, months);
   if (!windowRows.length) return;
 
   const labels = windowRows.map(r => r.date);
@@ -3856,7 +4504,11 @@ function updateBrentChartRange(months) {
   renderBrentRangeStats(windowRows);
 
   const titleEl = document.getElementById('brent-chart-title');
-  if (titleEl) titleEl.textContent = `Brent crude · ${formatRangeMonthsText(months)}`;
+  if (titleEl) {
+    titleEl.textContent = zoom
+      ? `Brent crude · ${formatPumpDate(windowRows[0].date)} – ${formatPumpDate(windowRows[windowRows.length - 1].date)}`
+      : `Brent crude · ${formatRangeMonthsText(months)}`;
+  }
 
   const startText = formatPumpDate(windowRows[0].date);
   const endText = formatPumpDate(windowRows[windowRows.length - 1].date);
@@ -3867,6 +4519,8 @@ function updateBrentChartRange(months) {
 }
 
 async function boot() {
+  initThemeControls();
+  initAutoRefreshControls();
   await loadLastUpdated();
   loadPumpPrices().catch(err => console.error('Pump prices:', err));
   renderTaxContext();
@@ -3888,7 +4542,8 @@ async function boot() {
     brentDailyAll = brent;
     const latest = brent[brent.length - 1];
     renderBrentKpi(brent);
-    updateBrentChartRange(12);
+    updateBrentChartRange(brentRangeMonths, true);
+    if (fuelDailyAll || fuelMonthlyAll) updateFuelChartRange(fuelRangeMonths, true);
     renderMomTable(monthlyRowsForMom(fuelMonthlyAll, fuelDailyAll));
     renderDecomposition();
     renderTaxContext();
