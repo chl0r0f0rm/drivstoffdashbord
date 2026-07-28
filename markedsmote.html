@@ -433,6 +433,46 @@ try {
     flex-wrap: wrap;
     justify-content: flex-end;
   }
+  .fuel-chart-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .fuel-chart-header-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 16px;
+    align-items: start;
+  }
+  .fuel-chart-header-top > :first-child {
+    min-width: 0;
+  }
+  .fuel-chart-controls {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    grid-template-areas:
+      "country range legend"
+      ". . labels";
+    gap: 8px 12px;
+    justify-items: end;
+    align-items: center;
+  }
+  .fuel-chart-controls .chart-country-controls {
+    grid-area: country;
+    flex-wrap: nowrap;
+  }
+  .fuel-chart-controls .chart-range-controls {
+    grid-area: range;
+    flex-wrap: nowrap;
+  }
+  .fuel-chart-controls .legend {
+    grid-area: legend;
+    flex-wrap: nowrap;
+  }
+  .fuel-chart-controls .chart-price-mode-controls {
+    grid-area: labels;
+    justify-self: end;
+  }
   .chart-range-controls {
     display: flex;
     gap: 6px;
@@ -444,6 +484,21 @@ try {
     gap: 6px;
     flex-wrap: wrap;
     justify-content: flex-end;
+  }
+  .chart-price-mode-controls {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  .chart-price-mode-label {
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    margin-right: 2px;
   }
   .range-btn {
     appearance: none;
@@ -939,6 +994,26 @@ try {
       justify-content: flex-start;
       gap: 8px;
     }
+    .fuel-chart-header-top {
+      grid-template-columns: 1fr;
+    }
+    .fuel-chart-controls {
+      width: 100%;
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "country"
+        "range"
+        "legend"
+        "labels";
+      justify-items: stretch;
+    }
+    .fuel-chart-controls .chart-country-controls,
+    .fuel-chart-controls .chart-range-controls,
+    .fuel-chart-controls .legend,
+    .fuel-chart-controls .chart-price-mode-controls {
+      width: 100%;
+      justify-self: stretch;
+    }
     .chart-country-controls,
     .chart-range-controls,
     .legend {
@@ -952,6 +1027,20 @@ try {
     }
     .chart-range-controls {
       grid-template-columns: repeat(2, 1fr);
+    }
+    .chart-price-mode-controls {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .chart-price-mode-label {
+      width: 100%;
+      margin-bottom: 2px;
+    }
+    .chart-price-mode-controls .range-btn {
+      flex: 1 1 0;
     }
     .range-btn,
     .country-btn,
@@ -1738,33 +1827,40 @@ try {
       </div>
 
       <section class="chart-card fuel-chart-card">
-        <div class="card-header">
-          <div>
-            <div class="card-title" id="fuel-chart-title">Prisutvikling · Circle K SE</div>
-            <div class="card-subtitle" id="fuel-chart-note">Siste 6 måneder · SEK/L eks. mva</div>
-          </div>
-          <div class="card-header-right">
-            <div class="chart-country-controls" aria-label="Velg land">
-              <button type="button" class="country-btn active" data-country="SE_ck">SE</button>
-              <button type="button" class="country-btn" data-country="NO_ck">NO</button>
-              <button type="button" class="country-btn" data-country="DK_ck">DK</button>
+        <div class="card-header fuel-chart-header">
+          <div class="fuel-chart-header-top">
+            <div>
+              <div class="card-title" id="fuel-chart-title">Prisutvikling · Circle K SE</div>
+              <div class="card-subtitle" id="fuel-chart-note">Siste 6 måneder · SEK/L eks. mva</div>
             </div>
-            <div class="chart-range-controls" data-chart="fuelChart" aria-label="Velg tidsperiode">
-              <button type="button" class="range-btn" data-range="3m">Siste 3 mnd</button>
-              <button type="button" class="range-btn active" data-range="6m">Siste 6 mnd</button>
-              <button type="button" class="range-btn" data-range="12m">Siste 12 mnd</button>
-              <button type="button" class="range-btn" data-range="5y">Siste 5 år</button>
-            </div>
-            <div class="legend" role="group" aria-label="Vis serier">
-              <button type="button" class="legend-toggle active" data-series="diesel" aria-pressed="true">
-                <span class="legend-dot" style="background:var(--diesel)"></span> Diesel
-              </button>
-              <button type="button" class="legend-toggle active" data-series="hvo" aria-pressed="true">
-                <span class="legend-dot" style="background:var(--hvo)"></span> HVO100
-              </button>
-              <button type="button" class="legend-toggle" data-series="brent" aria-pressed="false">
-                <span class="legend-dot" style="background:var(--brent)"></span> Brent
-              </button>
+            <div class="fuel-chart-controls">
+              <div class="chart-country-controls" aria-label="Velg land">
+                <button type="button" class="country-btn active" data-country="SE_ck">SE</button>
+                <button type="button" class="country-btn" data-country="NO_ck">NO</button>
+                <button type="button" class="country-btn" data-country="DK_ck">DK</button>
+              </div>
+              <div class="chart-range-controls" data-chart="fuelChart" aria-label="Velg tidsperiode">
+                <button type="button" class="range-btn" data-range="3m">Siste 3 mnd</button>
+                <button type="button" class="range-btn active" data-range="6m">Siste 6 mnd</button>
+                <button type="button" class="range-btn" data-range="12m">Siste 12 mnd</button>
+                <button type="button" class="range-btn" data-range="5y">Siste 5 år</button>
+              </div>
+              <div class="legend" role="group" aria-label="Vis serier">
+                <button type="button" class="legend-toggle active" data-series="diesel" aria-pressed="true">
+                  <span class="legend-dot" style="background:var(--diesel)"></span> Diesel
+                </button>
+                <button type="button" class="legend-toggle active" data-series="hvo" aria-pressed="true">
+                  <span class="legend-dot" style="background:var(--hvo)"></span> HVO100
+                </button>
+                <button type="button" class="legend-toggle" data-series="brent" aria-pressed="false">
+                  <span class="legend-dot" style="background:var(--brent)"></span> Brent
+                </button>
+              </div>
+              <div class="chart-price-mode-controls" role="group" aria-label="Velg labelvisning">
+                <span class="chart-price-mode-label">Labelvisning:</span>
+                <button type="button" class="range-btn active" data-price-mode="monthEnd">Månedsslutt</button>
+                <button type="button" class="range-btn" data-price-mode="monthAvg">Månedssnitt</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2148,10 +2244,12 @@ let brentRangeMonths = 6;
 let fuelShowDiesel = true;
 let fuelShowHvo = true;
 let fuelShowBrent = false;
+let fuelPriceMode = 'monthEnd';
 let brentDailyAll = null;
 let rangeButtonsBound = false;
 let countryButtonsBound = false;
 let seriesTogglesBound = false;
+let priceModeButtonsBound = false;
 
 const BRENT_EVENTS = [
   { date: '2022-02-24', label: 'Russland invaderer Ukraina' },
@@ -2344,6 +2442,28 @@ function initSeriesToggles() {
   });
   seriesTogglesBound = true;
   syncSeriesToggleButtons();
+}
+
+function syncPriceModeButtons() {
+  document.querySelectorAll('.chart-price-mode-controls [data-price-mode]').forEach(btn => {
+    const mode = btn.getAttribute('data-price-mode');
+    btn.classList.toggle('active', mode === fuelPriceMode);
+  });
+}
+
+function initPriceModeButtons() {
+  if (priceModeButtonsBound) return;
+  document.querySelectorAll('.chart-price-mode-controls [data-price-mode]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-price-mode');
+      if (!mode || mode === fuelPriceMode) return;
+      fuelPriceMode = mode;
+      syncPriceModeButtons();
+      updateFuelChartRange(fuelRangeMonths, true);
+    });
+  });
+  priceModeButtonsBound = true;
+  syncPriceModeButtons();
 }
 
 function alignBrentToDates(labels, brentRows) {
@@ -3105,9 +3225,10 @@ function drawMultiLine(id, seriesList, opts = {}) {
     ctx.stroke();
   });
 
-  const header = id === 'fuelChart'
-    ? formatHoverHeader('fuel', labels[hoverIndex])
-    : String(labels[hoverIndex] || '');
+  const header = formatHoverHeader(
+    id === 'fuelChart' ? 'fuel' : null,
+    labels[hoverIndex]
+  );
   const valueLines = hoverItems.map(item => {
     const unit = item.unit ? ` ${item.unit}` : '';
     return `${item.name}: ${formatHoverValue(item.value)}${unit}`;
@@ -3689,11 +3810,23 @@ function shiftMonthKey(monthKey, deltaMonths) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function buildMonthEndMarkers(dailyRows, monthlyByKey, monthStep = 1) {
+function buildFuelMonthlyByKey() {
+  const monthlyByKey = {};
+  (fuelMonthlyAll || []).forEach(r => {
+    if (r.month) monthlyByKey[r.month] = r;
+  });
+  monthlyAveragesFromDaily(fuelDailyAll || []).forEach(r => {
+    if (r.month) monthlyByKey[r.month] = r;
+  });
+  return monthlyByKey;
+}
+
+function buildMonthEndMarkers(dailyRows, monthlyByKey, monthStep = 1, priceMode = 'monthEnd') {
   const markerIndexes = [];
   const dieselLabels = dailyRows.map(() => null);
   const hvoLabels = dailyRows.map(() => null);
   const step = Math.max(1, monthStep);
+  const useMonthAvg = priceMode === 'monthAvg';
 
   const lastIndexByMonth = {};
   dailyRows.forEach((row, index) => {
@@ -3713,10 +3846,40 @@ function buildMonthEndMarkers(dailyRows, monthlyByKey, monthStep = 1) {
     if (!prevKey) continue;
 
     const index = lastIndexByMonth[currKey];
+    const prevIndex = lastIndexByMonth[prevKey];
     markerIndexes.push(index);
-    dieselLabels[index] = pctChange(monthlyByKey[currKey]?.diesel, monthlyByKey[prevKey]?.diesel);
+
+    let currDiesel;
+    let prevDiesel;
+    let currHvo;
+    let prevHvo;
+    if (useMonthAvg) {
+      currDiesel = monthlyByKey[currKey]?.diesel;
+      prevDiesel = monthlyByKey[prevKey]?.diesel;
+      currHvo = monthlyByKey[currKey]?.hvo;
+      prevHvo = monthlyByKey[prevKey]?.hvo;
+      if (currDiesel == null) currDiesel = dailyRows[index]?.diesel;
+      if (prevDiesel == null && prevIndex != null) prevDiesel = dailyRows[prevIndex]?.diesel;
+      if (currHvo == null) currHvo = dailyRows[index]?.hvo;
+      if (prevHvo == null && prevIndex != null) prevHvo = dailyRows[prevIndex]?.hvo;
+    } else {
+      currDiesel = dailyRows[index]?.diesel;
+      prevDiesel = prevIndex != null ? dailyRows[prevIndex]?.diesel : null;
+      currHvo = dailyRows[index]?.hvo;
+      prevHvo = prevIndex != null ? dailyRows[prevIndex]?.hvo : null;
+      if (currDiesel == null || prevDiesel == null) {
+        currDiesel = monthlyByKey[currKey]?.diesel;
+        prevDiesel = monthlyByKey[prevKey]?.diesel;
+      }
+      if (currHvo == null || prevHvo == null) {
+        currHvo = monthlyByKey[currKey]?.hvo;
+        prevHvo = monthlyByKey[prevKey]?.hvo;
+      }
+    }
+
+    dieselLabels[index] = pctChange(currDiesel, prevDiesel);
     if (dieselLabels[index] != null) dieselLabels[index] *= 100;
-    hvoLabels[index] = pctChange(monthlyByKey[currKey]?.hvo, monthlyByKey[prevKey]?.hvo);
+    hvoLabels[index] = pctChange(currHvo, prevHvo);
     if (hvoLabels[index] != null) hvoLabels[index] *= 100;
   }
 
@@ -4317,10 +4480,10 @@ function updateFuelChartRange(months, keepZoom = false, skipContext = false) {
   const meta = FUEL_COUNTRIES[fuelCountryKey] || FUEL_COUNTRIES.SE_ck;
   const seriesRows = fuelChartSeriesAll || fuelDailyAll || [];
   const zoom = CHART_ZOOM.fuelChart;
-  const chartRows = zoom
+  const windowRows = zoom
     ? filterRowsByDateRange(seriesRows, zoom.start, zoom.end)
     : lastNDailyMonths(seriesRows, months);
-  if (!chartRows.length) {
+  if (!windowRows.length) {
     document.getElementById('fuel-chart-note').textContent =
       `${formatRangeMonthsText(months)} · ${meta.currency}/L eks. mva`;
     drawMultiLine('fuelChart', [{
@@ -4337,19 +4500,15 @@ function updateFuelChartRange(months, keepZoom = false, skipContext = false) {
     return;
   }
 
+  const monthlyByKey = buildFuelMonthlyByKey();
+  const chartRows = windowRows;
+
   const labels = chartRows.map(r => r.date);
   const dieselVals = chartRows.map(r => r.diesel);
   const hvoVals = chartRows.map(r => r.hvo);
   const { diesel, hvo } = renderFuelRangeStats(chartRows, meta.currency);
   const hasMonthlyHistory = chartRows.some(row => row.resolution === 'monthly');
 
-  const monthlyByKey = {};
-  (fuelMonthlyAll || []).forEach(r => {
-    if (r.month) monthlyByKey[r.month] = r;
-  });
-  monthlyAveragesFromDaily(fuelDailyAll || []).forEach(r => {
-    if (r.month) monthlyByKey[r.month] = r;
-  });
   const visibleMonthsApprox = Math.max(
     1,
     Math.round((dateToMs(chartRows[chartRows.length - 1].date) - dateToMs(chartRows[0].date)) / (DAY_MS * 30.44))
@@ -4358,11 +4517,14 @@ function updateFuelChartRange(months, keepZoom = false, skipContext = false) {
   const { markerIndexes, dieselLabels, hvoLabels } = buildMonthEndMarkers(
     chartRows,
     monthlyByKey,
-    monthStep
+    monthStep,
+    fuelPriceMode
   );
 
   const historyNote = hasMonthlyHistory ? ' · månedssnitt + daglig' : '';
-  const changeNote = monthStep === 3 ? ' · QoQ %' : ' · MoM %';
+  const changeNote = fuelPriceMode === 'monthAvg'
+    ? (monthStep === 3 ? ' · QoQ % (snitt)' : ' · MoM % (snitt)')
+    : (monthStep === 3 ? ' · % kvartalsslutt' : ' · % månedsslutt');
   document.getElementById('fuel-chart-note').textContent = fuelShowBrent
     ? `${formatPumpDate(chartRows[0].date)} – ${formatPumpDate(chartRows[chartRows.length - 1].date)} · ${meta.currency}/L eks. mva (venstre) · Brent USD/fat (høyre)${historyNote}${changeNote}`
     : `${formatPumpDate(chartRows[0].date)} – ${formatPumpDate(chartRows[chartRows.length - 1].date)} · ${meta.currency}/L eks. mva${historyNote}${changeNote}`;
@@ -4527,6 +4689,7 @@ async function boot() {
   initRangeButtons();
   initCountryButtons();
   initSeriesToggles();
+  initPriceModeButtons();
 
   try {
     await setFuelCountry(fuelCountryKey);
