@@ -852,6 +852,30 @@ def _parse_iso_date(text):
     return match.group(1) if match else None
 
 
+def strip_moms_divided_daily_tail(rows):
+    """Drop trailing live rows that look like inkl-moms prices wrongly divided by 1.25."""
+    if len(rows) < 2:
+        return rows
+    cleaned = list(rows)
+    while len(cleaned) >= 2:
+        last_diesel = cleaned[-1].get("diesel")
+        if last_diesel is None:
+            break
+        previous_good = None
+        for row in reversed(cleaned[:-1]):
+            diesel = row.get("diesel")
+            if diesel is not None and diesel > last_diesel * 1.1:
+                previous_good = diesel
+                break
+        if previous_good is None:
+            break
+        if abs(last_diesel * SE_MOMS_FACTOR - previous_good) <= 0.12:
+            cleaned.pop()
+            continue
+        break
+    return cleaned
+
+
 def apply_live_daily_source(
     source_key,
     csv_path,
@@ -865,10 +889,18 @@ def apply_live_daily_source(
         return
     latest = dict(live_rows[0])
     effective_date = latest.pop("effective_date", latest["date"])
-    prior_row = read_last_daily_row(csv_path)
+    existing_rows = read_daily_csv_rows(csv_path)
+    cleaned_rows = strip_moms_divided_daily_tail(existing_rows)
+    if len(cleaned_rows) != len(existing_rows):
+        write_csv_full(csv_path, cleaned_rows, ["date", "diesel", "hvo"], "date")
+        report.append(
+            f"{source_key} daily live: removed {len(existing_rows) - len(cleaned_rows)} "
+            "moms-divided tail rows"
+        )
+    prior_row = cleaned_rows[-1] if cleaned_rows else None
     new_rows = gap_fill_daily_rows(
         latest,
-        read_existing_keys(csv_path, "date"),
+        {row["date"] for row in cleaned_rows},
         effective_date=effective_date,
         prior_row=prior_row,
     )
@@ -996,12 +1028,27 @@ def fetch_preem_se_daily():
     date_effective = None
 
     for table in soup.find_all("table"):
+        first_row = table.find("tr")
+        header_text = ""
+        if first_row:
+            header_text = " ".join(
+                cell.get_text(" ", strip=True) for cell in first_row.find_all(["td", "th"])
+            ).lower()
+        # Match XLS listpris series: pump/list tables in kr/l inkl. moms
+        if "inkl" not in header_text or "moms" not in header_text:
+            continue
+        table_text = table.get_text(" ", strip=True).lower()
+        if "kr/l" not in table_text:
+            continue
+
         for row in table.find_all("tr"):
             cells = row.find_all(["td", "th"])
             if len(cells) < 2:
                 continue
             cell_texts = [c.get_text(" ", strip=True) for c in cells]
             row_text = " ".join(cell_texts).lower()
+            if "kr/l" not in row_text:
+                continue
 
             matched_product = None
             if "evolution diesel" in row_text and "diesel" not in prices:
@@ -1011,16 +1058,17 @@ def fetch_preem_se_daily():
             if not matched_product:
                 continue
 
-            price_inkl = None
+            price_val = None
             row_date = None
             for cell_text in cell_texts:
                 row_date = row_date or _parse_iso_date(cell_text)
-                if price_inkl is None:
-                    price_inkl = _parse_sek_per_liter(cell_text)
-            if price_inkl is None:
+                if price_val is None:
+                    price_val = _parse_sek_per_liter(cell_text)
+            if price_val is None:
                 continue
 
-            prices[matched_product] = round(price_inkl / SE_MOMS_FACTOR, 4)
+            # Same unit as Preem XLS history — do not divide by moms.
+            prices[matched_product] = price_val
             if row_date:
                 date_effective = row_date
 
@@ -1039,7 +1087,7 @@ def fetch_preem_se_daily():
         "effective_date": date_effective or today,
     }
     print(
-        f"  Diesel: {row['diesel']} SEK/L eks. moms  HVO: {row.get('hvo')} SEK/L  "
+        f"  Diesel: {row['diesel']} SEK/L  HVO: {row.get('hvo')} SEK/L  "
         f"(gjeldende fra {row['effective_date']}, lagres som {today})"
     )
     return [row]
