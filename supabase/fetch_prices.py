@@ -1194,6 +1194,133 @@ def fetch_ck_no():
     return [row]
 
 
+# ── EU Weekly Oil Bulletin (SE diesel) ───────────────────────────────────────
+
+EU_OIL_BULLETIN_URL = (
+    "https://energy.ec.europa.eu/document/download/"
+    "906e60ca-8b6a-44e7-8589-652854d2fd3f_en"
+    "?filename=Weekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx"
+)
+EU_OIL_SHEET_WITH_TAXES = "Prices with taxes"
+EU_SE_DIESEL_HEADER = "SE_price_with_tax_diesel"
+LITERS_PER_BULLETIN_UNIT = 1000
+
+
+def _excel_col_index(letters):
+    index = 0
+    for char in str(letters):
+        index = index * 26 + (ord(char.upper()) - 64)
+    return index
+
+
+def _find_header_columns(worksheet, header_names, header_row=1):
+    wanted = {name: None for name in header_names}
+    for row_index, row in enumerate(worksheet.iter_rows(min_row=1, max_row=header_row, values_only=True), 1):
+        if row_index != header_row:
+            continue
+        for col_index, value in enumerate(row, 1):
+            if value in wanted and wanted[value] is None:
+                wanted[value] = col_index
+        break
+    missing = [name for name, col in wanted.items() if col is None]
+    if missing:
+        raise RuntimeError(f"EU Oil Bulletin: missing columns {missing}")
+    return wanted
+
+
+def fetch_se_eu_oil_bulletin():
+    """Weekly SE diesel consumer price inkl. taxes from EU Weekly Oil Bulletin.
+
+    Column GP (SE_price_with_tax_diesel) is EUR per 1000 L.
+    Stored and shown as EUR/L.
+    """
+    print("\n── EU Oil Bulletin SE (ukentlig diesel) ─────────────────────────────")
+    try:
+        import openpyxl
+    except ImportError as error:
+        print(f"  openpyxl not installed — skipping EU Oil Bulletin: {error}")
+        return [], []
+
+    try:
+        resp = requests.get(
+            EU_OIL_BULLETIN_URL,
+            timeout=120,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        resp.raise_for_status()
+    except requests.RequestException as error:
+        print(f"  Download failed: {error}")
+        return [], []
+
+    workbook = openpyxl.load_workbook(BytesIO(resp.content), data_only=True)
+    if EU_OIL_SHEET_WITH_TAXES not in workbook.sheetnames:
+        print(f"  Sheet not found: {EU_OIL_SHEET_WITH_TAXES}")
+        return [], []
+
+    worksheet = workbook[EU_OIL_SHEET_WITH_TAXES]
+    try:
+        columns = _find_header_columns(
+            worksheet,
+            [EU_SE_DIESEL_HEADER],
+        )
+    except RuntimeError as error:
+        print(f"  {error}")
+        return [], []
+
+    diesel_col = columns[EU_SE_DIESEL_HEADER]
+    if diesel_col != _excel_col_index("GP"):
+        print(f"  Note: diesel column is {diesel_col} (expected GP=198)")
+
+    weekly_rows = []
+    for row in worksheet.iter_rows(min_row=4, values_only=True):
+        raw_date = row[0] if row else None
+        if raw_date is None:
+            continue
+        if isinstance(raw_date, str):
+            break
+        if not hasattr(raw_date, "strftime"):
+            continue
+
+        diesel_eur_per_1000l = row[diesel_col - 1] if len(row) >= diesel_col else None
+        diesel_eur = safe_float(diesel_eur_per_1000l)
+        if diesel_eur is None:
+            continue
+
+        diesel_eur_per_l = round(diesel_eur / LITERS_PER_BULLETIN_UNIT, 4)
+        if diesel_eur_per_l < 0.3 or diesel_eur_per_l > 5:
+            continue
+
+        weekly_rows.append({
+            "date": raw_date.strftime("%Y-%m-%d"),
+            "diesel": diesel_eur_per_l,
+            "hvo": None,
+        })
+
+    weekly_rows.sort(key=lambda item: item["date"])
+    monthly_buckets = {}
+    for row in weekly_rows:
+        month = row["date"][:7]
+        monthly_buckets.setdefault(month, []).append(row["diesel"])
+    monthly_rows = [
+        {
+            "month": month,
+            "diesel_avg": round(sum(values) / len(values), 4),
+            "hvo_avg": None,
+        }
+        for month, values in sorted(monthly_buckets.items())
+        if values
+    ]
+
+    print(
+        f"  {len(weekly_rows)} weekly rows, {len(monthly_rows)} months "
+        f"({weekly_rows[0]['date'] if weekly_rows else '—'} – "
+        f"{weekly_rows[-1]['date'] if weekly_rows else '—'})"
+    )
+    if weekly_rows:
+        print(f"  Latest diesel: {weekly_rows[-1]['diesel']} EUR/L inkl. avgifter")
+    return monthly_rows, weekly_rows
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -1273,6 +1400,42 @@ def main():
                 report,
                 daily_upsert,
             )
+
+        eu_monthly, eu_weekly = fetch_se_eu_oil_bulletin()
+        if eu_monthly or eu_weekly:
+            synced_sources.append("SE_eu")
+        if eu_monthly:
+            eu_monthly_csv = os.path.join(DATA_DIR, "eu_SE_månedlig.csv")
+            write_csv_full(
+                eu_monthly_csv, eu_monthly, ["month", "diesel_avg", "hvo_avg"], "month"
+            )
+            report.append(
+                f"SE_eu: {len(eu_monthly)} months (latest: {eu_monthly[-1]['month']})"
+            )
+            monthly_upsert += [
+                {
+                    "source": "SE_eu",
+                    "month": row["month"],
+                    "diesel": row["diesel_avg"],
+                    "hvo": row["hvo_avg"],
+                }
+                for row in eu_monthly
+            ]
+        if eu_weekly:
+            eu_weekly_csv = os.path.join(DATA_DIR, "eu_SE_ukentlig.csv")
+            write_csv_full(eu_weekly_csv, eu_weekly, ["date", "diesel", "hvo"], "date")
+            report.append(
+                f"SE_eu weekly: {len(eu_weekly)} rows (through {eu_weekly[-1]['date']})"
+            )
+            daily_upsert += [
+                {
+                    "source": "SE_eu",
+                    "date": row["date"],
+                    "diesel": row["diesel"],
+                    "hvo": row["hvo"],
+                }
+                for row in eu_weekly
+            ]
 
     if run_daily and "dk" in countries:
         dk_results = fetch_ck_dk()

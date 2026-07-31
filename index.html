@@ -461,23 +461,43 @@ try {
   .news-item-meta {
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: space-between;
+    gap: 8px;
     margin-bottom: 4px;
   }
-  .news-item-time {
+  .news-item-country {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.67rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 0;
+  }
+  .news-item-flag {
+    display: inline-flex;
+    flex-shrink: 0;
+    line-height: 0;
+  }
+  .news-item-flag svg {
+    display: block;
+    width: 16px;
+    height: 11px;
+    border-radius: 1px;
+  }
+  .news-item-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-size: 0.67rem;
     font-weight: 700;
     color: var(--ng-mid);
-    min-width: 28px;
-  }
-  .news-item-source {
-    font-size: 0.67rem;
-    color: var(--text-muted);
-    font-weight: 500;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 110px;
+    margin-left: auto;
+  }
+  .news-item-rel {
+    font-weight: 500;
+    color: var(--text-muted);
   }
   .news-item-headline {
     font-size: 0.79rem;
@@ -664,10 +684,15 @@ try {
     font-size: 0.75rem;
     color: var(--text-muted);
     line-height: 1.45;
-    white-space: normal;
-    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
   }
-  .source-ref-line { display: block; }
+  .source-ref-line {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .tab {
     display: flex;
     align-items: center;
@@ -1317,6 +1342,10 @@ try {
         <span class="flag-icon"><svg viewBox="0 0 22 15" width="22" height="15" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="15" fill="#006AA7"/><rect y="6" width="22" height="3" fill="#FECC02"/><rect x="8" width="3" height="15" fill="#FECC02"/></svg></span>
         <span class="tab-title">Sverige – Preem</span>
       </div>
+      <div class="tab" data-country="SE_eu" onclick="setCountry(this)">
+        <span class="flag-icon"><svg viewBox="0 0 22 15" width="22" height="15" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="15" fill="#006AA7"/><rect y="6" width="22" height="3" fill="#FECC02"/><rect x="8" width="3" height="15" fill="#FECC02"/></svg></span>
+        <span class="tab-title">Sverige – EU Oil Bulletin</span>
+      </div>
       <div class="tab" data-country="NO_ck" onclick="setCountry(this)">
         <span class="flag-icon"><svg viewBox="0 0 22 15" width="22" height="15" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="15" fill="#EF2B2D"/><rect y="5" width="22" height="5" fill="#fff"/><rect x="7" width="5" height="15" fill="#fff"/><rect y="6" width="22" height="3" fill="#002868"/><rect x="8" width="3" height="15" fill="#002868"/></svg></span>
         <span class="tab-title">Norge – Circle K</span>
@@ -1464,8 +1493,8 @@ try {
         <thead>
           <tr>
             <th>Dato</th>
-            <th id="th-daily-history-diesel">Diesel</th>
-            <th id="th-daily-history-hvo">HVO100</th>
+            <th id="th-daily-history-diesel" class="col-diesel">Diesel</th>
+            <th id="th-daily-history-hvo" class="col-hvo">HVO100</th>
             <th>Δ diesel</th>
           </tr>
         </thead>
@@ -1648,16 +1677,17 @@ try {
 
 </div><!-- /.outer-layout -->
 
-<footer>Data: 🇸🇪 Circle K SE / Preem SE (SEK/L eks. mva) · 🇩🇰 Circle K DK (DKK/L eks. moms) · 🇳🇴 Circle K NO (NOK/L eks. mva) · BAF Color Line / Fjord Line (NOK/LM) · Månedlig/daglig gjennomsnitt</footer>
+<footer>Data: 🇸🇪 Circle K SE / Preem SE (SEK/L eks. mva) · EU Oil Bulletin SE (EUR/L inkl. avgifter) · 🇩🇰 Circle K DK (DKK/L eks. moms) · 🇳🇴 Circle K NO (NOK/L eks. mva) · BAF Color Line / Fjord Line (NOK/LM) · Månedlig/daglig/ukentlig</footer>
 
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────────────
 const SOURCE_META = {
-  SE_ck:    { label: 'Circle K Sverige', currency: 'SEK', flag: '🇸🇪', hasDaily: true,  hasBothViews: true,  sourceUrl: 'https://www.circlek.se/foretag/drivmedel/priser',         sourceFile: 'Prishistorik_B2B.xls' },
-  SE_preem: { label: 'Preem Sverige',    currency: 'SEK', flag: '🇸🇪', hasDaily: true,  hasBothViews: true,  sourceUrl: 'https://www.preem.se/foretag/listpriser/',                 sourceFile: 'prishistorik-listpriser-2008-2026.xls' },
-  DK_ck:      { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true, hasBothViews: true, sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser', sourceFile: 'miles diesel (ekskl. moms)' },
-  DK_ck_inkl: { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true, hasBothViews: true, sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser', sourceFile: 'miles diesel (inkl. moms)' },
-  NO_ck:    { label: 'Circle K Norge',   currency: 'NOK', flag: '🇳🇴', hasDaily: true,  sourceUrl: 'https://www.circlek.no/bedrift/produkter/drivstoff/priser',             sourceFile: 'Bulk-listepris (eks. mva)' },
+  SE_ck:    { label: 'Circle K Sverige', currency: 'SEK', flag: '🇸🇪', hasDaily: true,  hasBothViews: true,  priceBasis: 'eks. mva', sourceUrl: 'https://www.circlek.se/foretag/drivmedel/priser',         sourceFile: 'Prishistorik_B2B.xls' },
+  SE_preem: { label: 'Preem Sverige',    currency: 'SEK', flag: '🇸🇪', hasDaily: true,  hasBothViews: true,  priceBasis: 'eks. mva', sourceUrl: 'https://www.preem.se/foretag/listpriser/',                 sourceFile: 'prishistorik-listpriser-2008-2026.xls' },
+  SE_eu:    { label: 'EU Oil Bulletin SE', currency: 'EUR', flag: '🇸🇪', hasDaily: true, hasBothViews: true, cadence: 'weekly', hasHvo: false, priceBasis: 'inkl. avgifter og moms', sourceUrl: 'https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en', sourceFile: 'Weekly Oil Bulletin (EUR/L)' },
+  DK_ck:      { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true, hasBothViews: true, priceBasis: 'eks. moms', sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser', sourceFile: 'miles diesel (ekskl. moms)' },
+  DK_ck_inkl: { label: 'Circle K Danmark', currency: 'DKK', flag: '🇩🇰', hasDaily: true, hasBothViews: true, priceBasis: 'inkl. moms', sourceUrl: 'https://www.circlek.dk/erhverv/braendstof/historiskepriser', sourceFile: 'miles diesel (inkl. moms)' },
+  NO_ck:    { label: 'Circle K Norge',   currency: 'NOK', flag: '🇳🇴', hasDaily: true,  priceBasis: 'eks. mva', sourceUrl: 'https://www.circlek.no/bedrift/produkter/drivstoff/priser',             sourceFile: 'Bulk-listepris (eks. mva)' },
 };
 
 const COMPARE_DAILY_SOURCES = [
@@ -1725,8 +1755,10 @@ async function fetchAllSupabaseRows(endpoint) {
   return rows;
 }
 
-const DAILY_SOURCE_KEYS = ['NO_ck', 'DK_ck', 'DK_ck_inkl', 'SE_ck', 'SE_preem'];
+const DAILY_SOURCE_KEYS = ['NO_ck', 'DK_ck', 'DK_ck_inkl', 'SE_ck', 'SE_preem', 'SE_eu'];
 const NO_DAILY_CSV = 'data/circklek_NO_daglig.csv';
+const EU_SE_WEEKLY_CSV = 'data/eu_SE_ukentlig.csv';
+const EU_SE_MONTHLY_CSV = 'data/eu_SE_månedlig.csv';
 
 async function loadNoDailyCsv() {
   try {
@@ -1744,6 +1776,39 @@ async function loadNoDailyCsv() {
   } catch (err) {
     console.error('NO daily CSV:', err);
     return [];
+  }
+}
+
+async function loadEuSeCsvFallback() {
+  try {
+    const [weeklyRes, monthlyRes] = await Promise.all([
+      fetch(EU_SE_WEEKLY_CSV, { cache: 'no-store' }),
+      fetch(EU_SE_MONTHLY_CSV, { cache: 'no-store' }),
+    ]);
+    const weekly = weeklyRes.ok
+      ? (await weeklyRes.text()).trim().split(/\r?\n/).slice(1).map(line => {
+          const [date, diesel, hvo] = line.split(',');
+          return {
+            date: (date || '').trim(),
+            diesel: diesel ? Number(diesel) : null,
+            hvo: hvo ? Number(hvo) : null,
+          };
+        }).filter(row => row.date && row.diesel != null && !Number.isNaN(row.diesel))
+      : [];
+    const monthly = monthlyRes.ok
+      ? (await monthlyRes.text()).trim().split(/\r?\n/).slice(1).map(line => {
+          const [month, diesel, hvo] = line.split(',');
+          return {
+            month: (month || '').trim(),
+            diesel: diesel ? Number(diesel) : null,
+            hvo: hvo ? Number(hvo) : null,
+          };
+        }).filter(row => row.month && row.diesel != null && !Number.isNaN(row.diesel))
+      : [];
+    return { weekly, monthly };
+  } catch (err) {
+    console.error('EU SE CSV fallback:', err);
+    return { weekly: [], monthly: [] };
   }
 }
 
@@ -1783,7 +1848,7 @@ function mergeMonthlyWithDailyAverages(monthlyRows, dailyRows) {
 }
 
 async function fetchPriceData() {
-  const [rows, syncRes, noCsvRows, ...dailyChunks] = await Promise.all([
+  const [rows, syncRes, noCsvRows, euCsvFallback, ...dailyChunks] = await Promise.all([
     fetchAllSupabaseRows(
       `${SUPABASE_URL}/rest/v1/price_data?select=source,month,diesel,hvo&order=month.asc`
     ),
@@ -1792,6 +1857,7 @@ async function fetchPriceData() {
       { headers: supabaseHeaders }
     ),
     loadNoDailyCsv(),
+    loadEuSeCsvFallback(),
     ...DAILY_SOURCE_KEYS.map(source =>
       fetchAllSupabaseRows(
         `${SUPABASE_URL}/rest/v1/daily_price_data?select=source,date,diesel,hvo&source=eq.${source}&order=date.asc`
@@ -1813,10 +1879,18 @@ async function fetchPriceData() {
     if (key === 'NO_ck' && noCsvRows.length) {
       dailyData = noCsvRows;
     }
-    const monthlyFromDb = rows
+    let monthlyFromDb = rows
       .filter(r => r.source === key)
       .filter(r => !isDkSource || r.month >= '2020-01')
       .map(({ month, diesel, hvo }) => ({ month, diesel, hvo }));
+    if (key === 'SE_eu') {
+      if (!dailyData.length && euCsvFallback.weekly.length) {
+        dailyData = euCsvFallback.weekly;
+      }
+      if (!monthlyFromDb.length && euCsvFallback.monthly.length) {
+        monthlyFromDb = euCsvFallback.monthly;
+      }
+    }
     SOURCES[key] = {
       ...meta,
       lastSyncAt: SOURCE_SYNC[key] || null,
@@ -1899,8 +1973,35 @@ function drawChartXLabels(ctx, monthKeys, xAt, w, h, pad) {
 function toggleFuel(btn) {
   btn.classList.toggle('active');
   const table = document.getElementById('priceTable');
-  table.classList.toggle('hide-diesel', !document.querySelector('[data-fuel="diesel"]').classList.contains('active'));
-  table.classList.toggle('hide-hvo',    !document.querySelector('[data-fuel="hvo"]').classList.contains('active'));
+  const dieselBtn = document.querySelector('#monthly-sections .table-card .fuel-toggles [data-fuel="diesel"]');
+  const hvoBtn = document.querySelector('#monthly-sections .table-card .fuel-toggles [data-fuel="hvo"]');
+  table.classList.toggle('hide-diesel', !dieselBtn?.classList.contains('active'));
+  table.classList.toggle('hide-hvo', !hvoBtn?.classList.contains('active'));
+}
+
+function sourceHasHvo(src = getSource()) {
+  if (!src) return false;
+  if (src.hasHvo === false) return false;
+  const rows = [...(src.data || []), ...(src.dailyData || [])];
+  return rows.some(row => row.hvo != null && Number.isFinite(Number(row.hvo)));
+}
+
+function syncSourceFuelControls(src = getSource()) {
+  if (!src) return;
+  const hasHvo = sourceHasHvo(src);
+  document.querySelectorAll('#price-fuel-toggles [data-fuel="hvo"], #monthly-sections .table-card .fuel-toggles [data-fuel="hvo"]').forEach(btn => {
+    btn.style.display = hasHvo ? '' : 'none';
+    if (!hasHvo) btn.classList.remove('active');
+  });
+  document.querySelectorAll('#price-fuel-toggles [data-fuel="diesel"], #monthly-sections .table-card .fuel-toggles [data-fuel="diesel"]').forEach(btn => {
+    if (!hasHvo) btn.classList.add('active');
+  });
+  const priceTable = document.getElementById('priceTable');
+  const historyTable = document.getElementById('dailyHistoryTable');
+  if (priceTable) {
+    priceTable.classList.toggle('hide-hvo', !hasHvo || !document.querySelector('#monthly-sections .table-card .fuel-toggles [data-fuel="hvo"]')?.classList.contains('active'));
+  }
+  if (historyTable) historyTable.classList.toggle('hide-hvo', !hasHvo);
 }
 
 function toggleCollapse(btn) {
@@ -1974,6 +2075,19 @@ function setCountry(el) {
   const headerSync = getSourceLastSyncText(src);
   document.getElementById('last-updated').textContent =
     headerSync !== '—' ? headerSync : '—';
+  const sourceRef = document.getElementById('source-ref');
+  if (sourceRef && src) {
+    const fileLink = src.sourceUrl
+      ? `<a href="${src.sourceUrl}" target="_blank" rel="noopener"
+          style="color:var(--ng-mid);text-decoration:none;font-weight:600"
+          title="${src.sourceFile || 'Åpne kilde'}">${src.sourceFile || src.sourceUrl}</a>`
+      : '';
+    const basisText = src.priceBasis ? src.priceBasis : '';
+    sourceRef.innerHTML = [
+      `<span class="source-ref-line">${headerSync !== '—' ? headerSync + (basisText ? ' · ' + basisText : '') : (basisText || '&nbsp;')}</span>`,
+      `<span class="source-ref-line">${fileLink ? 'Kilde: ' + fileLink : '&nbsp;'}</span>`,
+    ].join('');
+  }
   populateYearSliders();
   populateBaseMonths();
   populateViewMonthSlider();
@@ -2245,6 +2359,10 @@ function renderKPIs(data, baseMonth) {
   const pumpDayChange = latestPump && prevPump
     ? Number(latestPump.diesel) / Number(prevPump.diesel) - 1
     : null;
+  const isWeekly = src.cadence === 'weekly';
+  const pumpLabel = isWeekly ? 'Siste ukespris' : 'Dagens pumpepris';
+  const pumpChangeSuffix = isWeekly ? 'fra forrige uke' : 'fra forrige dag';
+  const noPumpHint = isWeekly ? 'Ingen ukentlige data' : 'Kun månedlige data';
 
   // Oppdater kildevisning
   const sourceRef = document.getElementById('source-ref');
@@ -2253,19 +2371,20 @@ function renderKPIs(data, baseMonth) {
     const fileLink = src.sourceUrl
       ? `<a href="${src.sourceUrl}" target="_blank" rel="noopener"
           style="color:var(--ng-mid);text-decoration:none;font-weight:600"
-          title="Last ned ${src.sourceFile}">${src.sourceFile}</a>`
+          title="${src.sourceFile || 'Åpne kilde'}">${src.sourceFile || src.sourceUrl}</a>`
       : '';
+    const basisText = src.priceBasis ? ` · ${src.priceBasis}` : '';
     sourceRef.innerHTML = [
-      `<span class="source-ref-line">${syncText !== '—' ? syncText : '&nbsp;'}</span>`,
+      `<span class="source-ref-line">${syncText !== '—' ? syncText + basisText : (basisText ? basisText.slice(3) : '&nbsp;')}</span>`,
       `<span class="source-ref-line">${fileLink ? 'Kilde: ' + fileLink : '&nbsp;'}</span>`,
     ].join('');
   }
 
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi-ng" style="background:var(--key-number-bg-1);color:var(--key-number-text-1)">
-      <div class="kpi-ng-label">Dagens pumpepris</div>
+      <div class="kpi-ng-label">${pumpLabel}</div>
       <div class="kpi-ng-value">${latestPump ? fmt(latestPump.diesel) + ' <span style="font-size:1rem;font-weight:500">' + src.currency + '/L</span>' : '—'}</div>
-      <div class="kpi-ng-sub">${latestPump ? (pumpDayChange != null ? kpiChangeHtml(pumpDayChange, 'fra forrige dag') : '') : 'Kun månedlige data'}</div>
+      <div class="kpi-ng-sub">${latestPump ? (pumpDayChange != null ? kpiChangeHtml(pumpDayChange, pumpChangeSuffix) : '') : noPumpHint}</div>
     </div>
     <div class="kpi-ng" style="background:var(--key-number-bg-2);color:var(--key-number-text-2)">
       <div class="kpi-ng-label">Snitt diesel – ${monthLabel(selected.month)}</div>
@@ -2364,7 +2483,7 @@ function renderCharts(data, baseMonth) {
   const rows       = data.filter(r => r.diesel != null || r.hvo != null).slice(-n);
 
   document.getElementById('price-chart-title').textContent =
-    `Prisutvikling eks. mva (${src.currency}/L) – ${src.flag} ${src.label}`;
+    `Prisutvikling ${src.priceBasis || 'eks. mva'} (${src.currency}/L) – ${src.flag} ${src.label}`;
 
   const legend = document.getElementById('price-chart-legend');
   if (legend) {
@@ -2482,11 +2601,17 @@ function renderTable(data, baseMonth) {
     noteEl.style.display = 'inline-flex';
     if (isCurrentMonth) {
       const dayOfMonth = now.getDate();
+      const partialHint = src.cadence === 'weekly'
+        ? `snitt basert på ukentlige punkter t.o.m. ${dayOfMonth}. ${now.toLocaleString('no-NO', {month:'long'})}`
+        : `snitt basert på data t.o.m. ${dayOfMonth}. ${now.toLocaleString('no-NO', {month:'long'})}`;
       noteEl.className = 'data-note';
-      noteEl.innerHTML = `⚠ Siste måned (${monthLabel(latestMonth)}) er delvis – snitt basert på data t.o.m. ${dayOfMonth}. ${now.toLocaleString('no-NO', {month:'long'})}`;
+      noteEl.innerHTML = `⚠ Siste måned (${monthLabel(latestMonth)}) er delvis – ${partialHint}`;
     } else {
       noteEl.className = 'data-note complete';
-      noteEl.innerHTML = `✓ Data t.o.m. ${monthLabel(latestMonth)} (fullstendig månedssnitt)`;
+      const completeHint = src.cadence === 'weekly'
+        ? `✓ Data t.o.m. ${monthLabel(latestMonth)} (månedssnitt av ukentlige punkter)`
+        : `✓ Data t.o.m. ${monthLabel(latestMonth)} (fullstendig månedssnitt)`;
+      noteEl.innerHTML = completeHint;
     }
   } else {
     noteEl.style.display = 'none';
@@ -2909,6 +3034,9 @@ function averageDailyField(rows, field) {
 }
 
 function buildDailyTableRows(rows) {
+  const src = getSource();
+  const isWeekly = src?.cadence === 'weekly';
+  const pointUnit = isWeekly ? 'u.' : 'd.';
   const deltaClass = v => v == null ? '' : Math.abs(v) < 0.0001 ? 'flat' : v > 0 ? 'up' : 'down';
   const deltaLabel = v => {
     if (v == null) return '—';
@@ -2933,9 +3061,9 @@ function buildDailyTableRows(rows) {
     const avgDelta = avgDiesel != null && prevMonthAvgDiesel != null ? avgDiesel - prevMonthAvgDiesel : null;
     htmlParts.push(
       `<tr class="compare-month-avg">` +
-      `<td>Snitt ${monthLabel(monthKey)} <span style="font-weight:400;font-size:0.75rem;color:var(--text-muted)">(${monthRows.length} d.)</span></td>` +
-      `<td>${formatPrice(avgDiesel)}</td>` +
-      `<td>${formatPrice(avgHvo)}</td>` +
+      `<td>Snitt ${monthLabel(monthKey)} <span style="font-weight:400;font-size:0.75rem;color:var(--text-muted)">(${monthRows.length} ${pointUnit})</span></td>` +
+      `<td class="col-diesel">${formatPrice(avgDiesel)}</td>` +
+      `<td class="col-hvo">${formatPrice(avgHvo)}</td>` +
       `<td>${deltaLabel(avgDelta)}</td>` +
       `</tr>`
     );
@@ -2951,8 +3079,8 @@ function buildDailyTableRows(rows) {
       htmlParts.push(
         `<tr>` +
         `<td><strong>${monthLabel(row.date)}</strong></td>` +
-        `<td>${formatPrice(diesel)}</td>` +
-        `<td>${formatPrice(hvo)}</td>` +
+        `<td class="col-diesel">${formatPrice(diesel)}</td>` +
+        `<td class="col-hvo">${formatPrice(hvo)}</td>` +
         `<td>${deltaLabel(delta)}</td>` +
         `</tr>`
       );
@@ -2966,15 +3094,16 @@ function renderDailyHistoryTable() {
   const src = getSource();
   if (!src || !src.hasBothViews || !src.hasDaily) return;
 
+  const isWeekly = src.cadence === 'weekly';
   document.getElementById('daily-history-title').textContent =
-    `Daglige priser – ${src.label}`;
+    `${isWeekly ? 'Ukentlige priser' : 'Daglige priser'} – ${src.label}`;
   document.getElementById('th-daily-history-diesel').textContent = `Diesel (${src.currency}/L)`;
   document.getElementById('th-daily-history-hvo').textContent = `HVO100 (${src.currency}/L)`;
 
   const rows = [...getFilteredDailyData()].reverse();
   if (!rows.length) {
     document.getElementById('dailyHistoryTableBody').innerHTML =
-      `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Ingen daglige data for valgt periode</td></tr>`;
+      `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Ingen ${isWeekly ? 'ukentlige' : 'daglige'} data for valgt periode</td></tr>`;
     return;
   }
   document.getElementById('dailyHistoryTableBody').innerHTML = buildDailyTableRows(rows);
@@ -3094,7 +3223,7 @@ const TAX_CHANGES = [
 function taxCountryCode(sourceKey) {
   if (sourceKey === 'NO_ck') return 'NO';
   if (sourceKey === 'DK_ck' || sourceKey === 'DK_ck_inkl') return 'DK';
-  if (sourceKey === 'SE_ck' || sourceKey === 'SE_preem') return 'SE';
+  if (sourceKey === 'SE_ck' || sourceKey === 'SE_preem' || sourceKey === 'SE_eu') return 'SE';
   return null;
 }
 
@@ -3684,6 +3813,7 @@ function render() {
   const hasBothViews = !!(src.hasBothViews && src.hasDaily);
 
   updateViewControls();
+  syncSourceFuelControls(src);
 
   document.getElementById('monthly-sections').style.display = hasRenderableData ? '' : 'none';
   document.getElementById('daily-history-section').style.display =
@@ -3692,7 +3822,11 @@ function render() {
     (!hasBothViews && src.hasDaily) ? '' : 'none';
 
   document.getElementById('th-month').textContent = 'Måned';
-  document.getElementById('table-title').textContent = `Månedlige snitt – ${src.label}`;
+  const monthlyTitleSuffix = src.cadence === 'weekly'
+    ? ' (snitt av ukentlige punkter)'
+    : '';
+  document.getElementById('table-title').textContent =
+    `Månedlige snitt – ${src.label}${monthlyTitleSuffix}`;
 
   try { renderDailyHistoryTable(); } catch(e) { console.error('Daily history table:', e); }
   try { renderDailyTable(); } catch(e) { console.error('Daily table:', e); }
@@ -3781,13 +3915,29 @@ function toggleNewsSidebar() {
 }
 
 // ── News widget ───────────────────────────────────────────────────────────────
+const NEWS_FLAG_SVG = {
+  NO: '<svg viewBox="0 0 22 15" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="22" height="15" fill="#EF2B2D"/><rect y="5" width="22" height="5" fill="#fff"/><rect x="7" width="5" height="15" fill="#fff"/><rect y="6" width="22" height="3" fill="#002868"/><rect x="8" width="3" height="15" fill="#002868"/></svg>',
+  SE: '<svg viewBox="0 0 22 15" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="22" height="15" fill="#006AA7"/><rect y="6" width="22" height="3" fill="#FECC02"/><rect x="8" width="3" height="15" fill="#FECC02"/></svg>',
+};
+
 const NEWS_FEEDS = [
-  { url: 'https://news.google.com/rss/search?q=drivstoffpris+diesel+Norge&hl=no&gl=NO&ceid=NO:no',  label: 'NO' },
-  { url: 'https://news.google.com/rss/search?q=bensinpris+dieselpris+Sverige&hl=sv&gl=SE&ceid=SE:sv', label: 'SE' },
-  { url: 'https://news.google.com/rss/search?q=r%C3%A5oljepris+oljepris&hl=no&gl=NO&ceid=NO:no',    label: 'Råolje' },
-  { url: 'https://news.google.com/rss/search?q=HVO+biodrivstoff+drivstoff&hl=no&gl=NO&ceid=NO:no',  label: 'HVO' },
+  { url: 'https://news.google.com/rss/search?q=drivstoffpris+diesel+Norge&hl=no&gl=NO&ceid=NO:no',  country: 'Norge',   flagCode: 'NO' },
+  { url: 'https://news.google.com/rss/search?q=bensinpris+dieselpris+Sverige&hl=sv&gl=SE&ceid=SE:sv', country: 'Sverige', flagCode: 'SE' },
+  { url: 'https://news.google.com/rss/search?q=r%C3%A5oljepris+oljepris&hl=no&gl=NO&ceid=NO:no',    country: 'Norge',   flagCode: 'NO' },
+  { url: 'https://news.google.com/rss/search?q=HVO+biodrivstoff+drivstoff&hl=no&gl=NO&ceid=NO:no',  country: 'Norge',   flagCode: 'NO' },
 ];
 const RSS2JSON = 'https://api.rss2json.com/v1/api.json?num=5&rss_url=';
+
+function newsDateLabel(dateStr) {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return '';
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+  return date.toLocaleDateString('no-NO', {
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  });
+}
 
 function relTime(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000;
@@ -3796,13 +3946,29 @@ function relTime(dateStr) {
   return Math.round(diff / 86400) + ' d siden';
 }
 
+function renderNewsItems(items) {
+  return items.map(item => {
+    const flagSvg = NEWS_FLAG_SVG[item.flagCode] || '';
+    const dateText = newsDateLabel(item.date);
+    const relText = relTime(item.date);
+    return `
+    <a class="news-item" href="${item.link}" target="_blank" rel="noopener">
+      <div class="news-item-meta">
+        <span class="news-item-country"><span class="news-item-flag">${flagSvg}</span>${item.country}</span>
+        <span class="news-item-date">${dateText}<span class="news-item-rel">· ${relText}</span></span>
+      </div>
+      <div class="news-item-headline">${item.title}</div>
+    </a>`;
+  }).join('');
+}
+
 function stripHtml(html) {
   const d = document.createElement('div');
   d.innerHTML = html;
   return d.textContent || '';
 }
 
-const NEWS_CACHE_KEY = 'drivstoff_news_cache';
+const NEWS_CACHE_KEY = 'drivstoff_news_cache_v4';
 const NEWS_CACHE_TTL_MS = 30 * 60 * 1000;
 
 async function loadNews(forceRefresh = false) {
@@ -3814,9 +3980,9 @@ async function loadNews(forceRefresh = false) {
     try {
       const raw = sessionStorage.getItem(NEWS_CACHE_KEY);
       if (raw) {
-        const { html, timestamp } = JSON.parse(raw);
-        if (Date.now() - timestamp < NEWS_CACHE_TTL_MS) {
-          list.innerHTML = html;
+        const { items, timestamp } = JSON.parse(raw);
+        if (Array.isArray(items) && Date.now() - timestamp < NEWS_CACHE_TTL_MS) {
+          list.innerHTML = renderNewsItems(items);
           btn.disabled = false;
           return;
         }
@@ -3840,10 +4006,11 @@ async function loadNews(forceRefresh = false) {
         if (seen.has(item.link)) continue;
         seen.add(item.link);
         allItems.push({
-          title:  item.title,
-          link:   item.link,
-          source: item.author || feed.label,
-          date:   item.pubDate,
+          title:    item.title,
+          link:     item.link,
+          country:  feed.country,
+          flagCode: feed.flagCode,
+          date:     item.pubDate,
         });
       }
     } catch (fetchError) {}
@@ -3856,22 +4023,12 @@ async function loadNews(forceRefresh = false) {
   }
 
   allItems.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  const html = allItems.slice(0, 20).map(item => `
-    <a class="news-item" href="${item.link}" target="_blank" rel="noopener">
-      <div class="news-item-meta">
-        <span class="news-item-time">${relTime(item.date)}</span>
-        <span class="news-item-source">${item.source}</span>
-      </div>
-      <div class="news-item-headline">${item.title}</div>
-    </a>
-  `).join('');
-
-  list.innerHTML = html;
+  const items = allItems.slice(0, 20);
+  list.innerHTML = renderNewsItems(items);
   btn.disabled = false;
 
   try {
-    sessionStorage.setItem(NEWS_CACHE_KEY, JSON.stringify({ html, timestamp: Date.now() }));
+    sessionStorage.setItem(NEWS_CACHE_KEY, JSON.stringify({ items, timestamp: Date.now() }));
   } catch (storageError) {}
 }
 
