@@ -1872,9 +1872,10 @@ async function fetchPriceData() {
   }
   for (const [key, meta] of Object.entries(SOURCE_META)) {
     const isDkSource = key === 'DK_ck' || key === 'DK_ck_inkl';
+    const todayIso = getTodayIsoDate();
     let dailyData = dailyRows
       .filter(r => r.source === key)
-      .filter(r => !isDkSource || r.date >= '2020-01-01')
+      .filter(r => !isDkSource || (r.date >= '2020-01-01' && r.date <= todayIso))
       .map(({ date, diesel, hvo }) => ({ date, diesel, hvo }));
     if (key === 'NO_ck' && noCsvRows.length) {
       dailyData = noCsvRows;
@@ -2146,6 +2147,11 @@ function getYearRange() {
 function getCurrentYearMonth() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function getTodayIsoDate() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
 function monthDiffMonths(a, b) {

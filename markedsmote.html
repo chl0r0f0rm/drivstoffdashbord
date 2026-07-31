@@ -722,7 +722,7 @@ try {
   .pump-price-card .price-block.hvo .value { color: var(--hvo); }
   .pump-price-grid {
     display: grid;
-    grid-template-columns: auto 1fr auto 1fr;
+    grid-template-columns: auto 1fr 1fr 1fr;
     column-gap: 0;
     row-gap: 8px;
     align-items: stretch;
@@ -734,7 +734,7 @@ try {
     letter-spacing: 0.06em;
     color: var(--text-muted);
     line-height: 1.2;
-    padding: 0 8px;
+    padding: 0 10px;
     white-space: nowrap;
   }
   .pump-col-label.delta {
@@ -802,18 +802,28 @@ try {
     text-align: center;
     align-self: stretch;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    align-items: baseline;
     justify-content: center;
-    gap: 1px;
+    gap: 4px;
     white-space: nowrap;
-    padding: 0 8px;
+    padding: 0 10px;
     line-height: 1.15;
+  }
+  .pump-delta-cell .day-arrow {
+    font-size: 0.85rem;
+    line-height: 1;
   }
   .pump-delta-cell .delta-kr {
     font-size: 0.78rem;
     font-weight: 800;
   }
+  .pump-delta-cell.up,
+  .pump-delta-cell.up .day-arrow { color: var(--red, #C0392B); }
+  .pump-delta-cell.down,
+  .pump-delta-cell.down .day-arrow { color: var(--green, #1E8449); }
+  .pump-delta-cell.flat,
+  .pump-delta-cell.flat .day-arrow { color: var(--text-muted); }
   .pump-col-label.delta,
   .pump-delta-cell,
   .pump-col-label.avg,
@@ -2261,7 +2271,9 @@ const BRENT_EVENTS = [
   { date: '2026-06-17', label: 'Våpenhvile Iran' },
   { date: '2026-07-12', label: 'Ny spenning i Hormuz' },
   { date: '2026-07-23', label: 'Houthi angriper tankere · Brent $100+' },
-  { date: '2026-07-25', label: 'USA–Iran pauser angrep' }
+  { date: '2026-07-25', label: 'USA–Iran pauser angrep' },
+  { date: '2026-07-29', label: 'USA ny angrepsbølge Iran · Brent ~$93' },
+  { date: '2026-07-31', label: 'Hormuz-trafikk tar seg opp · Brent ~$88' }
 ];
 
 function eventIndexForDate(labels, eventDate) {
@@ -2506,6 +2518,11 @@ async function loadNoDailyCsv() {
   }
 }
 
+function getTodayIsoDate() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
 async function loadFuelDaily(sourceKey) {
   if (sourceKey === 'NO_ck') {
     const csvRows = await loadNoDailyCsv();
@@ -2515,9 +2532,11 @@ async function loadFuelDaily(sourceKey) {
   const rows = await fetchAllRows(
     `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&date=gte.${DATA_HISTORY_START}&order=date.asc`
   );
+  const todayIso = getTodayIsoDate();
   return rows
     .map(r => ({ date: r.date, diesel: r.diesel, hvo: r.hvo }))
-    .filter(r => r.date >= DATA_HISTORY_START);
+    .filter(r => r.date >= DATA_HISTORY_START)
+    .filter(r => sourceKey !== 'DK_ck' || r.date <= todayIso);
 }
 
 async function setFuelCountry(countryKey) {
@@ -3313,17 +3332,21 @@ function formatWeeklyTrendPct(v) {
 }
 
 function dayBeforeDeltaHtml(pct, kr, currency) {
-  if (pct == null && kr == null) return '';
+  if (pct == null && kr == null) {
+    return `<div class="pump-delta-cell flat">—</div>`;
+  }
   const cls = deltaClass(pct != null ? pct : kr);
   const arrow = pct == null
     ? (kr == null || Math.abs(kr) < 0.005 ? '→' : (kr > 0 ? '↑' : '↓'))
     : (Math.abs(pct) < 0.0005 ? '→' : (pct > 0 ? '↑' : '↓'));
-  if (kr == null) return '';
+  if (kr == null) {
+    return `<div class="pump-delta-cell flat">—</div>`;
+  }
   return (
-    `<span class="day-delta ${cls}">` +
+    `<div class="pump-delta-cell ${cls}">` +
       `<span class="day-arrow">${arrow}</span>` +
-      `<span class="day-kr">${formatSignedPrice(kr, currency)}</span>` +
-    `</span>`
+      `<span class="delta-kr">${formatSignedPrice(kr, currency)}</span>` +
+    `</div>`
   );
 }
 
@@ -4262,7 +4285,9 @@ async function fetchPumpStats(sourceKey) {
   }
 
   if (!latest) {
-    const latestUrl = `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&order=date.desc&limit=1`;
+    const todayIso = getTodayIsoDate();
+    const dateCap = sourceKey === 'DK_ck' ? `&date=lte.${todayIso}` : '';
+    const latestUrl = `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}${dateCap}&order=date.desc&limit=1`;
     const latestRes = await fetch(latestUrl, { headers: supabaseHeaders() });
     if (!latestRes.ok) throw new Error('Supabase ' + latestRes.status);
     const latestRows = await latestRes.json();
@@ -4286,7 +4311,7 @@ async function fetchPumpStats(sourceKey) {
       };
     }
 
-    const twoDaysUrl = `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}&order=date.desc&limit=2`;
+    const twoDaysUrl = `${SUPABASE_URL}/rest/v1/daily_price_data?select=date,diesel,hvo&source=eq.${sourceKey}${dateCap}&order=date.desc&limit=2`;
     const twoDaysRes = await fetch(twoDaysUrl, { headers: supabaseHeaders() });
     if (!twoDaysRes.ok) throw new Error('Supabase ' + twoDaysRes.status);
     const twoDays = await twoDaysRes.json();
@@ -4396,28 +4421,20 @@ function renderPumpPrices(entries) {
       d.setMonth(d.getMonth() - 1);
       return MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear();
     })();
-    const dieselDeltaKrValue = latest.diesel != null && avgPrevMonthDiesel != null
-      ? latest.diesel - avgPrevMonthDiesel
-      : null;
-    const hvoDeltaKrValue = latest.hvo != null && avgPrevMonthHvo != null
-      ? latest.hvo - avgPrevMonthHvo
-      : null;
-    const dieselDeltaKr = dieselDeltaKrValue != null ? formatSignedPrice(dieselDeltaKrValue, currency) : '—';
-    const hvoDeltaKr = hvoDeltaKrValue != null ? formatSignedPrice(hvoDeltaKrValue, currency) : '—';
     return `<div class="pump-price-card">` +
       `<div class="country">${flag}<span>${label} · Circle K</span></div>` +
       `<div class="pump-price-grid">` +
       `<div></div>` +
       `<div class="pump-col-label">Siste pumpepris</div>` +
-      `<div class="pump-col-label delta">Nyeste vs snitt</div>` +
+      `<div class="pump-col-label delta">Fra i går</div>` +
       `<div class="pump-col-label avg">Snitt ${prevMonthLabel}</div>` +
       `<div class="pump-fuel-name">Diesel</div>` +
-      `<div class="pump-price-cell diesel"><div class="value-row"><div class="value">${formatPrice(latest.diesel)} <span class="currency">${currency}</span></div>${dayBeforeDeltaHtml(pumpDayChangeDieselPct, pumpDayChangeDieselKr, currency)}</div></div>` +
-      `<div class="pump-delta-cell ${deltaClass(dieselDeltaKrValue)}"><span class="delta-kr">${dieselDeltaKr}</span></div>` +
+      `<div class="pump-price-cell diesel"><div class="value">${formatPrice(latest.diesel)} <span class="currency">${currency}</span></div></div>` +
+      dayBeforeDeltaHtml(pumpDayChangeDieselPct, pumpDayChangeDieselKr, currency) +
       `<div class="pump-price-cell diesel avg"><div class="value">${avgPrevMonthDiesel != null ? formatPrice(avgPrevMonthDiesel) : '—'} <span class="currency">${currency}</span></div></div>` +
       `<div class="pump-fuel-name">HVO100</div>` +
-      `<div class="pump-price-cell hvo"><div class="value-row"><div class="value">${formatPrice(latest.hvo)} <span class="currency">${currency}</span></div>${dayBeforeDeltaHtml(pumpDayChangeHvoPct, pumpDayChangeHvoKr, currency)}</div></div>` +
-      `<div class="pump-delta-cell ${deltaClass(hvoDeltaKrValue)}"><span class="delta-kr">${hvoDeltaKr}</span></div>` +
+      `<div class="pump-price-cell hvo"><div class="value">${formatPrice(latest.hvo)} <span class="currency">${currency}</span></div></div>` +
+      dayBeforeDeltaHtml(pumpDayChangeHvoPct, pumpDayChangeHvoKr, currency) +
       `<div class="pump-price-cell hvo avg"><div class="value">${avgPrevMonthHvo != null ? formatPrice(avgPrevMonthHvo) : '—'} <span class="currency">${currency}</span></div></div>` +
       `</div>` +
       `<div class="pump-card-footer">` +

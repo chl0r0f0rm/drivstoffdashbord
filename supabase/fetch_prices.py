@@ -781,7 +781,12 @@ def _parse_ck_dk_pdf(pdf_bytes, min_month=DK_MIN_MONTH):
     monthly_by_month = {row["month"]: row for row in monthly_rows}
     daily_by_date = {row["date"]: row for row in daily_rows}
     monthly_rows = [monthly_by_month[key] for key in sorted(monthly_by_month)]
-    daily_rows = [daily_by_date[key] for key in sorted(daily_by_date)]
+    today = date.today().isoformat()
+    daily_rows = [
+        daily_by_date[key]
+        for key in sorted(daily_by_date)
+        if key <= today
+    ]
     return monthly_rows, daily_rows
 
 
