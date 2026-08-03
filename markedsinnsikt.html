@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="no" class="auth-pending">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1683,6 +1683,25 @@ try {
     font-size: 0.72rem;
     color: var(--text-muted);
   }
+
+  html.auth-pending body { visibility: hidden; }
+  .header-logout-btn {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--control-bg, rgba(255,255,255,0.85));
+    color: var(--text-muted, #6B6B6B);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .header-logout-btn:hover {
+    border-color: var(--ng-mid);
+    color: var(--ng-mid);
+  }
+
 </style>
 </head>
 <body class="ng-orange">
@@ -1726,6 +1745,7 @@ try {
           <option value="1800000">30 min</option>
         </select>
       </label>
+      <button type="button" class="header-logout-btn" id="ng-logout-btn">Logg ut</button>
       <button type="button" class="theme-switch" id="themeToggle" role="switch" aria-checked="false" aria-label="Bytt til mørk modus" title="Bytt til mørk modus">
         <span class="theme-switch-track" aria-hidden="true">
           <svg class="theme-switch-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -1977,6 +1997,8 @@ try {
 
 <footer>Data: 🇳🇴🇩🇰🇸🇪 Circle K (daglig pumpepris) · Circle K SE månedlig (SEK/L eks. mva) · Brent: EIA via FRED DCOILBRENTEU</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
 <script>
 const SUPABASE_URL  = 'https://fnkdbuqsschkvpzeumbz.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZua2RidXFzc2Noa3ZwemV1bWJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NTM5MjQsImV4cCI6MjA5MTEyOTkyNH0.bI5r0wyEME9BIBqBAINKkzvYCmHlY1QtZwVYHYRiLpI';
@@ -2587,6 +2609,11 @@ function monthEndDate(monthKey) {
   if (!year || !month) return null;
   const lastDay = new Date(year, month, 0).getDate();
   return `${parts[0]}-${parts[1]}-${String(lastDay).padStart(2, '0')}`;
+}
+
+function isMonthComplete(monthKey, asOfDate) {
+  const end = monthEndDate(monthKey);
+  return end != null && asOfDate != null && asOfDate > end;
 }
 
 function buildFuelChartSeries(dailyRows, monthlyRows) {
@@ -3425,8 +3452,10 @@ function periodsOverlap(aStart, aEnd, bStart, bEnd) {
 
 function monthlyAveragesFromDaily(dailyRows) {
   const buckets = {};
+  let latestDate = null;
   (dailyRows || []).forEach(row => {
     if (row.diesel == null || !row.date) return;
+    if (!latestDate || row.date > latestDate) latestDate = row.date;
     const month = String(row.date).slice(0, 7);
     if (!buckets[month]) buckets[month] = { diesel: [], hvo: [] };
     buckets[month].diesel.push(Number(row.diesel));
@@ -3434,7 +3463,7 @@ function monthlyAveragesFromDaily(dailyRows) {
       buckets[month].hvo.push(Number(row.hvo));
     }
   });
-  return Object.keys(buckets).sort().map(month => {
+  return Object.keys(buckets).sort().filter(month => isMonthComplete(month, latestDate)).map(month => {
     const dieselVals = buckets[month].diesel;
     const hvoVals = buckets[month].hvo;
     return {
@@ -3451,10 +3480,16 @@ function monthlyAveragesFromDaily(dailyRows) {
 
 function monthlyRowsForMom(monthlyRows, dailyRows) {
   const fromDaily = monthlyAveragesFromDaily(dailyRows);
-  if (!fromDaily.length) return monthlyRows || [];
+  let latestDate = null;
+  (dailyRows || []).forEach(row => {
+    if (row.date && (!latestDate || row.date > latestDate)) latestDate = row.date;
+  });
+
   const byMonth = {};
   (monthlyRows || []).forEach(row => {
-    if (row.month) byMonth[row.month] = row;
+    if (!row.month) return;
+    if (latestDate && !isMonthComplete(row.month, latestDate)) return;
+    byMonth[row.month] = row;
   });
   fromDaily.forEach(row => {
     byMonth[row.month] = row;
@@ -3836,8 +3871,14 @@ function shiftMonthKey(monthKey, deltaMonths) {
 
 function buildFuelMonthlyByKey() {
   const monthlyByKey = {};
+  let latestDate = null;
+  (fuelDailyAll || []).forEach(row => {
+    if (row.date && (!latestDate || row.date > latestDate)) latestDate = row.date;
+  });
   (fuelMonthlyAll || []).forEach(r => {
-    if (r.month) monthlyByKey[r.month] = r;
+    if (!r.month) return;
+    if (latestDate && !isMonthComplete(r.month, latestDate)) return;
+    monthlyByKey[r.month] = r;
   });
   monthlyAveragesFromDaily(fuelDailyAll || []).forEach(r => {
     if (r.month) monthlyByKey[r.month] = r;
@@ -3851,6 +3892,7 @@ function buildMonthEndMarkers(dailyRows, monthlyByKey, monthStep = 1, priceMode 
   const hvoLabels = dailyRows.map(() => null);
   const step = Math.max(1, monthStep);
   const useMonthAvg = priceMode === 'monthAvg';
+  const asOfDate = dailyRows.length ? dailyRows[dailyRows.length - 1].date : null;
 
   const lastIndexByMonth = {};
   dailyRows.forEach((row, index) => {
@@ -3861,13 +3903,14 @@ function buildMonthEndMarkers(dailyRows, monthlyByKey, monthStep = 1, priceMode 
   const monthKeys = Object.keys(lastIndexByMonth).sort();
   for (let i = 0; i < monthKeys.length; i++) {
     const currKey = monthKeys[i];
+    if (!isMonthComplete(currKey, asOfDate)) continue;
     const monthNumber = Number(currKey.split('-')[1]);
     if (step > 1 && monthNumber % step !== 0) continue;
 
     const prevKey = step > 1
       ? shiftMonthKey(currKey, -step)
       : (i > 0 ? monthKeys[i - 1] : null);
-    if (!prevKey) continue;
+    if (!prevKey || !isMonthComplete(prevKey, asOfDate)) continue;
 
     const index = lastIndexByMonth[currKey];
     const prevIndex = lastIndexByMonth[prevKey];
@@ -4748,7 +4791,23 @@ document.addEventListener('keydown', (event) => {
 });
 
 window.addEventListener('resize', () => { try { boot(); } catch (e) {} });
-boot();
+(async function guardDashboard() {
+  try {
+    const session = await NgAuth.requireSession();
+    if (!session) return;
+    const logoutBtn = document.getElementById('ng-logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        try { await NgAuth.signOut(); } catch (e) { console.error(e); }
+        location.replace('login.html');
+      });
+    }
+    boot();
+  } catch (error) {
+    console.error('Auth gate failed:', error);
+    location.replace('login.html');
+  }
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="no" class="auth-ready">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logg inn – NG Drivstoff</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff8f0;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --muted: #6b6b6b;
+    --border: #e0d9d2;
+    --orange: #e85c0d;
+    --orange-hover: #c94e0a;
+    --error-bg: #fdecea;
+    --error-text: #9b2c1f;
+    --ok-bg: #e5f4ec;
+    --ok-text: #1f6b45;
+    --warn-bg: #fff4e5;
+    --warn-text: #8a4b00;
+    --shadow: 0 10px 30px rgba(26, 26, 26, 0.08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Inter, system-ui, sans-serif;
+    background:
+      radial-gradient(circle at top right, rgba(232, 92, 13, 0.16), transparent 40%),
+      linear-gradient(180deg, #fff8f0 0%, #fff3e6 100%);
+    color: var(--text);
+    display: grid;
+    place-items: center;
+    padding: 24px;
+  }
+  .card {
+    width: min(440px, 100%);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 28px 28px 24px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .brand img { height: 28px; width: auto; }
+  h1 {
+    margin: 0 0 6px;
+    font-size: 1.35rem;
+    letter-spacing: -0.02em;
+  }
+  .lead {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+  .notice {
+    margin: 0 0 18px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--warn-bg);
+    color: var(--warn-text);
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 18px;
+    background: #fff0e0;
+    padding: 4px;
+    border-radius: 10px;
+  }
+  .tab {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.86rem;
+    padding: 10px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .tab.active {
+    background: #fff;
+    color: var(--text);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font: inherit;
+    font-size: 1rem;
+    background: #fff;
+    color: var(--text);
+  }
+  input:focus {
+    outline: 2px solid rgba(232, 92, 13, 0.25);
+    border-color: var(--orange);
+  }
+  .field { margin-bottom: 14px; }
+  .actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  button.action {
+    appearance: none;
+    border: 0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  button.action:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--orange);
+    color: #fff;
+    flex: 1 1 auto;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--orange-hover); }
+  .btn-secondary {
+    background: #fff0e0;
+    color: var(--orange);
+  }
+  .msg {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    display: none;
+  }
+  .msg.error {
+    display: block;
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+  .msg.ok {
+    display: block;
+    background: var(--ok-bg);
+    color: var(--ok-text);
+  }
+  .hint {
+    margin-top: 16px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .code-input {
+    letter-spacing: 0.28em;
+    font-weight: 700;
+    text-align: center;
+    font-size: 1.35rem;
+  }
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">
+      <img src="assets/logo.svg" alt="NG Nordic">
+    </div>
+    <h1 id="pageTitle">Logg inn</h1>
+    <p class="lead">Internt verktøy for drivstoffpriser. Kun <strong>@ngn.no</strong>-adresser.</p>
+    <p class="notice">
+      Dette er <strong>ikke</strong> NG SSO / Vercel-innlogging.
+      Lag et <strong>eget passord bare for denne siden</strong> — ikke gjenbruk passordet du bruker ellers på jobb.
+    </p>
+
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab active" id="tabLogin" data-mode="login">Logg inn</button>
+      <button type="button" class="tab" id="tabRegister" data-mode="register">Registrer</button>
+    </div>
+
+    <section id="panel-auth" class="panel active">
+      <div class="field">
+        <label for="email">E-post</label>
+        <input id="email" type="email" autocomplete="username" placeholder="navn@ngn.no" required>
+      </div>
+      <div class="field">
+        <label for="password">Passord for denne siden</label>
+        <input id="password" type="password" autocomplete="current-password" placeholder="Minst 8 tegn" required>
+      </div>
+      <div class="field" id="passwordConfirmField" style="display:none">
+        <label for="passwordConfirm">Bekreft passord</label>
+        <input id="passwordConfirm" type="password" autocomplete="new-password" placeholder="Gjenta passordet">
+      </div>
+      <div class="actions">
+        <button type="button" class="action btn-primary" id="submitBtn">Logg inn</button>
+      </div>
+    </section>
+
+    <section id="panel-code" class="panel">
+      <p class="lead" style="margin-bottom:14px">Vi har sendt en verifikasjonskode til e-posten din. Skriv den inn for å aktivere kontoen.</p>
+      <div class="field">
+        <label for="code">Verifikasjonskode</label>
+        <input id="code" class="code-input" inputmode="numeric" autocomplete="one-time-code" placeholder="••••••" maxlength="8">
+      </div>
+      <div class="actions">
+        <button type="button" class="action btn-secondary" id="backBtn">Tilbake</button>
+        <button type="button" class="action btn-primary" id="verifyBtn">Bekreft konto</button>
+      </div>
+      <button type="button" class="action btn-secondary" id="resendBtn" style="margin-top:10px;width:100%">Send ny kode</button>
+    </section>
+
+    <div id="message" class="msg" role="status" aria-live="polite"></div>
+    <p class="hint">Siden inneholder ikke sensitiv intern data, men er kun ment for NG-ansatte med @ngn.no-adresse.</p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const nextPage = sanitizeNext(params.get('next'));
+    let mode = 'login';
+
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const passwordConfirmInput = document.getElementById('passwordConfirm');
+    const passwordConfirmField = document.getElementById('passwordConfirmField');
+    const codeInput = document.getElementById('code');
+    const messageEl = document.getElementById('message');
+    const panelAuth = document.getElementById('panel-auth');
+    const panelCode = document.getElementById('panel-code');
+    const submitBtn = document.getElementById('submitBtn');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const resendBtn = document.getElementById('resendBtn');
+    const backBtn = document.getElementById('backBtn');
+    const pageTitle = document.getElementById('pageTitle');
+    const tabLogin = document.getElementById('tabLogin');
+    const tabRegister = document.getElementById('tabRegister');
+
+    function sanitizeNext(value) {
+      if (!value) return 'index.html';
+      const cleaned = String(value).replace(/^\/+/, '');
+      if (!/^[a-zA-Z0-9._-]+\.html(?:\?.*)?$/.test(cleaned)) return 'index.html';
+      return cleaned;
+    }
+
+    function showMessage(text, type) {
+      messageEl.textContent = text || '';
+      messageEl.className = 'msg' + (type ? ' ' + type : '');
+    }
+
+    function setBusy(busy) {
+      [submitBtn, verifyBtn, resendBtn, backBtn, tabLogin, tabRegister].forEach(btn => {
+        btn.disabled = busy;
+      });
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      const isRegister = mode === 'register';
+      tabLogin.classList.toggle('active', !isRegister);
+      tabRegister.classList.toggle('active', isRegister);
+      pageTitle.textContent = isRegister ? 'Opprett konto' : 'Logg inn';
+      submitBtn.textContent = isRegister ? 'Registrer' : 'Logg inn';
+      passwordConfirmField.style.display = isRegister ? 'block' : 'none';
+      passwordInput.autocomplete = isRegister ? 'new-password' : 'current-password';
+      passwordInput.placeholder = isRegister
+        ? 'Eget passord for denne siden (minst 8 tegn)'
+        : 'Passordet du laget for denne siden';
+      showPanel('auth');
+      showMessage('');
+    }
+
+    function showPanel(name) {
+      panelAuth.classList.toggle('active', name === 'auth');
+      panelCode.classList.toggle('active', name === 'code');
+    }
+
+    async function redirectIfLoggedIn() {
+      const session = await NgAuth.getSession();
+      if (session && NgAuth.isAllowedEmail(session.user.email)) {
+        location.replace(nextPage);
+      }
+    }
+
+    async function submitAuth() {
+      showMessage('');
+      const email = emailInput.value;
+      const password = passwordInput.value;
+
+      if (!NgAuth.isAllowedEmail(email)) {
+        showMessage('Kun e-postadresser på @ngn.no er tillatt.', 'error');
+        return;
+      }
+
+      if (mode === 'register' && password !== passwordConfirmInput.value) {
+        showMessage('Passordene er ikke like.', 'error');
+        return;
+      }
+
+      setBusy(true);
+      try {
+        if (mode === 'login') {
+          await NgAuth.signIn(email, password);
+          location.replace(nextPage);
+          return;
+        }
+
+        const result = await NgAuth.signUp(email, password);
+        if (result.session) {
+          location.replace(nextPage);
+          return;
+        }
+        showPanel('code');
+        showMessage('Konto opprettet. Skriv inn verifikasjonskoden fra e-posten.', 'ok');
+        codeInput.focus();
+      } catch (error) {
+        const message = error && error.message ? error.message : 'Noe gikk galt.';
+        showMessage(message, 'error');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function verifyCode() {
+      showMessage('');
+      setBusy(true);
+      try {
+        await NgAuth.verifySignupOtp(emailInput.value, codeInput.value);
+        location.replace(nextPage);
+      } catch (error) {
+        showMessage(error.message || 'Ugyldig eller utløpt kode.', 'error');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function resendCode() {
+      showMessage('');
+      setBusy(true);
+      try {
+        await NgAuth.resendSignupCode(emailInput.value);
+        showMessage('Ny kode er sendt.', 'ok');
+      } catch (error) {
+        showMessage(error.message || 'Kunne ikke sende ny kode.', 'error');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    tabLogin.addEventListener('click', () => setMode('login'));
+    tabRegister.addEventListener('click', () => setMode('register'));
+    submitBtn.addEventListener('click', submitAuth);
+    verifyBtn.addEventListener('click', verifyCode);
+    resendBtn.addEventListener('click', resendCode);
+    backBtn.addEventListener('click', () => {
+      showPanel('auth');
+      showMessage('');
+    });
+
+    [emailInput, passwordInput, passwordConfirmInput].forEach(input => {
+      input.addEventListener('keydown', event => {
+        if (event.key === 'Enter') submitAuth();
+      });
+    });
+    codeInput.addEventListener('keydown', event => {
+      if (event.key === 'Enter') verifyCode();
+    });
+
+    if (params.get('error') === 'domain') {
+      showMessage('Kontoen er ikke på @ngn.no og ble logget ut.', 'error');
+    }
+
+    setMode('login');
+    redirectIfLoggedIn().catch(error => console.error(error));
+  </script>
+</body>
+</html>

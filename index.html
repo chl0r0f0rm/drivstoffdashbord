@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="no" class="auth-pending">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1200,6 +1200,25 @@ try {
     header { padding: 12px 16px; }
     .kpi .value { font-size: 1.4rem; }
   }
+
+  html.auth-pending body { visibility: hidden; }
+  .header-logout-btn {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--control-bg, rgba(255,255,255,0.85));
+    color: var(--text-muted, #6B6B6B);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .header-logout-btn:hover {
+    border-color: var(--ng-mid);
+    color: var(--ng-mid);
+  }
+
 </style>
 </head>
 <body class="ng-orange">
@@ -1224,7 +1243,7 @@ try {
   </div>
   <div class="header-nav">
     <span class="header-nav-hint" title="Bytt dashbord med piltaster" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd></span>
-    <a href="markedsmote.html" class="header-meeting-btn">
+    <a href="markedsinnsikt.html" class="header-meeting-btn">
       <span class="dash-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3l9 4.5-9 4.5L3 7.5 12 3z"/>
@@ -1247,6 +1266,7 @@ try {
           <option value="1800000">30 min</option>
         </select>
       </label>
+      <button type="button" class="header-logout-btn" id="ng-logout-btn">Logg ut</button>
       <button type="button" class="theme-switch" id="themeToggle" role="switch" aria-checked="false" aria-label="Bytt til mørk modus" title="Bytt til mørk modus">
         <span class="theme-switch-track" aria-hidden="true">
           <svg class="theme-switch-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -1679,6 +1699,8 @@ try {
 
 <footer>Data: 🇸🇪 Circle K SE / Preem SE (SEK/L eks. mva) · EU Oil Bulletin SE (EUR/L inkl. avgifter) · 🇩🇰 Circle K DK (DKK/L eks. moms) · 🇳🇴 Circle K NO (NOK/L eks. mva) · BAF Color Line / Fjord Line (NOK/LM) · Månedlig/daglig/ukentlig</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────────────
 const SOURCE_META = {
@@ -2345,20 +2367,6 @@ function renderKPIs(data, baseMonth) {
   const prevPeriodLabel = 'fra forrige mnd';
   const afterBaseHint = 'Velg måned etter basis';
 
-  const avgEndMonth = selected.month > baseMonth ? selected.month : null;
-  const avgPeriodRows = avgEndMonth
-    ? withDiesel.filter(r => r.month > baseMonth && r.month <= avgEndMonth)
-    : [];
-  const avgSurcharge = avgPeriodRows.length > 0
-    ? avgPeriodRows.reduce((sum, r) => sum + (r.diesel / base.diesel - 1) * impact, 0) / avgPeriodRows.length
-    : null;
-  const avgSurPct = avgSurcharge != null
-    ? (avgSurcharge >= 0 ? '+' : '') + (avgSurcharge * 100).toFixed(1) + '%'
-    : '—';
-  const avgPeriodLabel = avgEndMonth && avgPeriodRows.length > 0
-    ? `${monthLabel(baseMonth)} – ${monthLabel(avgEndMonth)}`
-    : (avgEndMonth ? 'Ingen hele måneder etter basis' : afterBaseHint);
-
   const dailyWithDiesel = (src.dailyData || []).filter(r => r.diesel != null);
   const latestPump = dailyWithDiesel.length ? dailyWithDiesel[dailyWithDiesel.length - 1] : null;
   const prevPump = dailyWithDiesel.length > 1 ? dailyWithDiesel[dailyWithDiesel.length - 2] : null;
@@ -2369,6 +2377,21 @@ function renderKPIs(data, baseMonth) {
   const pumpLabel = isWeekly ? 'Siste ukespris' : 'Dagens pumpepris';
   const pumpChangeSuffix = isWeekly ? 'fra forrige uke' : 'fra forrige dag';
   const noPumpHint = isWeekly ? 'Ingen ukentlige data' : 'Kun månedlige data';
+
+  const TREND_WINDOW_DAYS = 7;
+  const recentTrendRows = dailyWithDiesel.slice(-TREND_WINDOW_DAYS);
+  const previousTrendRows = dailyWithDiesel.slice(-TREND_WINDOW_DAYS * 2, -TREND_WINDOW_DAYS);
+  const avg = rows => rows.length
+    ? rows.reduce((sum, row) => sum + Number(row.diesel), 0) / rows.length
+    : null;
+  const trendAvg = avg(recentTrendRows);
+  const prevTrendAvg = avg(previousTrendRows);
+  const trendChange = trendAvg != null && prevTrendAvg != null && prevTrendAvg !== 0
+    ? trendAvg / prevTrendAvg - 1
+    : null;
+  const trendLabel = isWeekly ? '7 ukers snitt' : '7 dagers snitt';
+  const trendChangeSuffix = isWeekly ? 'vs forrige 7 uker' : 'vs forrige 7 dager';
+  const trendHint = isWeekly ? 'Trenger flere ukespunkter' : 'Trenger flere dagspriser';
 
   // Oppdater kildevisning
   const sourceRef = document.getElementById('source-ref');
@@ -2398,19 +2421,19 @@ function renderKPIs(data, baseMonth) {
       <div class="kpi-ng-sub">${kpiChangeHtml(momDiesel, prevPeriodLabel)}</div>
     </div>
     <div class="kpi-ng" style="background:var(--key-number-bg-3);color:var(--key-number-text-3)">
+      <div class="kpi-ng-label">${trendLabel}</div>
+      <div class="kpi-ng-value">${trendAvg != null ? fmt(trendAvg) + ' <span style="font-size:1rem;font-weight:500">' + src.currency + '/L</span>' : '—'}</div>
+      <div class="kpi-ng-sub">${trendAvg != null ? (trendChange != null ? kpiChangeHtml(trendChange, trendChangeSuffix) : `snitt av ${recentTrendRows.length} punkter`) : trendHint}</div>
+    </div>
+    <div class="kpi-ng" style="background:var(--key-number-bg-4);color:var(--key-number-text-4)">
       <div class="kpi-ng-label">Basispris diesel</div>
       <div class="kpi-ng-value">${fmt(base.diesel)} <span style="font-size:1rem;font-weight:500">${src.currency}/L</span></div>
       <div class="kpi-ng-sub">${monthLabel(base.month)}</div>
     </div>
-    <div class="kpi-ng" style="background:var(--key-number-bg-4);color:var(--key-number-text-4)">
+    <div class="kpi-ng" style="background:var(--key-number-bg-1);color:var(--key-number-text-1)">
       <div class="kpi-ng-label">Dieseltillegg${isLatest ? ' nå' : ''}</div>
       <div class="kpi-ng-value">${afterBase ? surPct : '—'}</div>
       <div class="kpi-ng-sub">${afterBase ? (momSurchargePp != null ? kpiChangePpHtml(momSurchargePp, prevPeriodLabel) : 'vs basis ' + monthLabel(baseMonth)) : afterBaseHint}</div>
-    </div>
-    <div class="kpi-ng" style="background:var(--key-number-bg-1);color:var(--key-number-text-1);opacity:0.85">
-      <div class="kpi-ng-label">Snitt dieseltillegg</div>
-      <div class="kpi-ng-value">${avgSurPct}</div>
-      <div class="kpi-ng-sub">${avgPeriodLabel}</div>
     </div>`;
 }
 
@@ -3893,26 +3916,43 @@ document.getElementById('yearFullHistory').addEventListener('change', function()
 // Redraw charts on resize
 window.addEventListener('resize', () => { try { render(); } catch(e) {} });
 
-initThemeControls();
-initAutoRefreshControls();
-
-fetchPriceData()
-  .then(() => fetchBafData().catch(err => {
-    console.error('BAF data:', err);
-    BAF_ROWS = [];
-  }))
-  .then(() => {
-    document.getElementById('loadingOverlay').style.display = 'none';
-    populateYearSliders();
-    populateBaseMonths();
-    populateViewMonthSlider();
-    render();
-  })
-  .catch(err => {
-    document.getElementById('loadingOverlay').innerHTML =
-      '<div class="loading-text loading-error">Kunne ikke laste prisdata. Sjekk nettverkstilgang og oppdater siden.</div>';
-    throw err;
-  });
+(async function guardDashboard() {
+  try {
+    const session = await NgAuth.requireSession();
+    if (!session) return;
+    const logoutBtn = document.getElementById('ng-logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        try { await NgAuth.signOut(); } catch (e) { console.error(e); }
+        location.replace('login.html');
+      });
+    }
+    initThemeControls();
+    initAutoRefreshControls();
+    await fetchPriceData()
+      .then(() => fetchBafData().catch(err => {
+        console.error('BAF data:', err);
+        BAF_ROWS = [];
+      }))
+      .then(() => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        populateYearSliders();
+        populateBaseMonths();
+        populateViewMonthSlider();
+        render();
+      })
+      .catch(err => {
+        document.getElementById('loadingOverlay').innerHTML =
+          '<div class="loading-text loading-error">Kunne ikke laste prisdata. Sjekk nettverkstilgang og oppdater siden.</div>';
+        throw err;
+      });
+    loadNews();
+    setInterval(() => loadNews(true), NEWS_CACHE_TTL_MS);
+  } catch (error) {
+    console.error('Auth gate failed:', error);
+    location.replace('login.html');
+  }
+})();
 
 // ── News sidebar toggle ────────────────────────────────────────────────────────
 function toggleNewsSidebar() {
@@ -4038,8 +4078,6 @@ async function loadNews(forceRefresh = false) {
   } catch (storageError) {}
 }
 
-loadNews();
-setInterval(() => loadNews(true), NEWS_CACHE_TTL_MS);
 
 document.addEventListener('keydown', (event) => {
   if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
@@ -4047,7 +4085,7 @@ document.addEventListener('keydown', (event) => {
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || event.target.isContentEditable) return;
   if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
   event.preventDefault();
-  window.location.href = 'markedsmote.html';
+  window.location.href = 'markedsinnsikt.html';
 });
 </script>
 </body>

@@ -2,7 +2,8 @@ name: Update fuel prices – NO
 
 on:
   schedule:
-    - cron: "20 6 * * *"
+    # UTC — ≈ 06:20 CEST (norsk sommertid)
+    - cron: "20 4 * * *"
   workflow_dispatch:
 
 jobs:

@@ -2,7 +2,8 @@ name: Update Brent crude
 
 on:
   schedule:
-    - cron: "45 6 * * 1-5"
+    # UTC — ≈ 06:45 CEST (norsk sommertid), man–fre
+    - cron: "45 4 * * 1-5"
   workflow_dispatch:
 
 jobs:
