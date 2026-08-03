@@ -43,7 +43,7 @@
   function assertAllowedEmail(email) {
     const normalized = normalizeEmail(email);
     if (!isAllowedEmail(normalized)) {
-      throw new Error('Kun e-postadresser på @' + ALLOWED_EMAIL_DOMAIN + ' kan registrere seg eller logge inn.');
+      throw new Error('Kun NG-ansatte har tilgang.');
     }
     return normalized;
   }
@@ -82,17 +82,6 @@
     return session;
   }
 
-  async function signUp(email, password) {
-    const normalized = assertAllowedEmail(email);
-    validatePassword(password);
-    const { data, error } = await getClient().auth.signUp({
-      email: normalized,
-      password: String(password),
-    });
-    if (error) throw error;
-    return data;
-  }
-
   async function signIn(email, password) {
     const normalized = assertAllowedEmail(email);
     validatePassword(password);
@@ -102,22 +91,24 @@
     });
     if (error) throw error;
     if (!data.session) {
-      throw new Error('Innlogging feilet. Sjekk e-post, passord og at kontoen er bekreftet.');
+      throw new Error('Innlogging feilet. Sjekk e-post og passord.');
     }
     return data;
   }
 
-  async function resendSignupCode(email) {
+  async function sendRegisterOtp(email) {
     const normalized = assertAllowedEmail(email);
-    const { data, error } = await getClient().auth.resend({
-      type: 'signup',
+    const { data, error } = await getClient().auth.signInWithOtp({
       email: normalized,
+      options: {
+        shouldCreateUser: true,
+      },
     });
     if (error) throw error;
     return data;
   }
 
-  async function verifySignupOtp(email, token) {
+  async function verifyRegisterOtp(email, token) {
     const normalized = assertAllowedEmail(email);
     const code = String(token || '').replace(/\s+/g, '');
     if (!/^\d{6,8}$/.test(code)) {
@@ -126,12 +117,28 @@
     const { data, error } = await getClient().auth.verifyOtp({
       email: normalized,
       token: code,
-      type: 'signup',
+      type: 'email',
     });
     if (error) throw error;
     if (!data.session) {
-      throw new Error('Kunne ikke bekrefte kontoen. Prøv å be om ny kode.');
+      throw new Error('Kunne ikke bekrefte e-posten. Prøv å be om ny kode.');
     }
+    return data;
+  }
+
+  async function setPassword(password, passwordConfirm) {
+    validatePassword(password);
+    if (String(password) !== String(passwordConfirm || '')) {
+      throw new Error('Passordene er ikke like.');
+    }
+    const session = await getSession();
+    if (!session) {
+      throw new Error('Du må bekrefte e-posten før du kan sette passord.');
+    }
+    const { data, error } = await getClient().auth.updateUser({
+      password: String(password),
+    });
+    if (error) throw error;
     return data;
   }
 
@@ -159,10 +166,10 @@
     isAllowedEmail,
     getSession,
     requireSession,
-    signUp,
     signIn,
-    resendSignupCode,
-    verifySignupOtp,
+    sendRegisterOtp,
+    verifyRegisterOtp,
+    setPassword,
     signOut,
     getAccessToken,
     currentUserEmail,

@@ -11,8 +11,9 @@ Dette er **ikke** NG SSO. Brukere skal lage et **eget passord kun for denne side
    - Confirm email: **ON**
    - Minimum password length: 8 (eller høyere)
 
-2. **Authentication → Email Templates → Confirm signup**
+2. **Authentication → Email Templates → Magic Link**
    - Lim inn malen under (må inneholde `{{ .Token }}`)
+   - Dette er malen som brukes for verifikasjonskode ved registrering
 
 3. **Authentication → URL Configuration**
    - Site URL: produksjons-URL for dashbordet (Cloudflare)
@@ -22,7 +23,20 @@ Dette er **ikke** NG SSO. Brukere skal lage et **eget passord kun for denne side
    - Kjør `migrations/auth_ngn_domain.sql`
    - Blokkerer registrering uten `@ngn.no`
 
-## E-postmal (Confirm signup)
+## Flyt
+
+### Registrering
+1. `@ngn.no`-epost → send verifikasjonskode
+2. Bekreft kode
+3. Sett eget passord for denne siden
+4. Inn i dashbordet
+
+### Innlogging
+1. `@ngn.no`-epost + passordet for denne siden
+
+## E-postmal
+
+For registreringskoden brukes **Magic Link**-malen (OTP). Den må inneholde `{{ .Token }}`.
 
 **Subject:**
 ```text
@@ -31,20 +45,14 @@ Verifikasjonskode for NG drivstoffverktøy
 
 **Body:**
 ```html
-<h2>Bekreft kontoen din</h2>
+<h2>Bekreft e-posten din</h2>
 <p>Hei,</p>
 <p>Du registrerer deg på NG sitt interne drivstoffverktøy (ikke SSO).</p>
 <p>Din verifikasjonskode er:</p>
 <p style="font-size:24px;font-weight:700;letter-spacing:4px;">{{ .Token }}</p>
-<p>Koden gjelder en kort stund. Hvis du ikke ba om dette, kan du se bort fra e-posten.</p>
+<p>Etter at koden er bekreftet, lager du et eget passord bare for denne siden.</p>
+<p>Hvis du ikke ba om dette, kan du se bort fra e-posten.</p>
 ```
-
-## Flyt
-
-1. Registrer med `@ngn.no` + eget passord for denne siden
-2. Bekreft med 6-sifret kode fra e-post
-3. Logg inn senere med samme e-post/passord
-4. `index.html` / `markedsinnsikt.html` krever gyldig session
 
 ## Filer
 

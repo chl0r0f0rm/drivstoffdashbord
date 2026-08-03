@@ -56,6 +56,7 @@
     margin: 0 0 6px;
     font-size: 1.35rem;
     letter-spacing: -0.02em;
+    min-height: 1.45em;
   }
   .lead {
     margin: 0 0 14px;
@@ -121,6 +122,42 @@
     outline: 2px solid rgba(232, 92, 13, 0.25);
     border-color: var(--orange);
   }
+  .email-wrap {
+    position: relative;
+  }
+  .email-wrap input {
+    padding-right: 40px;
+  }
+  .email-wrap input.email-invalid {
+    border-color: #d9584a;
+    outline: 2px solid rgba(217, 88, 74, 0.18);
+  }
+  .email-status {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .email-wrap.is-invalid .email-status {
+    display: inline-flex;
+    color: #d9584a;
+  }
+  .email-error {
+    display: none;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: #d9584a;
+    line-height: 1.3;
+  }
+  .email-wrap.is-invalid + .email-error {
+    display: block;
+  }
   .field { margin-bottom: 14px; }
   .actions {
     display: flex;
@@ -175,8 +212,25 @@
     color: var(--muted);
     line-height: 1.4;
   }
-  .panel { display: none; }
-  .panel.active { display: block; }
+  .panel-stage {
+    display: grid;
+  }
+  .panel-stage > .panel {
+    grid-area: 1 / 1;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .panel-stage > .panel.active {
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .step-lead {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
   .code-input {
     letter-spacing: 0.28em;
     font-weight: 700;
@@ -191,10 +245,10 @@
       <img src="assets/logo.svg" alt="NG Nordic">
     </div>
     <h1 id="pageTitle">Logg inn</h1>
-    <p class="lead">Internt verktøy for drivstoffpriser. Kun <strong>@ngn.no</strong>-adresser.</p>
-    <p class="notice">
+    <p class="lead">Internt verktøy for drivstoffpriser. Kun for NG-ansatte.</p>
+    <p class="notice" id="passwordNotice">
       Dette er <strong>ikke</strong> NG SSO / Vercel-innlogging.
-      Lag et <strong>eget passord bare for denne siden</strong> — ikke gjenbruk passordet du bruker ellers på jobb.
+      Bruk et <strong>eget passord bare for denne siden</strong> — ikke gjenbruk passordet du bruker ellers på jobb.
     </p>
 
     <div class="tabs" role="tablist">
@@ -202,39 +256,79 @@
       <button type="button" class="tab" id="tabRegister" data-mode="register">Registrer</button>
     </div>
 
-    <section id="panel-auth" class="panel active">
+    <div class="panel-stage">
+    <section id="panel-login" class="panel active">
       <div class="field">
-        <label for="email">E-post</label>
-        <input id="email" type="email" autocomplete="username" placeholder="navn@ngn.no" required>
+        <label for="loginEmail">E-post</label>
+        <div class="email-wrap" id="loginEmailWrap">
+          <input id="loginEmail" type="email" autocomplete="username" placeholder="din e-post" required>
+          <span class="email-status" aria-hidden="true">
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M4 4l8 8M12 4l-8 8"/>
+            </svg>
+          </span>
+        </div>
+        <div class="email-error" id="loginEmailError">Ugyldig e-post</div>
       </div>
       <div class="field">
-        <label for="password">Passord for denne siden</label>
-        <input id="password" type="password" autocomplete="current-password" placeholder="Minst 8 tegn" required>
-      </div>
-      <div class="field" id="passwordConfirmField" style="display:none">
-        <label for="passwordConfirm">Bekreft passord</label>
-        <input id="passwordConfirm" type="password" autocomplete="new-password" placeholder="Gjenta passordet">
+        <label for="loginPassword">Passord for denne siden</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Passordet du laget her" required>
       </div>
       <div class="actions">
-        <button type="button" class="action btn-primary" id="submitBtn">Logg inn</button>
+        <button type="button" class="action btn-primary" id="loginBtn">Logg inn</button>
       </div>
     </section>
 
-    <section id="panel-code" class="panel">
-      <p class="lead" style="margin-bottom:14px">Vi har sendt en verifikasjonskode til e-posten din. Skriv den inn for å aktivere kontoen.</p>
+    <section id="panel-register-email" class="panel">
+      <p class="step-lead">Steg 1 av 3: bekreft e-post med kode</p>
+      <div class="field">
+        <label for="registerEmail">E-post</label>
+        <div class="email-wrap" id="registerEmailWrap">
+          <input id="registerEmail" type="email" autocomplete="username" placeholder="din e-post" required>
+          <span class="email-status" aria-hidden="true">
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M4 4l8 8M12 4l-8 8"/>
+            </svg>
+          </span>
+        </div>
+        <div class="email-error" id="registerEmailError">Ugyldig e-post</div>
+      </div>
+      <div class="actions">
+        <button type="button" class="action btn-primary" id="sendCodeBtn">Send verifikasjonskode</button>
+      </div>
+    </section>
+
+    <section id="panel-register-code" class="panel">
+      <p class="step-lead">Steg 2 av 3: skriv inn koden fra e-posten</p>
       <div class="field">
         <label for="code">Verifikasjonskode</label>
         <input id="code" class="code-input" inputmode="numeric" autocomplete="one-time-code" placeholder="••••••" maxlength="8">
       </div>
       <div class="actions">
-        <button type="button" class="action btn-secondary" id="backBtn">Tilbake</button>
-        <button type="button" class="action btn-primary" id="verifyBtn">Bekreft konto</button>
+        <button type="button" class="action btn-secondary" id="backToEmailBtn">Tilbake</button>
+        <button type="button" class="action btn-primary" id="verifyBtn">Bekreft kode</button>
       </div>
       <button type="button" class="action btn-secondary" id="resendBtn" style="margin-top:10px;width:100%">Send ny kode</button>
     </section>
 
+    <section id="panel-register-password" class="panel">
+      <p class="step-lead">Steg 3 av 3: lag passord for denne siden</p>
+      <div class="field">
+        <label for="registerPassword">Passord for denne siden</label>
+        <input id="registerPassword" type="password" autocomplete="new-password" placeholder="Minst 8 tegn" required>
+      </div>
+      <div class="field">
+        <label for="registerPasswordConfirm">Bekreft passord</label>
+        <input id="registerPasswordConfirm" type="password" autocomplete="new-password" placeholder="Gjenta passordet" required>
+      </div>
+      <div class="actions">
+        <button type="button" class="action btn-primary" id="setPasswordBtn">Lagre passord og fortsett</button>
+      </div>
+    </section>
+    </div>
+
     <div id="message" class="msg" role="status" aria-live="polite"></div>
-    <p class="hint">Siden inneholder ikke sensitiv intern data, men er kun ment for NG-ansatte med @ngn.no-adresse.</p>
+    <p class="hint">Siden inneholder ikke sensitiv intern data, men er kun ment for NG-ansatte.</p>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -244,21 +338,30 @@
     const nextPage = sanitizeNext(params.get('next'));
     let mode = 'login';
 
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const passwordConfirmInput = document.getElementById('passwordConfirm');
-    const passwordConfirmField = document.getElementById('passwordConfirmField');
+    const loginEmail = document.getElementById('loginEmail');
+    const loginPassword = document.getElementById('loginPassword');
+    const registerEmail = document.getElementById('registerEmail');
+    const registerPassword = document.getElementById('registerPassword');
+    const registerPasswordConfirm = document.getElementById('registerPasswordConfirm');
     const codeInput = document.getElementById('code');
     const messageEl = document.getElementById('message');
-    const panelAuth = document.getElementById('panel-auth');
-    const panelCode = document.getElementById('panel-code');
-    const submitBtn = document.getElementById('submitBtn');
-    const verifyBtn = document.getElementById('verifyBtn');
-    const resendBtn = document.getElementById('resendBtn');
-    const backBtn = document.getElementById('backBtn');
     const pageTitle = document.getElementById('pageTitle');
     const tabLogin = document.getElementById('tabLogin');
     const tabRegister = document.getElementById('tabRegister');
+
+    const panels = {
+      login: document.getElementById('panel-login'),
+      registerEmail: document.getElementById('panel-register-email'),
+      registerCode: document.getElementById('panel-register-code'),
+      registerPassword: document.getElementById('panel-register-password'),
+    };
+
+    const loginBtn = document.getElementById('loginBtn');
+    const sendCodeBtn = document.getElementById('sendCodeBtn');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const resendBtn = document.getElementById('resendBtn');
+    const backToEmailBtn = document.getElementById('backToEmailBtn');
+    const setPasswordBtn = document.getElementById('setPasswordBtn');
 
     function sanitizeNext(value) {
       if (!value) return 'index.html';
@@ -272,9 +375,41 @@
       messageEl.className = 'msg' + (type ? ' ' + type : '');
     }
 
+    function isCompleteEmail(value) {
+      return String(value || '').includes('@') && String(value || '').split('@')[1];
+    }
+
+    function updateEmailValidity(input, wrap) {
+      const value = input.value.trim();
+      const shouldValidate = isCompleteEmail(value);
+      const valid = !shouldValidate || NgAuth.isAllowedEmail(value);
+      wrap.classList.toggle('is-invalid', shouldValidate && !valid);
+      input.classList.toggle('email-invalid', shouldValidate && !valid);
+      return !shouldValidate || valid;
+    }
+
+    function wireEmailField(input, wrap) {
+      const refresh = () => updateEmailValidity(input, wrap);
+      input.addEventListener('input', refresh);
+      input.addEventListener('blur', refresh);
+      input.addEventListener('change', refresh);
+    }
+
     function setBusy(busy) {
-      [submitBtn, verifyBtn, resendBtn, backBtn, tabLogin, tabRegister].forEach(btn => {
+      [
+        loginBtn, sendCodeBtn, verifyBtn, resendBtn, backToEmailBtn, setPasswordBtn,
+        tabLogin, tabRegister,
+      ].forEach(btn => {
         btn.disabled = busy;
+      });
+    }
+
+    function showPanel(name) {
+      Object.keys(panels).forEach(key => {
+        const panel = panels[key];
+        const active = key === name;
+        panel.classList.toggle('active', active);
+        panel.toggleAttribute('inert', !active);
       });
     }
 
@@ -284,19 +419,8 @@
       tabLogin.classList.toggle('active', !isRegister);
       tabRegister.classList.toggle('active', isRegister);
       pageTitle.textContent = isRegister ? 'Opprett konto' : 'Logg inn';
-      submitBtn.textContent = isRegister ? 'Registrer' : 'Logg inn';
-      passwordConfirmField.style.display = isRegister ? 'block' : 'none';
-      passwordInput.autocomplete = isRegister ? 'new-password' : 'current-password';
-      passwordInput.placeholder = isRegister
-        ? 'Eget passord for denne siden (minst 8 tegn)'
-        : 'Passordet du laget for denne siden';
-      showPanel('auth');
+      showPanel(isRegister ? 'registerEmail' : 'login');
       showMessage('');
-    }
-
-    function showPanel(name) {
-      panelAuth.classList.toggle('active', name === 'auth');
-      panelCode.classList.toggle('active', name === 'code');
     }
 
     async function redirectIfLoggedIn() {
@@ -306,40 +430,40 @@
       }
     }
 
-    async function submitAuth() {
+    const loginEmailWrap = document.getElementById('loginEmailWrap');
+    const registerEmailWrap = document.getElementById('registerEmailWrap');
+
+    async function doLogin() {
       showMessage('');
-      const email = emailInput.value;
-      const password = passwordInput.value;
-
-      if (!NgAuth.isAllowedEmail(email)) {
-        showMessage('Kun e-postadresser på @ngn.no er tillatt.', 'error');
+      if (!updateEmailValidity(loginEmail, loginEmailWrap) || !NgAuth.isAllowedEmail(loginEmail.value)) {
+        showMessage('Ugyldig e-post.', 'error');
         return;
       }
-
-      if (mode === 'register' && password !== passwordConfirmInput.value) {
-        showMessage('Passordene er ikke like.', 'error');
-        return;
-      }
-
       setBusy(true);
       try {
-        if (mode === 'login') {
-          await NgAuth.signIn(email, password);
-          location.replace(nextPage);
-          return;
-        }
+        await NgAuth.signIn(loginEmail.value, loginPassword.value);
+        location.replace(nextPage);
+      } catch (error) {
+        showMessage(error.message || 'Innlogging feilet.', 'error');
+      } finally {
+        setBusy(false);
+      }
+    }
 
-        const result = await NgAuth.signUp(email, password);
-        if (result.session) {
-          location.replace(nextPage);
-          return;
-        }
-        showPanel('code');
-        showMessage('Konto opprettet. Skriv inn verifikasjonskoden fra e-posten.', 'ok');
+    async function sendCode() {
+      showMessage('');
+      if (!updateEmailValidity(registerEmail, registerEmailWrap) || !NgAuth.isAllowedEmail(registerEmail.value)) {
+        showMessage('Ugyldig e-post.', 'error');
+        return;
+      }
+      setBusy(true);
+      try {
+        await NgAuth.sendRegisterOtp(registerEmail.value);
+        showPanel('registerCode');
+        showMessage('Kode sendt. Sjekk e-posten din.', 'ok');
         codeInput.focus();
       } catch (error) {
-        const message = error && error.message ? error.message : 'Noe gikk galt.';
-        showMessage(message, 'error');
+        showMessage(error.message || 'Kunne ikke sende kode.', 'error');
       } finally {
         setBusy(false);
       }
@@ -349,8 +473,10 @@
       showMessage('');
       setBusy(true);
       try {
-        await NgAuth.verifySignupOtp(emailInput.value, codeInput.value);
-        location.replace(nextPage);
+        await NgAuth.verifyRegisterOtp(registerEmail.value, codeInput.value);
+        showPanel('registerPassword');
+        showMessage('E-post bekreftet. Lag nå et eget passord for denne siden.', 'ok');
+        registerPassword.focus();
       } catch (error) {
         showMessage(error.message || 'Ugyldig eller utløpt kode.', 'error');
       } finally {
@@ -358,14 +484,14 @@
       }
     }
 
-    async function resendCode() {
+    async function savePassword() {
       showMessage('');
       setBusy(true);
       try {
-        await NgAuth.resendSignupCode(emailInput.value);
-        showMessage('Ny kode er sendt.', 'ok');
+        await NgAuth.setPassword(registerPassword.value, registerPasswordConfirm.value);
+        location.replace(nextPage);
       } catch (error) {
-        showMessage(error.message || 'Kunne ikke sende ny kode.', 'error');
+        showMessage(error.message || 'Kunne ikke lagre passord.', 'error');
       } finally {
         setBusy(false);
       }
@@ -373,26 +499,39 @@
 
     tabLogin.addEventListener('click', () => setMode('login'));
     tabRegister.addEventListener('click', () => setMode('register'));
-    submitBtn.addEventListener('click', submitAuth);
+    loginBtn.addEventListener('click', doLogin);
+    sendCodeBtn.addEventListener('click', sendCode);
     verifyBtn.addEventListener('click', verifyCode);
-    resendBtn.addEventListener('click', resendCode);
-    backBtn.addEventListener('click', () => {
-      showPanel('auth');
+    resendBtn.addEventListener('click', sendCode);
+    setPasswordBtn.addEventListener('click', savePassword);
+    backToEmailBtn.addEventListener('click', () => {
+      showPanel('registerEmail');
       showMessage('');
     });
 
-    [emailInput, passwordInput, passwordConfirmInput].forEach(input => {
+    [loginEmail, loginPassword].forEach(input => {
       input.addEventListener('keydown', event => {
-        if (event.key === 'Enter') submitAuth();
+        if (event.key === 'Enter') doLogin();
       });
+    });
+    registerEmail.addEventListener('keydown', event => {
+      if (event.key === 'Enter') sendCode();
     });
     codeInput.addEventListener('keydown', event => {
       if (event.key === 'Enter') verifyCode();
     });
+    [registerPassword, registerPasswordConfirm].forEach(input => {
+      input.addEventListener('keydown', event => {
+        if (event.key === 'Enter') savePassword();
+      });
+    });
 
     if (params.get('error') === 'domain') {
-      showMessage('Kontoen er ikke på @ngn.no og ble logget ut.', 'error');
+      showMessage('Kontoen har ikke tilgang og ble logget ut.', 'error');
     }
+
+    wireEmailField(loginEmail, loginEmailWrap);
+    wireEmailField(registerEmail, registerEmailWrap);
 
     setMode('login');
     redirectIfLoggedIn().catch(error => console.error(error));
