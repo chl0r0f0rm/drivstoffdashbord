@@ -1115,6 +1115,47 @@ PRODUCT_ALIASES = {
     "hvo":     ["hvo100"],
 }
 
+
+def _parse_ck_no_price_cell(text):
+    match = re.search(r"(\d+)[,.](\d+)", text.replace(" ", ""))
+    if not match:
+        return None
+    return round(float(match.group(1) + "." + match.group(2)), 4)
+
+
+def _parse_ck_no_date_cell(text):
+    match = re.search(r"(20\d{2}-\d{2}-\d{2})", text)
+    return match.group(1) if match else None
+
+
+def _ck_no_eks_price_from_cells(cell_texts, eks_idx=None, inkl_idx=None):
+    """Always prefer Pris eks. mva.; never use inkl. mva."""
+    if eks_idx is not None and eks_idx < len(cell_texts):
+        value = _parse_ck_no_price_cell(cell_texts[eks_idx])
+        if value is not None:
+            return value
+
+    for cell_text in cell_texts:
+        lowered = cell_text.lower()
+        if "inkl" in lowered and ("mva" in lowered or "moms" in lowered):
+            continue
+        if "eks" in lowered and ("mva" in lowered or "moms" in lowered):
+            value = _parse_ck_no_price_cell(cell_text)
+            if value is not None:
+                return value
+
+    for index, cell_text in enumerate(cell_texts):
+        if inkl_idx is not None and index == inkl_idx:
+            continue
+        lowered = cell_text.lower()
+        if "inkl" in lowered:
+            continue
+        value = _parse_ck_no_price_cell(cell_text)
+        if value is not None and 8 < value < 40:
+            return value
+    return None
+
+
 def fetch_ck_no():
     print("\n── Circle K Norge ───────────────────────────────────────────────────")
     try:
@@ -1129,52 +1170,82 @@ def fetch_ck_no():
     date_effective = None
 
     for table in soup.find_all("table"):
-        headers_text = " ".join(th.get_text(" ", strip=True).lower() for th in table.find_all("th"))
-        if "gjeldende fra" not in headers_text and "pris eks" not in headers_text:
+        headers = [th.get_text(" ", strip=True).lower() for th in table.find_all("th")]
+        headers_text = " ".join(headers)
+        body_preview = " ".join(
+            cell.get_text(" ", strip=True).lower()
+            for cell in table.find_all("td")[:12]
+        )
+        if (
+            "gjeldende fra" not in headers_text
+            and "pris eks" not in headers_text
+            and "gjeldende fra" not in body_preview
+            and "pris eks" not in body_preview
+        ):
             continue
+
+        eks_idx = next(
+            (
+                index for index, header in enumerate(headers)
+                if "eks" in header and ("mva" in header or "moms" in header)
+            ),
+            None,
+        )
+        inkl_idx = next(
+            (
+                index for index, header in enumerate(headers)
+                if "inkl" in header and ("mva" in header or "moms" in header)
+            ),
+            None,
+        )
+        date_idx = next(
+            (index for index, header in enumerate(headers) if "gjeldende" in header),
+            None,
+        )
+        product_idx = next(
+            (index for index, header in enumerate(headers) if "produkt" in header),
+            1 if len(headers) > 1 else 0,
+        )
 
         for row in table.find_all("tr"):
             cells = row.find_all("td")
-            if len(cells) < 4:
+            if len(cells) < 3:
                 continue
 
-            cell_texts = [c.get_text(" ", strip=True) for c in cells]
+            cell_texts = [cell.get_text(" ", strip=True) for cell in cells]
             row_text = " ".join(cell_texts).lower()
+            product_text = (
+                cell_texts[product_idx].lower()
+                if product_idx is not None and product_idx < len(cell_texts)
+                else row_text
+            )
 
-            def extract_number(text):
-                m = re.search(r"(\d+)[,.](\d+)", text)
-                return round(float(m.group(1) + "." + m.group(2)), 4) if m else None
-
-            def extract_date(text):
-                m = re.search(r"(\d{4}-\d{2}-\d{2})", text)
-                return m.group(1) if m else None
+            if "anleggsdiesel" in product_text or "anleggsbio" in product_text:
+                continue
 
             matched_product = None
             for product_key, aliases in PRODUCT_ALIASES.items():
                 for alias in aliases:
-                    if alias in row_text:
+                    if alias in product_text:
                         matched_product = product_key
                         break
                 if matched_product:
                     break
-
             if not matched_product:
                 continue
 
-            if "anleggsdiesel" in row_text or "anleggsbio" in row_text:
-                continue
+            price_val = _ck_no_eks_price_from_cells(cell_texts, eks_idx, inkl_idx)
 
-            price_val = None
             row_date = None
-            for cell_text in cell_texts:
-                v = extract_number(cell_text)
-                d = extract_date(cell_text)
-                if d:
-                    row_date = d
-                if v and 10 < v < 30 and price_val is None:
-                    price_val = v
+            if date_idx is not None and date_idx < len(cell_texts):
+                row_date = _parse_ck_no_date_cell(cell_texts[date_idx])
+            if row_date is None:
+                for cell_text in cell_texts:
+                    row_date = _parse_ck_no_date_cell(cell_text)
+                    if row_date:
+                        break
 
-            if price_val:
+            if price_val is not None:
                 prices[matched_product] = price_val
             if row_date:
                 date_effective = row_date
@@ -1501,6 +1572,20 @@ def main():
         latest = dict(ck_no_daily[0])
         effective_date = latest.pop("effective_date", latest["date"])
         prior_row = read_last_daily_row(no_csv)
+        # Guard: old scraper sometimes took inkl. mva (~ +25%) for diesel.
+        prior_diesel = prior_row.get("diesel") if prior_row else None
+        if (
+            prior_diesel
+            and latest.get("diesel")
+            and prior_diesel > 0
+            and abs(latest["diesel"] / prior_diesel - 1.25) < 0.03
+        ):
+            corrected_diesel = round(latest["diesel"] / 1.25, 2)
+            print(
+                f"  WARN: diesel {latest['diesel']} looks like inkl. mva "
+                f"vs prior {prior_diesel}; using eks {corrected_diesel}"
+            )
+            latest["diesel"] = corrected_diesel
         new_rows = gap_fill_daily_rows(
             latest,
             read_existing_keys(no_csv, "date"),
