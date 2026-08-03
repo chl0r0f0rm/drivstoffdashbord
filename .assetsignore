@@ -1,0 +1,17 @@
+src/
+migrations/
+supabase/
+.github/
+.cursor/
+_tmp*
+*.pyc
+__pycache__/
+.git/
+.gitignore
+wrangler.toml
+package.json
+package-lock.json
+node_modules/
+CLOUDFLARE_ACCESS.md
+BAF-pipeline-handoff.md
+baf/

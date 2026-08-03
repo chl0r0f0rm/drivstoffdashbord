@@ -1,26 +1,6 @@
 (function (global) {
   const ALLOWED_EMAIL_DOMAIN = 'ngn.no';
   const MIN_PASSWORD_LENGTH = 8;
-  const SUPABASE_URL = 'https://fnkdbuqsschkvpzeumbz.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZua2RidXFzc2Noa3ZwemV1bWJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NTM5MjQsImV4cCI6MjA5MTEyOTkyNH0.bI5r0wyEME9BIBqBAINKkzvYCmHlY1QtZwVYHYRiLpI';
-
-  let client = null;
-
-  function getClient() {
-    if (client) return client;
-    if (!global.supabase || typeof global.supabase.createClient !== 'function') {
-      throw new Error('Supabase JS er ikke lastet');
-    }
-    client = global.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storage: global.localStorage,
-      },
-    });
-    return client;
-  }
 
   function normalizeEmail(email) {
     return String(email || '').trim().toLowerCase();
@@ -33,30 +13,45 @@
     return normalized.slice(at + 1) === ALLOWED_EMAIL_DOMAIN;
   }
 
-  function validatePassword(password) {
-    const value = String(password || '');
-    if (value.length < MIN_PASSWORD_LENGTH) {
-      throw new Error('Passordet må være minst ' + MIN_PASSWORD_LENGTH + ' tegn.');
-    }
-  }
-
-  function assertAllowedEmail(email) {
-    const normalized = normalizeEmail(email);
-    if (!isAllowedEmail(normalized)) {
-      throw new Error('Kun NG-ansatte har tilgang.');
-    }
-    return normalized;
-  }
-
   function markAuthReady() {
     document.documentElement.classList.add('auth-ready');
     document.documentElement.classList.remove('auth-pending');
   }
 
+  async function api(path, options) {
+    const opts = options || {};
+    const method = opts.method || 'GET';
+    const headers = { ...(opts.headers || {}) };
+    if (method !== 'GET' && method !== 'HEAD') {
+      headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+    }
+    const response = await fetch(path, {
+      credentials: 'same-origin',
+      ...opts,
+      method,
+      headers,
+    });
+    let data = null;
+    try {
+      data = await response.json();
+    } catch (error) {
+      data = null;
+    }
+    if (!response.ok) {
+      const message = data && data.error ? data.error : 'Noe gikk galt';
+      throw new Error(message);
+    }
+    return data;
+  }
+
   async function getSession() {
-    const { data, error } = await getClient().auth.getSession();
-    if (error) throw error;
-    return data.session || null;
+    try {
+      const data = await api('/api/auth/me', { method: 'GET', headers: {} });
+      if (!data || !data.authenticated) return null;
+      return { user: { email: data.email } };
+    } catch (error) {
+      return null;
+    }
   }
 
   async function requireSession(options) {
@@ -71,97 +66,70 @@
       return null;
     }
 
-    const email = session.user && session.user.email ? session.user.email : '';
-    if (!isAllowedEmail(email)) {
-      await signOut();
-      location.replace(loginPath + '?error=domain');
-      return null;
-    }
-
     markAuthReady();
     return session;
   }
 
   async function signIn(email, password) {
-    const normalized = assertAllowedEmail(email);
-    validatePassword(password);
-    const { data, error } = await getClient().auth.signInWithPassword({
-      email: normalized,
-      password: String(password),
-    });
-    if (error) throw error;
-    if (!data.session) {
-      throw new Error('Innlogging feilet. Sjekk e-post og passord.');
+    if (!isAllowedEmail(email)) throw new Error('Ugyldig e-post');
+    if (String(password || '').length < MIN_PASSWORD_LENGTH) {
+      throw new Error('Passordet må være minst ' + MIN_PASSWORD_LENGTH + ' tegn.');
     }
-    return data;
+    return api('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: normalizeEmail(email),
+        password: String(password),
+      }),
+    });
   }
 
   async function sendRegisterOtp(email) {
-    const normalized = assertAllowedEmail(email);
-    const { data, error } = await getClient().auth.signInWithOtp({
-      email: normalized,
-      options: {
-        shouldCreateUser: true,
-      },
+    if (!isAllowedEmail(email)) throw new Error('Ugyldig e-post');
+    return api('/api/auth/send-code', {
+      method: 'POST',
+      body: JSON.stringify({ email: normalizeEmail(email) }),
     });
-    if (error) throw error;
-    return data;
   }
 
   async function verifyRegisterOtp(email, token) {
-    const normalized = assertAllowedEmail(email);
+    if (!isAllowedEmail(email)) throw new Error('Ugyldig e-post');
     const code = String(token || '').replace(/\s+/g, '');
     if (!/^\d{6,8}$/.test(code)) {
       throw new Error('Skriv inn verifikasjonskoden du fikk på e-post (6 siffer).');
     }
-    const { data, error } = await getClient().auth.verifyOtp({
-      email: normalized,
-      token: code,
-      type: 'email',
+    return api('/api/auth/verify-code', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: normalizeEmail(email),
+        code,
+      }),
     });
-    if (error) throw error;
-    if (!data.session) {
-      throw new Error('Kunne ikke bekrefte e-posten. Prøv å be om ny kode.');
-    }
-    return data;
   }
 
   async function setPassword(password, passwordConfirm) {
-    validatePassword(password);
+    if (String(password || '').length < MIN_PASSWORD_LENGTH) {
+      throw new Error('Passordet må være minst ' + MIN_PASSWORD_LENGTH + ' tegn.');
+    }
     if (String(password) !== String(passwordConfirm || '')) {
       throw new Error('Passordene er ikke like.');
     }
-    const session = await getSession();
-    if (!session) {
-      throw new Error('Du må bekrefte e-posten før du kan sette passord.');
-    }
-    const { data, error } = await getClient().auth.updateUser({
-      password: String(password),
+    return api('/api/auth/set-password', {
+      method: 'POST',
+      body: JSON.stringify({
+        password: String(password),
+        passwordConfirm: String(passwordConfirm),
+      }),
     });
-    if (error) throw error;
-    return data;
   }
 
   async function signOut() {
-    const { error } = await getClient().auth.signOut();
-    if (error) throw error;
-  }
-
-  async function getAccessToken() {
-    const session = await getSession();
-    return session && session.access_token ? session.access_token : null;
-  }
-
-  function currentUserEmail() {
-    return getSession().then(session => (session && session.user && session.user.email) || null);
+    return api('/api/auth/logout', { method: 'POST', body: '{}' });
   }
 
   global.NgAuth = {
     ALLOWED_EMAIL_DOMAIN,
     MIN_PASSWORD_LENGTH,
-    SUPABASE_URL,
-    SUPABASE_ANON,
-    getClient,
     normalizeEmail,
     isAllowedEmail,
     getSession,
@@ -171,8 +139,6 @@
     verifyRegisterOtp,
     setPassword,
     signOut,
-    getAccessToken,
-    currentUserEmail,
     markAuthReady,
   };
 })(window);

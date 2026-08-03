@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" class="auth-pending">
+<html lang="no">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1201,23 +1201,6 @@ try {
     .kpi .value { font-size: 1.4rem; }
   }
 
-  html.auth-pending body { visibility: hidden; }
-  .header-logout-btn {
-    appearance: none;
-    border: 1px solid var(--border);
-    background: var(--control-bg, rgba(255,255,255,0.85));
-    color: var(--text-muted, #6B6B6B);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    padding: 7px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  .header-logout-btn:hover {
-    border-color: var(--ng-mid);
-    color: var(--ng-mid);
-  }
 
 </style>
 </head>
@@ -1266,7 +1249,6 @@ try {
           <option value="1800000">30 min</option>
         </select>
       </label>
-      <button type="button" class="header-logout-btn" id="ng-logout-btn">Logg ut</button>
       <button type="button" class="theme-switch" id="themeToggle" role="switch" aria-checked="false" aria-label="Bytt til mørk modus" title="Bytt til mørk modus">
         <span class="theme-switch-track" aria-hidden="true">
           <svg class="theme-switch-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -1699,8 +1681,6 @@ try {
 
 <footer>Data: 🇸🇪 Circle K SE / Preem SE (SEK/L eks. mva) · EU Oil Bulletin SE (EUR/L inkl. avgifter) · 🇩🇰 Circle K DK (DKK/L eks. moms) · 🇳🇴 Circle K NO (NOK/L eks. mva) · BAF Color Line / Fjord Line (NOK/LM) · Månedlig/daglig/ukentlig</footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="auth.js"></script>
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────────────
 const SOURCE_META = {
@@ -3916,43 +3896,27 @@ document.getElementById('yearFullHistory').addEventListener('change', function()
 // Redraw charts on resize
 window.addEventListener('resize', () => { try { render(); } catch(e) {} });
 
-(async function guardDashboard() {
-  try {
-    const session = await NgAuth.requireSession();
-    if (!session) return;
-    const logoutBtn = document.getElementById('ng-logout-btn');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', async () => {
-        try { await NgAuth.signOut(); } catch (e) { console.error(e); }
-        location.replace('login.html');
-      });
-    }
-    initThemeControls();
-    initAutoRefreshControls();
-    await fetchPriceData()
-      .then(() => fetchBafData().catch(err => {
-        console.error('BAF data:', err);
-        BAF_ROWS = [];
-      }))
-      .then(() => {
-        document.getElementById('loadingOverlay').style.display = 'none';
-        populateYearSliders();
-        populateBaseMonths();
-        populateViewMonthSlider();
-        render();
-      })
-      .catch(err => {
-        document.getElementById('loadingOverlay').innerHTML =
-          '<div class="loading-text loading-error">Kunne ikke laste prisdata. Sjekk nettverkstilgang og oppdater siden.</div>';
-        throw err;
-      });
-    loadNews();
-    setInterval(() => loadNews(true), NEWS_CACHE_TTL_MS);
-  } catch (error) {
-    console.error('Auth gate failed:', error);
-    location.replace('login.html');
-  }
-})();
+initThemeControls();
+initAutoRefreshControls();
+fetchPriceData()
+  .then(() => fetchBafData().catch(err => {
+    console.error('BAF data:', err);
+    BAF_ROWS = [];
+  }))
+  .then(() => {
+    document.getElementById('loadingOverlay').style.display = 'none';
+    populateYearSliders();
+    populateBaseMonths();
+    populateViewMonthSlider();
+    render();
+  })
+  .catch(err => {
+    document.getElementById('loadingOverlay').innerHTML =
+      '<div class="loading-text loading-error">Kunne ikke laste prisdata. Sjekk nettverkstilgang og oppdater siden.</div>';
+    throw err;
+  });
+loadNews();
+setInterval(() => loadNews(true), NEWS_CACHE_TTL_MS);
 
 // ── News sidebar toggle ────────────────────────────────────────────────────────
 function toggleNewsSidebar() {

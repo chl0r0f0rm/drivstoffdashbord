@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" class="auth-pending">
+<html lang="no">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1684,23 +1684,6 @@ try {
     color: var(--text-muted);
   }
 
-  html.auth-pending body { visibility: hidden; }
-  .header-logout-btn {
-    appearance: none;
-    border: 1px solid var(--border);
-    background: var(--control-bg, rgba(255,255,255,0.85));
-    color: var(--text-muted, #6B6B6B);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    padding: 7px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  .header-logout-btn:hover {
-    border-color: var(--ng-mid);
-    color: var(--ng-mid);
-  }
 
 </style>
 </head>
@@ -1745,7 +1728,6 @@ try {
           <option value="1800000">30 min</option>
         </select>
       </label>
-      <button type="button" class="header-logout-btn" id="ng-logout-btn">Logg ut</button>
       <button type="button" class="theme-switch" id="themeToggle" role="switch" aria-checked="false" aria-label="Bytt til mørk modus" title="Bytt til mørk modus">
         <span class="theme-switch-track" aria-hidden="true">
           <svg class="theme-switch-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -1997,8 +1979,6 @@ try {
 
 <footer>Data: 🇳🇴🇩🇰🇸🇪 Circle K (daglig pumpepris) · Circle K SE månedlig (SEK/L eks. mva) · Brent: EIA via FRED DCOILBRENTEU</footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="auth.js"></script>
 <script>
 const SUPABASE_URL  = 'https://fnkdbuqsschkvpzeumbz.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZua2RidXFzc2Noa3ZwemV1bWJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NTM5MjQsImV4cCI6MjA5MTEyOTkyNH0.bI5r0wyEME9BIBqBAINKkzvYCmHlY1QtZwVYHYRiLpI';
@@ -4791,23 +4771,7 @@ document.addEventListener('keydown', (event) => {
 });
 
 window.addEventListener('resize', () => { try { boot(); } catch (e) {} });
-(async function guardDashboard() {
-  try {
-    const session = await NgAuth.requireSession();
-    if (!session) return;
-    const logoutBtn = document.getElementById('ng-logout-btn');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', async () => {
-        try { await NgAuth.signOut(); } catch (e) { console.error(e); }
-        location.replace('login.html');
-      });
-    }
-    boot();
-  } catch (error) {
-    console.error('Auth gate failed:', error);
-    location.replace('login.html');
-  }
-})();
+boot();
 </script>
 </body>
 </html>

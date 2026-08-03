@@ -1,7 +1,16 @@
 name = "drivstoffdashbord"
+main = "src/worker.js"
 compatibility_date = "2026-06-05"
 
 [assets]
 directory = "."
+binding = "ASSETS"
 not_found_handling = "single-page-application"
 html_handling = "auto-trailing-slash"
+run_worker_first = true
+
+# Auth paused — D1 kept for later.
+[[d1_databases]]
+binding = "AUTH_DB"
+database_name = "drivstoff-auth"
+database_id = "1af983d4-3564-4db5-998c-cff7cc31f05e"

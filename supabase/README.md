@@ -15,9 +15,8 @@
 |-----|---------|
 | `migrations/migration.sql` | Drivstoff-schema + seed-data |
 | `migrations/baf_migration.sql` | BAF-tabeller |
-| `migrations/auth_ngn_domain.sql` | Sperrer Auth-brukere uten `@ngn.no` |
 
-Se også `AUTH_SETUP.md` for innlogging med e-postkode.
+Innlogging: se `CLOUDFLARE_ACCESS.md` (Cloudflare Zero Trust). Supabase Auth brukes ikke lenger.
 
 Kjør i Supabase SQL Editor, eller bruk bootstrap-scriptene under.
 
