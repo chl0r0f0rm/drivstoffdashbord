@@ -19,7 +19,7 @@ on:
 jobs:
   se-weekly:
     if: >-
-      (github.event_name == 'schedule' && github.event.schedule == '0 6 * * 1') ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 4 * * 1') ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'weekly')
     runs-on: ubuntu-latest
     permissions:
@@ -57,7 +57,7 @@ jobs:
 
   se-daily:
     if: >-
-      (github.event_name == 'schedule' && github.event.schedule == '10 6 * * *') ||
+      (github.event_name == 'schedule' && github.event.schedule == '10 4 * * *') ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'daily')
     runs-on: ubuntu-latest
     permissions:
