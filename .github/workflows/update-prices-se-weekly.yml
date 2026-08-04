@@ -1,0 +1,43 @@
+name: Update fuel prices – SE weekly
+
+on:
+  schedule:
+    # UTC — ≈ 06:00 CEST (norsk sommertid), mandager
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+jobs:
+  se-weekly:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pull latest changes
+        run: git pull --rebase origin main
+
+      - name: Install dependencies
+        run: pip install requests xlrd==1.2.0 beautifulsoup4 lxml openpyxl
+
+      - name: Fetch and upsert SE monthly data
+        env:
+          SUPABASE_URL: https://fnkdbuqsschkvpzeumbz.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          FETCH_MODE: weekly
+          FETCH_COUNTRY: se
+        run: python supabase/fetch_prices.py
+
+      - name: Commit updated CSV files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/preem_SE_månedlig.csv data/preem_SE_daglig.csv data/circklek_SE_månedlig.csv data/circklek_SE_daglig.csv data/eu_SE_månedlig.csv data/eu_SE_ukentlig.csv
+          git diff --staged --quiet || git commit -m "chore: weekly SE price update $(date -u +%Y-%m-%d)"
+          git push origin main
